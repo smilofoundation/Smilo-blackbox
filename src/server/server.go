@@ -3,27 +3,35 @@ package server
 import (
 	"os"
 	"net/http"
-	"github.com/orisano/uds"
-
 	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gorilla/pat"
 	"github.com/golang/glog"
 	"Smilo-blackbox/src/server/api"
-	"sync"
+	"net"
 )
 var privateAPI             *pat.Router
 var publicAPI              *pat.Router
 
-const (
-	sockPath = "./sample.sock"
-)
+var	sockPath = "./blackbox.sock"
 
-func NewServer(Port string) *http.Server {
+type status struct {
+	httpServer bool
+	unixServer bool
+}
+
+var serverStatus = status{false, false}
+
+func NewServer(Port string) (*http.Server,*http.Server) {
 	publicAPI, privateAPI = InitRouting()
+
 	return &http.Server{
 		Addr:    ":" + Port,
 		Handler: publicAPI,
-	}
+	},
+		&http.Server{
+			Handler: privateAPI,
+		}
+
 }
 
 //StartServer start and listen @server
@@ -31,35 +39,27 @@ func StartServer(Port string) {
 
 	//gracehttp.SetLogger(logger)
 
+	os.Remove(sockPath)
+
 	glog.Info("Starting server")
-	s := NewServer(Port)
+	pub, priv := NewServer(Port)
 	glog.Info("Server starting --> " + Port)
-
-	var wg sync.WaitGroup
-	//enable graceful shutdown
-	wg.Add(2)
-	go func() {
+	sock, _ := net.Listen("unix", sockPath)
+    go func() {
 		err := gracehttp.Serve(
-			s,
-		)
+			pub)
 		if err != nil {
 			glog.Error("Error: %v", err)
 			os.Exit(1)
 		}
-        wg.Done()
 	}()
-
-	go func() {
-		os.Remove(sockPath)
-		err := uds.ListenAndServe(sockPath, privateAPI)
+    go func() {
+    	err := priv.Serve(sock)
 		if err != nil {
 			glog.Error("Error: %v", err)
 			os.Exit(1)
 		}
-		wg.Done()
 	}()
-	wg.Wait()
-
 }
 
 func InitRouting() (*pat.Router, *pat.Router) {
