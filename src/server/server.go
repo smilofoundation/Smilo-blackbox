@@ -34,17 +34,19 @@ func NewServer(Port string) (*http.Server,*http.Server) {
 
 }
 
-//StartServer start and listen @server
-func StartServer(Port string) {
 
-	//gracehttp.SetLogger(logger)
+func StartServer(Port string, sockFilePath string) {
 
+	if sockFilePath != "" {
+		sockPath = sockFilePath
+	}
 	os.Remove(sockPath)
 
 	glog.Info("Starting server")
 	pub, priv := NewServer(Port)
 	glog.Info("Server starting --> " + Port)
 	sock, _ := net.Listen("unix", sockPath)
+	glog.Info("Unix Domain Socket Up --> " + sockPath)
     go func() {
 		err := gracehttp.Serve(
 			pub)
@@ -53,13 +55,11 @@ func StartServer(Port string) {
 			os.Exit(1)
 		}
 	}()
-    go func() {
-    	err := priv.Serve(sock)
-		if err != nil {
-			glog.Error("Error: %v", err)
-			os.Exit(1)
-		}
-	}()
+	err := priv.Serve(sock)
+	if err != nil {
+		glog.Error("Error: %v", err)
+		os.Exit(1)
+	}
 }
 
 func InitRouting() (*pat.Router, *pat.Router) {

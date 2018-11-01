@@ -6,6 +6,5 @@ import (
 
 func main() {
 	port := "9000"
-	server.StartServer(port)
-
+	server.StartServer(port,"")
 }

@@ -12,7 +12,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	StartServer("9000")
+	go StartServer("9000", "")
+	time.Sleep(100000000)
 	retcode := m.Run();
 	os.Exit(retcode)
 }
@@ -33,7 +34,16 @@ func TestHttpUpcheck(t *testing.T) {
 	}
 }
 
-func TestVersion(t *testing.T) {
+func TestUnixVersion(t *testing.T) {
+	response := doUnixRequest("/version", t)
+
+	if (!reflect.DeepEqual(response, api.BlackBoxVersion)) {
+		t.Fail()
+	}
+}
+
+
+func TestHttpVersion(t *testing.T) {
 	response := doRequest("http://localhost:9000/version", t)
 
 	if (!reflect.DeepEqual(response, api.BlackBoxVersion)) {
