@@ -9,6 +9,7 @@ import (
 	"Smilo-blackbox/src/server/api"
 	"github.com/tv42/httpunix"
 	"time"
+	"net/url"
 )
 
 func TestMain(m *testing.M) {
@@ -51,6 +52,32 @@ func TestHttpVersion(t *testing.T) {
 	}
 }
 
+func TestHttpTransactionGet(t *testing.T) {
+	response := doRequest("http://localhost:9000/transaction/1", t)
+
+	if (!reflect.DeepEqual(response, "1")) {
+		t.Fail()
+	}
+}
+
+func TestHttpTransactionDelete(t *testing.T) {
+	response := doDeleteRequest("http://localhost:9000/transaction/1", t)
+
+	if (!reflect.DeepEqual(response, "1")) {
+		t.Fail()
+	}
+}
+
+func TestHttpDelete(t *testing.T) {
+	params := url.Values{}
+    params.Add("Encoded public key", "123456")
+	response := doPostRequest("http://localhost:9000/delete", t, params)
+
+	if (!reflect.DeepEqual(response, "123456")) {
+		t.Fail()
+	}
+}
+
 func doUnixRequest(endpoint string, t *testing.T) (string) {
 	u := &httpunix.Transport{
 		DialTimeout:           100 * time.Millisecond,
@@ -64,6 +91,21 @@ func doUnixRequest(endpoint string, t *testing.T) (string) {
 	}
 
 	response, err := client.Get("http+unix://myservice"+endpoint)
+	ret := getResponseData(err, t, response)
+	return ret
+}
+
+func doDeleteRequest(url string, t *testing.T) (string) {
+	client := new(http.Client)
+	req, _ := http.NewRequest("DELETE", url, http.NoBody)
+	response, err := client.Do(req)
+	ret := getResponseData(err, t, response)
+	return ret
+}
+
+func doPostRequest(_url string, t *testing.T, params url.Values) (string) {
+	client := new(http.Client)
+	response, err := client.PostForm(_url,params)
 	ret := getResponseData(err, t, response)
 	return ret
 }

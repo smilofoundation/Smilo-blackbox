@@ -4,15 +4,15 @@ import (
 	"os"
 	"net/http"
 	"github.com/facebookgo/grace/gracehttp"
-	"github.com/gorilla/pat"
 	"github.com/golang/glog"
 	"Smilo-blackbox/src/server/api"
 	"net"
+	"github.com/gorilla/mux"
 )
-var privateAPI             *pat.Router
-var publicAPI              *pat.Router
+var privateAPI             *mux.Router
+var publicAPI              *mux.Router
 
-var	sockPath = "./blackbox.sock"
+var	sockPath = os.TempDir()+"blackbox.sock"
 
 type status struct {
 	httpServer bool
@@ -62,10 +62,10 @@ func StartServer(Port string, sockFilePath string) {
 	}
 }
 
-func InitRouting() (*pat.Router, *pat.Router) {
+func InitRouting() (*mux.Router, *mux.Router) {
 
-	publicAPI := pat.New()
-	privateAPI := pat.New()
+	publicAPI := mux.NewRouter()
+	privateAPI := mux.NewRouter()
 
 	publicAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	publicAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")
@@ -74,6 +74,8 @@ func InitRouting() (*pat.Router, *pat.Router) {
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
 	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("GET")
 	publicAPI.HandleFunc("/delete", api.Delete).Methods("POST")
+	publicAPI.HandleFunc("/transaction/{hash:.*}",api.TransactionGet).Methods("GET")
+	publicAPI.HandleFunc("/transaction/{key:.*}",api.TransactionDelete).Methods("DELETE")
 
 	privateAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")
