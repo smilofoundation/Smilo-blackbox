@@ -74,13 +74,18 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
 	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("GET")
 	publicAPI.HandleFunc("/delete", api.Delete).Methods("POST")
-	publicAPI.HandleFunc("/transaction/{hash:.*}",api.TransactionGet).Methods("GET")
+	publicAPI.HandleFunc("/receiveraw", api.ReceiveRaw).Methods("GET")
 	publicAPI.HandleFunc("/transaction/{key:.*}",api.TransactionDelete).Methods("DELETE")
+	publicAPI.HandleFunc("/config/peers",api.ConfigPeersPut).Methods("PUT")
+	publicAPI.HandleFunc("/config/peers/{index:.*}",api.ConfigPeersGet).Methods("GET")
+	publicAPI.HandleFunc("/metrics", api.Metrics).Methods("GET")
 
 	privateAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")
 	privateAPI.HandleFunc("/sendraw", api.SendRaw).Methods("POST")
-	privateAPI.HandleFunc("/receiveraw", api.ReceiveRaw).Methods("GET")
+	privateAPI.HandleFunc("/send", api.Send).Methods("POST")
+	privateAPI.HandleFunc("/receive", api.Receive).Methods("GET")
+	privateAPI.HandleFunc("/transaction/{hash:.*}",api.TransactionGet).Methods("GET")
 
 	return publicAPI, privateAPI
 }
