@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"fmt"
-	"Smilo-blackbox/src/server/data"
+	"Smilo-blackbox/src/data"
 )
 
 // It receives a POST request with a binary encoded PartyInfo, updates it and returns updated PartyInfo encoded.
