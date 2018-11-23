@@ -71,7 +71,7 @@ install-linters: ## Install linters
 format:  # Formats the code. Must have goimports installed (use make install-linters).
 	# This sorts imports by [stdlib, 3rdpart]
 	$(foreach pkg,$(PACKAGES),\
-		goimports -w -local go-smilo $(pkg);\
+		goimports -w -local Smilo-blackbox $(pkg);\
 		gofmt -s -w $(pkg);)
 	goimports -w -local go-smilo main.go
 	gofmt -s -w main.go

@@ -1,11 +1,12 @@
 package api
 
 import (
-	"Smilo-blackbox/src/data"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+
+	"Smilo-blackbox/src/data"
 
 	"github.com/gorilla/mux"
 )

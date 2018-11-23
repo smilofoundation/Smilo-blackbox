@@ -1,13 +1,14 @@
 package api
 
 import (
-	"Smilo-blackbox/src/data"
-	"Smilo-blackbox/src/server/encoding"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/encoding"
 
 	"github.com/gorilla/mux"
 )

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"Smilo-blackbox/src/server/api"
 	"bytes"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"Smilo-blackbox/src/server/api"
 
 	"github.com/tv42/httpunix"
 )

@@ -1,9 +1,10 @@
 package encoding
 
 import (
-	"Smilo-blackbox/src/crypt"
 	"bytes"
 	"encoding/binary"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 type Encoded_Payload_Data struct {
