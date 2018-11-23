@@ -1,8 +1,9 @@
-package data
+package encoding
 
 import (
 	"bytes"
 	"encoding/binary"
+	"Smilo-blackbox/src/crypt"
 )
 
 type Encoded_Payload_Data struct {
@@ -33,6 +34,36 @@ func Deserialize(encoded_payload []byte) (*Encoded_Payload_Data) {
     e.RecipientList = *decodeArray(buffer)
     e.RecipientNonce = *decodeBytes(buffer)
     return &e
+}
+
+func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Encoded_Payload_Data, error) {
+	masterkey, err := crypt.NewRandomKey()
+	if err != nil {
+		return nil, err
+	}
+	recipientsNonce, err := crypt.NewRandomNonce()
+	if err != nil {
+		return nil, err
+	}
+	nonce, err := crypt.NewRandomNonce()
+	if err != nil {
+		return nil, err
+	}
+	cipher := crypt.EncryptPayload(masterkey, payload, nonce)
+	senderPrivate := crypt.GetPrivateKey(sender)
+	recipientsEncryptedKey := make([][]byte, len(recipients))
+	for i:=0; i<len(recipients); i++ {
+		sharedKey := crypt.ComputeSharedKey(senderPrivate, recipients[i])
+		recipientsEncryptedKey[i]=crypt.EncryptPayload(sharedKey, masterkey, recipientsNonce)
+	}
+	e := Encoded_Payload_Data{
+		Sender : sender,
+		Cipher: cipher,
+		Nonce:nonce,
+		RecipientNonce:recipientsNonce,
+		RecipientList:recipientsEncryptedKey,
+	}
+	return &e, nil
 }
 
 func encodeBytes(data []byte, buffer *bytes.Buffer) {

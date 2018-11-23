@@ -1,10 +1,40 @@
 package crypt
 
-import "github.com/twystd/tweetnacl-go"
+import (
+	"github.com/twystd/tweetnacl-go"
+	"crypto/rand"
+)
 
 var empty_return = []byte("")
 
 var empty_nounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000")
+
+type KeyPair struct {
+	PrimaryKey []byte
+	PublicKey []byte
+}
+
+var keys = make(map[string][]byte)
+
+func PutKeyPair(pair KeyPair) {
+	keys[string(pair.PublicKey)] = pair.PrimaryKey
+}
+
+func GetPrivateKey(publickey []byte) []byte {
+    return keys[string(publickey)]
+}
+
+func NewRandomKey() ([]byte, error) {
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
+	return b, err
+}
+
+func NewRandomNonce() ([]byte, error) {
+	b := make([]byte, 24)
+	_, err := rand.Read(b)
+	return b, err
+}
 
 func ComputeSharedKey(senderKey []byte, publicKey []byte) ([]byte) {
 	var ret []byte
