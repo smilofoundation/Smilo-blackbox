@@ -1,7 +1,5 @@
 package sync
 
-
-
 func StartSync() {
 
 }

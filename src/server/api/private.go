@@ -1,15 +1,15 @@
 package api
 
 import (
-	"net/http"
-	"github.com/gorilla/mux"
-	"fmt"
-	"encoding/json"
-	"encoding/base64"
-	"github.com/ethereum/go-ethereum/log"
-	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/encoding"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 // It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
@@ -30,7 +30,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	payload, sender, recipients, msgs := sendReq.Parse()
 
 	if len(msgs) > 0 {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs,"\n")))
+		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
 		return
 	}
 
@@ -47,7 +47,6 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 }
-
 
 // Deprecated API
 // It receives a ReceiveRequest json with an encoded key (hash) and to values, returns decrypted payload
@@ -70,4 +69,3 @@ func requestError(returnCode int, w http.ResponseWriter, message string) {
 	w.WriteHeader(returnCode)
 	fmt.Fprintf(w, message)
 }
-

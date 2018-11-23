@@ -1,9 +1,9 @@
 package data
 
 import (
-	"github.com/asdine/storm"
 	"os"
-	"github.com/golang/glog"
+
+	"github.com/asdine/storm"
 )
 
 var databaseFile string
@@ -17,10 +17,8 @@ func Start(_databaseFile string) {
 	}
 	var err error
 	db, err = storm.Open(databaseFile)
-    if err != nil {
-    	glog.Fatal(err)
-    	os.Exit(1)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
 	}
 }
-
-

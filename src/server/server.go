@@ -1,53 +1,69 @@
 package server
 
 import (
-	"os"
-	"net/http"
-	"github.com/facebookgo/grace/gracehttp"
-	"github.com/golang/glog"
 	"Smilo-blackbox/src/server/api"
 	"net"
-	"github.com/gorilla/mux"
-)
-var privateAPI             *mux.Router
-var publicAPI              *mux.Router
+	"net/http"
+	"os"
 
-var	sockPath = os.TempDir()+"blackbox.sock"
+	"github.com/facebookgo/grace/gracehttp"
+	"github.com/golang/glog"
+	"github.com/gorilla/mux"
+	"github.com/onrik/logrus/filename"
+	"github.com/sirupsen/logrus"
+)
+
+var (
+	privateAPI *mux.Router
+	publicAPI  *mux.Router
+
+	sockPath = os.TempDir() + "/blackbox.sock"
+
+	serverStatus               = status{false, false}
+	log          *logrus.Entry = logrus.WithField("package", "server")
+)
 
 type status struct {
 	httpServer bool
 	unixServer bool
 }
 
-var serverStatus = status{false, false}
+// SetLogger set the logger
+func SetLogger(loggers *logrus.Entry) {
+	log = loggers.WithFields(log.Data)
 
-func NewServer(Port string) (*http.Server,*http.Server) {
+	filenameHook := filename.NewHook()
+
+	logrus.AddHook(filenameHook)
+
+}
+
+func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-		Addr:    ":" + Port,
-		Handler: publicAPI,
-	},
+			Addr:    ":" + Port,
+			Handler: publicAPI,
+		},
 		&http.Server{
 			Handler: privateAPI,
 		}
 
 }
 
-
 func StartServer(Port string, sockFilePath string) {
 
 	if sockFilePath != "" {
 		sockPath = sockFilePath
 	}
-	os.Remove(sockPath)
+	defer os.Remove(sockPath)
 
 	glog.Info("Starting server")
 	pub, priv := NewServer(Port)
 	glog.Info("Server starting --> " + Port)
 	sock, _ := net.Listen("unix", sockPath)
 	glog.Info("Unix Domain Socket Up --> " + sockPath)
-    go func() {
+	go func() {
 		err := gracehttp.Serve(
 			pub)
 		if err != nil {
@@ -75,9 +91,9 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("GET")
 	publicAPI.HandleFunc("/delete", api.Delete).Methods("POST")
 	publicAPI.HandleFunc("/receiveraw", api.ReceiveRaw).Methods("GET")
-	publicAPI.HandleFunc("/transaction/{key:.*}",api.TransactionDelete).Methods("DELETE")
-	publicAPI.HandleFunc("/config/peers",api.ConfigPeersPut).Methods("PUT")
-	publicAPI.HandleFunc("/config/peers/{index:.*}",api.ConfigPeersGet).Methods("GET")
+	publicAPI.HandleFunc("/transaction/{key:.*}", api.TransactionDelete).Methods("DELETE")
+	publicAPI.HandleFunc("/config/peers", api.ConfigPeersPut).Methods("PUT")
+	publicAPI.HandleFunc("/config/peers/{index:.*}", api.ConfigPeersGet).Methods("GET")
 	publicAPI.HandleFunc("/metrics", api.Metrics).Methods("GET")
 
 	privateAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
@@ -85,7 +101,7 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	privateAPI.HandleFunc("/sendraw", api.SendRaw).Methods("POST")
 	privateAPI.HandleFunc("/send", api.Send).Methods("POST")
 	privateAPI.HandleFunc("/receive", api.Receive).Methods("GET")
-	privateAPI.HandleFunc("/transaction/{hash:.*}",api.TransactionGet).Methods("GET")
+	privateAPI.HandleFunc("/transaction/{hash:.*}", api.TransactionGet).Methods("GET")
 
 	return publicAPI, privateAPI
 }

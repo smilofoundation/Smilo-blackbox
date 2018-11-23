@@ -1,8 +1,9 @@
 package crypt
 
 import (
-	"github.com/twystd/tweetnacl-go"
 	"crypto/rand"
+
+	"github.com/twystd/tweetnacl-go"
 )
 
 var empty_return = []byte("")
@@ -11,7 +12,7 @@ var empty_nounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\
 
 type KeyPair struct {
 	PrimaryKey []byte
-	PublicKey []byte
+	PublicKey  []byte
 }
 
 var keys = make(map[string][]byte)
@@ -21,7 +22,7 @@ func PutKeyPair(pair KeyPair) {
 }
 
 func GetPrivateKey(publickey []byte) []byte {
-    return keys[string(publickey)]
+	return keys[string(publickey)]
 }
 
 func NewRandomKey() ([]byte, error) {
@@ -36,16 +37,16 @@ func NewRandomNonce() ([]byte, error) {
 	return b, err
 }
 
-func ComputeSharedKey(senderKey []byte, publicKey []byte) ([]byte) {
+func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 	var ret []byte
 	ret, err := tweetnacl.CryptoBoxBeforeNM(publicKey, senderKey)
 	if err != nil {
 		ret = empty_return
 	}
-	return ret;
+	return ret
 }
 
-func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) ([]byte) {
+func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) []byte {
 	var ret []byte
 	if nounce == nil {
 		nounce = empty_nounce
@@ -57,7 +58,7 @@ func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) ([]byte) {
 	return ret
 }
 
-func DecryptPayload(sharedKey []byte, encrypted_payload []byte, nounce []byte) ([]byte) {
+func DecryptPayload(sharedKey []byte, encrypted_payload []byte, nounce []byte) []byte {
 	var ret []byte
 	if nounce == nil {
 		nounce = empty_nounce

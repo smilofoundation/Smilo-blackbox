@@ -1,39 +1,39 @@
 package encoding
 
 import (
+	"Smilo-blackbox/src/crypt"
 	"bytes"
 	"encoding/binary"
-	"Smilo-blackbox/src/crypt"
 )
 
 type Encoded_Payload_Data struct {
-	Sender []byte
-	Nonce []byte
-	Cipher []byte
+	Sender         []byte
+	Nonce          []byte
+	Cipher         []byte
 	RecipientNonce []byte
-	RecipientList [][]byte
+	RecipientList  [][]byte
 }
 
-func (e *Encoded_Payload_Data) Serialize() (*[]byte){
-    buffer := bytes.NewBuffer([]byte(""))
-    encodeBytes(e.Sender, buffer)
+func (e *Encoded_Payload_Data) Serialize() *[]byte {
+	buffer := bytes.NewBuffer([]byte(""))
+	encodeBytes(e.Sender, buffer)
 	encodeBytes(e.Cipher, buffer)
 	encodeBytes(e.Nonce, buffer)
 	encodeArray(e.RecipientList, buffer)
 	encodeBytes(e.RecipientNonce, buffer)
-    ret := buffer.Bytes()
-    return &ret
+	ret := buffer.Bytes()
+	return &ret
 }
 
-func Deserialize(encoded_payload []byte) (*Encoded_Payload_Data) {
-    e := Encoded_Payload_Data{}
-    buffer := bytes.NewBuffer(encoded_payload)
-    e.Sender = *decodeBytes(buffer)
-    e.Cipher = *decodeBytes(buffer)
-    e.Nonce = *decodeBytes(buffer)
-    e.RecipientList = *decodeArray(buffer)
-    e.RecipientNonce = *decodeBytes(buffer)
-    return &e
+func Deserialize(encoded_payload []byte) *Encoded_Payload_Data {
+	e := Encoded_Payload_Data{}
+	buffer := bytes.NewBuffer(encoded_payload)
+	e.Sender = *decodeBytes(buffer)
+	e.Cipher = *decodeBytes(buffer)
+	e.Nonce = *decodeBytes(buffer)
+	e.RecipientList = *decodeArray(buffer)
+	e.RecipientNonce = *decodeBytes(buffer)
+	return &e
 }
 
 func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Encoded_Payload_Data, error) {
@@ -52,16 +52,16 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 	cipher := crypt.EncryptPayload(masterkey, payload, nonce)
 	senderPrivate := crypt.GetPrivateKey(sender)
 	recipientsEncryptedKey := make([][]byte, len(recipients))
-	for i:=0; i<len(recipients); i++ {
+	for i := 0; i < len(recipients); i++ {
 		sharedKey := crypt.ComputeSharedKey(senderPrivate, recipients[i])
-		recipientsEncryptedKey[i]=crypt.EncryptPayload(sharedKey, masterkey, recipientsNonce)
+		recipientsEncryptedKey[i] = crypt.EncryptPayload(sharedKey, masterkey, recipientsNonce)
 	}
 	e := Encoded_Payload_Data{
-		Sender : sender,
-		Cipher: cipher,
-		Nonce:nonce,
-		RecipientNonce:recipientsNonce,
-		RecipientList:recipientsEncryptedKey,
+		Sender:         sender,
+		Cipher:         cipher,
+		Nonce:          nonce,
+		RecipientNonce: recipientsNonce,
+		RecipientList:  recipientsEncryptedKey,
 	}
 	return &e, nil
 }
@@ -82,18 +82,18 @@ func encodeArray(data [][]byte, buffer *bytes.Buffer) {
 	}
 }
 
-func decodeBytes(buffer *bytes.Buffer) (*[]byte) {
+func decodeBytes(buffer *bytes.Buffer) *[]byte {
 	sizeB := buffer.Next(8)
 	size := binary.BigEndian.Uint64(sizeB)
 	data := buffer.Next(int(size))
 	return &data
 }
 
-func decodeArray(buffer *bytes.Buffer) (*[][]byte) {
+func decodeArray(buffer *bytes.Buffer) *[][]byte {
 	sizeB := buffer.Next(8)
 	size := binary.BigEndian.Uint64(sizeB)
 	data := make([][]byte, size)
-	for i:=uint64(0); i<size; i++ {
+	for i := uint64(0); i < size; i++ {
 		data[i] = *decodeBytes(buffer)
 	}
 	return &data

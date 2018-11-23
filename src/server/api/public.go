@@ -1,12 +1,13 @@
 package api
 
 import (
-	"net/http"
-	"github.com/gorilla/mux"
-	"encoding/json"
-	"io/ioutil"
-	"fmt"
 	"Smilo-blackbox/src/data"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // It receives a POST request with a binary encoded PartyInfo, updates it and returns updated PartyInfo encoded.
@@ -38,7 +39,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	err := json.Unmarshal(body, &jsonReq)
 	fmt.Println(err)
 	w.WriteHeader(200)
-    w.Write([]byte(jsonReq.Key))
+	w.Write([]byte(jsonReq.Key))
 }
 
 // It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
@@ -50,7 +51,7 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 
 // It receives a PUT request with a json containing a Peer and returns Status Code 200 and the new peer URL.
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
-    jsonReq := data.Peer{}
+	jsonReq := data.Peer{}
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &jsonReq)
 	fmt.Println(err)
