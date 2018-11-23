@@ -34,7 +34,10 @@ func Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encPayload := encoding.EncodePayloadData(payload, sender, recipients)
+	encPayload, err := encoding.EncodePayloadData(payload, sender, recipients)
+	if err != nil {
+		requestError(http.StatusInternalServerError, w, fmt.Sprintf("Error Encoding Payload on Request: %s\n %s\n", r.URL, err))
+	}
 	encTrans := data.NewEncryptedTransaction(string(*encPayload.Serialize()))
 
 	encTrans.Save()
