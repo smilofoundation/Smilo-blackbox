@@ -55,11 +55,13 @@ cover: ## Runs tests on ./src/ with HTML code coverage
 	go tool cover -html=coverage-all.out
 
 doc:
-	godoc2md go-smilo/src/model > ./docs/model.md
-	godoc2md go-smilo/src/server > ./docs/server.md
-	$(foreach pkg,$(PACKAGES_ETH),\
-	    rm -rf $(PWD)/docs/$(pkg); mkdir -p $(PWD)/docs/$(pkg); \
-		godoc2md  go-smilo/$(pkg) > $(PWD)/docs/$(pkg).md;)
+	godoc2md Smilo-blackbox/src/crypt > ./docs/crypt.md
+	godoc2md Smilo-blackbox/src/data > ./docs/data.md
+	godoc2md Smilo-blackbox/src/server > ./docs/server.md
+	godoc2md Smilo-blackbox/src/server/api > ./docs/api.md
+	godoc2md Smilo-blackbox/src/server/encoding > ./docs/encoding.md
+	godoc2md Smilo-blackbox/src/server/sync > ./docs/sync.md
+
 
 install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
