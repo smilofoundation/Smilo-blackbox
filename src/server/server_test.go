@@ -17,7 +17,7 @@ import (
 
 func TestMain(m *testing.M) {
 	go StartServer("9000", "")
-	time.Sleep(100000000)
+	time.Sleep(500000000)
 	retcode := m.Run()
 	os.Exit(retcode)
 }

@@ -57,6 +57,14 @@
   branch = "master"
   name = "golang.org/x/crypto"
 
+[[constraint]]
+  branch = "master"
+  name = "github.com/spf13/pflag"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/spf13/viper"
+
 [prune]
   go-tests = true
   unused-packages = true

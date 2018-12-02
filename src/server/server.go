@@ -8,7 +8,6 @@ import (
 	"Smilo-blackbox/src/server/api"
 
 	"github.com/facebookgo/grace/gracehttp"
-	"github.com/golang/glog"
 	"github.com/gorilla/mux"
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
@@ -18,7 +17,7 @@ var (
 	privateAPI *mux.Router
 	publicAPI  *mux.Router
 
-	sockPath = os.TempDir() + "/blackbox.sock"
+	sockPath = "./blackbox.sock"
 
 	serverStatus               = status{false, false}
 	log          *logrus.Entry = logrus.WithField("package", "server")
@@ -59,22 +58,22 @@ func StartServer(Port string, sockFilePath string) {
 	}
 	defer os.Remove(sockPath)
 
-	glog.Info("Starting server")
+	log.Info("Starting server")
 	pub, priv := NewServer(Port)
-	glog.Info("Server starting --> " + Port)
+	log.Info("Server starting --> " + Port)
 	sock, _ := net.Listen("unix", sockPath)
-	glog.Info("Unix Domain Socket Up --> " + sockPath)
+	log.Info("Unix Domain Socket Up --> " + sockPath)
 	go func() {
 		err := gracehttp.Serve(
 			pub)
 		if err != nil {
-			glog.Error("Error: %v", err)
+			log.Error("Error: %v", err)
 			os.Exit(1)
 		}
 	}()
 	err := priv.Serve(sock)
 	if err != nil {
-		glog.Error("Error: %v", err)
+		log.Error("Error: %v", err)
 		os.Exit(1)
 	}
 }
