@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
+	"strconv"
 )
 
 var (
@@ -51,18 +52,22 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 
 }
 
-func StartServer(Port string, sockFilePath string) {
-
+func StartServer(port int, sockFilePath string) {
+    portString := strconv.Itoa(port)
 	if sockFilePath != "" {
 		sockPath = sockFilePath
 	}
 	defer os.Remove(sockPath)
 
 	log.Info("Starting server")
-	pub, priv := NewServer(Port)
-	log.Info("Server starting --> " + Port)
-	sock, _ := net.Listen("unix", sockPath)
-	log.Info("Unix Domain Socket Up --> " + sockPath)
+	pub, priv := NewServer(portString)
+	log.Info("Server starting --> " + portString)
+	sock, err := net.Listen("unix", sockPath)
+	log.Info("Unix Domain Socket starting --> " + sockPath)
+	if err != nil {
+		log.Error(err)
+		os.Exit(1)
+	}
 	go func() {
 		err := gracehttp.Serve(
 			pub)
@@ -71,7 +76,7 @@ func StartServer(Port string, sockFilePath string) {
 			os.Exit(1)
 		}
 	}()
-	err := priv.Serve(sock)
+	err = priv.Serve(sock)
 	if err != nil {
 		log.Error("Error: %v", err)
 		os.Exit(1)

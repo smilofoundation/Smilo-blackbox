@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 
 	"Smilo-blackbox/src/crypt"
+	"io/ioutil"
 )
 
 type Encoded_Payload_Data struct {
@@ -16,24 +17,24 @@ type Encoded_Payload_Data struct {
 }
 
 func (e *Encoded_Payload_Data) Serialize() *[]byte {
-	buffer := bytes.NewBuffer([]byte(""))
-	encodeBytes(e.Sender, buffer)
-	encodeBytes(e.Cipher, buffer)
-	encodeBytes(e.Nonce, buffer)
-	encodeArray(e.RecipientList, buffer)
-	encodeBytes(e.RecipientNonce, buffer)
-	ret := buffer.Bytes()
+	var buffer = bytes.NewBuffer([]byte{})
+	serializeBytes(e.Sender, buffer)
+	serializeBytes(e.Cipher, buffer)
+	serializeBytes(e.Nonce, buffer)
+	serializeArray(e.RecipientList, buffer)
+	serializeBytes(e.RecipientNonce, buffer)
+	ret, _ := ioutil.ReadAll(buffer)
 	return &ret
 }
 
-func Deserialize(encoded_payload []byte) *Encoded_Payload_Data {
+func Deserialize(encodedPayload []byte) *Encoded_Payload_Data {
 	e := Encoded_Payload_Data{}
-	buffer := bytes.NewBuffer(encoded_payload)
-	e.Sender = *decodeBytes(buffer)
-	e.Cipher = *decodeBytes(buffer)
-	e.Nonce = *decodeBytes(buffer)
-	e.RecipientList = *decodeArray(buffer)
-	e.RecipientNonce = *decodeBytes(buffer)
+	buffer := bytes.NewBuffer(encodedPayload)
+	e.Sender = deserializeBytes(buffer)
+	e.Cipher = deserializeBytes(buffer)
+	e.Nonce = deserializeBytes(buffer)
+	e.RecipientList = deserializeArray(buffer)
+	e.RecipientNonce = deserializeBytes(buffer)
 	return &e
 }
 
@@ -67,35 +68,60 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 	return &e, nil
 }
 
-func encodeBytes(data []byte, buffer *bytes.Buffer) {
+func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
+	var publicKey = to
+	privateKey := crypt.GetPrivateKey(e.Sender)
+	if privateKey == nil  {
+		privateKey = crypt.GetPrivateKey(to)
+		publicKey = e.Sender
+	}
+	sharedKey := crypt.ComputeSharedKey(privateKey, publicKey)
+
+	var masterKey []byte
+	for _, recipient := range e.RecipientList {
+		masterKey = crypt.DecryptPayload(sharedKey, recipient, e.RecipientNonce)
+		if len(masterKey) > 0 { break }
+	}
+    if len(masterKey) > 0 {
+    	return crypt.DecryptPayload(masterKey, e.Cipher, e.Nonce)
+	} else {
+		return []byte{}
+	}
+}
+
+func serializeBytes(data []byte, buffer *bytes.Buffer) {
 	tmp := make([]byte, 8)
-	binary.BigEndian.PutUint64(tmp, uint64(len(data)))
+	size := len(data)
+	buffer.Grow(size+8)
+	binary.BigEndian.PutUint64(tmp, uint64(size))
 	buffer.Write(tmp)
 	buffer.Write(data)
 }
 
-func encodeArray(data [][]byte, buffer *bytes.Buffer) {
+func serializeArray(data [][]byte, buffer *bytes.Buffer) {
 	tmp := make([]byte, 8)
+	buffer.Grow(8)
 	binary.BigEndian.PutUint64(tmp, uint64(len(data)))
 	buffer.Write(tmp)
 	for _, i := range data {
-		encodeBytes(i, buffer)
+		serializeBytes(i, buffer)
 	}
 }
 
-func decodeBytes(buffer *bytes.Buffer) *[]byte {
-	sizeB := buffer.Next(8)
+func deserializeBytes(buffer *bytes.Buffer) []byte {
+	var sizeB = make([]byte,8)
+	buffer.Read(sizeB)
 	size := binary.BigEndian.Uint64(sizeB)
 	data := buffer.Next(int(size))
-	return &data
+	return data
 }
 
-func decodeArray(buffer *bytes.Buffer) *[][]byte {
+func deserializeArray(buffer *bytes.Buffer) [][]byte {
 	sizeB := buffer.Next(8)
 	size := binary.BigEndian.Uint64(sizeB)
 	data := make([][]byte, size)
 	for i := uint64(0); i < size; i++ {
-		data[i] = *decodeBytes(buffer)
+		data[i] = deserializeBytes(buffer)
 	}
-	return &data
+	return data
 }

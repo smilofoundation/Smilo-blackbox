@@ -4,6 +4,7 @@ import (
 	"Smilo-blackbox/src/server"
 
 	"github.com/sirupsen/logrus"
+	"Smilo-blackbox/src/server/config"
 )
 
 var (
@@ -21,6 +22,6 @@ func init() {
 }
 
 func main() {
-	port := "9000"
-	server.StartServer(port, "")
+	config.Init()
+	server.StartServer(config.GetServerPort(), config.GetSocketFile())
 }

@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 	"os"
-	"github.com/spf13/viper"
+	"Smilo-blackbox/src/crypt"
 )
 
 const configFile = "./config_test.conf"
@@ -13,30 +13,26 @@ func TestMain(m *testing.M) {
 	os.Exit(retcode)
 }
 
-func TestCommandLine(t *testing.T) {
+func TestLoadConfig(t *testing.T) {
 	err := LoadConfig(configFile)
 
 	if err != nil {
-		t.Fatalf("Unable to load config file: %s, %s", configFile, err)
+		t.Fail()
 	}
 
-	privateKey := viper.GetStringMap("keys")["keydata"].([]interface {})[0].(map[string]interface{})["config"].(string);
-	publicKey := viper.GetStringMap("keys")["keydata"].([]interface {})[0].(map[string]interface{})["publicKey"].(string);
-
-    if (privateKey != "./private.key") {
-    	t.Fail()
-	} else {
-		_, err = ReadPrimaryKey(privateKey)
-		if err != nil {
-			t.Fail()
-		}
+	publicKey,err := ReadPublicKey("./public.pub")
+	if err != nil {
+		t.Fail()
 	}
 
-	if (publicKey != "./public.key") {
-		teste,err2 := ReadPublicKey(publicKey)
-		if err2 != nil {
-			t.Fail()
-		}
-		_ = len(teste)
+	configPrivateKey, err := ReadPrimaryKey("./private.key")
+	if err != nil {
+		t.Fail()
+	}
+
+	privateKey := crypt.GetPrivateKey(publicKey)
+
+	if string(privateKey) != string(configPrivateKey) {
+		t.Fail()
 	}
 }

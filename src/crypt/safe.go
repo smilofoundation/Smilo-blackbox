@@ -21,8 +21,8 @@ func PutKeyPair(pair KeyPair) {
 	keys[string(pair.PublicKey)] = pair.PrimaryKey
 }
 
-func GetPrivateKey(publickey []byte) []byte {
-	return keys[string(publickey)]
+func GetPrivateKey(publicKey []byte) []byte {
+	return keys[string(publicKey)]
 }
 
 func NewRandomKey() ([]byte, error) {

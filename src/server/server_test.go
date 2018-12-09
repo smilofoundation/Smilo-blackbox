@@ -13,13 +13,27 @@ import (
 	"Smilo-blackbox/src/server/api"
 
 	"github.com/tv42/httpunix"
+	"encoding/base64"
+	"encoding/json"
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/config"
 )
 
 func TestMain(m *testing.M) {
-	go StartServer("9000", "")
+	removeIfExists("./blackbox.db")
+	removeIfExists("./blackbox.sock")
+	config.LoadConfig("./server_test.conf")
+	data.Start("./blackbox.db")
+	go StartServer(9000, "")
 	time.Sleep(500000000)
 	retcode := m.Run()
 	os.Exit(retcode)
+}
+
+func removeIfExists(file string) {
+	if _, err := os.Stat(file); !os.IsNotExist(err) {
+		os.Remove(file)
+	}
 }
 
 func TestUnixUpcheck(t *testing.T) {
@@ -82,17 +96,67 @@ func TestHttpDelete(t *testing.T) {
 	}
 }
 
-func doUnixRequest(endpoint string, t *testing.T) string {
+func TestUnixSend(t *testing.T) {
+	to := make([]string,1)
+	to[0] = "OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="
+	sendRequest := api.SendRequest{ Payload: base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs")), From: "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=", To: to}
+	req, err := json.Marshal(sendRequest)
+	if err != nil {
+		t.Fail()
+	}
+	response := doUnixPostJsonRequest("/send", t, string(req))
+	var sendResponse api.SendResponse
+	json.Unmarshal([]byte(response),&sendResponse)
+
+    receiveRequest := api.ReceiveRequest{ Key: sendResponse.Key, To: sendRequest.To[0]}
+	req2, err2 := json.Marshal(receiveRequest)
+	if err2 != nil {
+		t.Fail()
+	}
+	log.Debug("Send Response: " + sendResponse.Key)
+
+	response = doUnixGetJsonRequest("/receive", t, string(req2))
+	var receiveResponse api.ReceiveResponse
+	json.Unmarshal([]byte(response),&receiveResponse)
+
+	log.Debug("Receive Response: " + receiveResponse.Payload)
+	if sendRequest.Payload != receiveResponse.Payload {
+		t.Fail()
+	}
+}
+
+func doUnixPostJsonRequest(endpoint string, t *testing.T, json string) string {
+	client := getSocketClient()
+
+	response, err := client.Post("http+unix://myservice" + endpoint, "application/json", bytes.NewBuffer([]byte(json)))
+	ret := getResponseData(err, t, response)
+	return ret
+}
+
+func doUnixGetJsonRequest(endpoint string, t *testing.T, json string) string {
+	client := getSocketClient()
+	req, _ := http.NewRequest("GET","http+unix://myservice" + endpoint, bytes.NewBuffer([]byte(json)))
+	req.Header.Set("Content-Type", "application/json")
+	response, err := client.Do(req)
+	ret := getResponseData(err, t, response)
+	return ret
+}
+
+func getSocketClient() *http.Client {
 	u := &httpunix.Transport{
 		DialTimeout:           100 * time.Millisecond,
 		RequestTimeout:        1 * time.Second,
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 	u.RegisterLocation("myservice", sockPath)
-
 	var client = http.Client{
 		Transport: u,
 	}
+	return &client
+}
+
+func doUnixRequest(endpoint string, t *testing.T) string {
+	client := getSocketClient()
 
 	response, err := client.Get("http+unix://myservice" + endpoint)
 	ret := getResponseData(err, t, response)
@@ -130,6 +194,7 @@ func doRequest(url string, t *testing.T) string {
 
 func getResponseData(err error, t *testing.T, response *http.Response) string {
 	ret := ""
+	defer response.Body.Close()
 	if err != nil {
 		t.Fail()
 	} else {

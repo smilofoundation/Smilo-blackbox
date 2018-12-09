@@ -8,12 +8,12 @@ import (
 )
 
 type Encrypted_Transaction struct {
-	Hash            string `storm:"id"`
-	Encoded_Payload string
+	Hash            []byte `storm:"id"`
+	Encoded_Payload []byte
 	Timestamp       time.Time `storm:"index"`
 }
 
-func NewEncryptedTransaction(encoded_payload string) *Encrypted_Transaction {
+func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction {
 	trans := Encrypted_Transaction{
 		Hash:            calculateHash(encoded_payload),
 		Encoded_Payload: encoded_payload,
@@ -22,12 +22,12 @@ func NewEncryptedTransaction(encoded_payload string) *Encrypted_Transaction {
 	return &trans
 }
 
-func calculateHash(encoded_payload string) string {
-	tmp := sha3.Sum512([]byte(encoded_payload))
-	return string(tmp[:])
+func calculateHash(encoded_payload []byte) []byte {
+	tmp := sha3.Sum512(encoded_payload)
+	return tmp[:]
 }
 
-func CreateEncryptedTransaction(hash string, encoded_payload string, timestamp time.Time) *Encrypted_Transaction {
+func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction {
 	trans := Encrypted_Transaction{
 		Hash:            hash,
 		Encoded_Payload: encoded_payload,
@@ -36,7 +36,7 @@ func CreateEncryptedTransaction(hash string, encoded_payload string, timestamp t
 	return &trans
 }
 
-func FindEncryptedTransaction(hash string) *Encrypted_Transaction {
+func FindEncryptedTransaction(hash []byte) *Encrypted_Transaction {
 	var t Encrypted_Transaction
 	err := db.One("Hash", hash, &t)
 	if err != nil {
