@@ -9,6 +9,7 @@ import (
 	"Smilo-blackbox/src/data"
 
 	"github.com/gorilla/mux"
+	"encoding/base64"
 )
 
 // It receives a POST request with a binary encoded PartyInfo, updates it and returns updated PartyInfo encoded.
@@ -23,6 +24,28 @@ func Push(w http.ResponseWriter, r *http.Request) {
 
 // Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
 func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
+	key := r.Header.Get("c11n-key")
+	to := r.Header.Get("c11n-to")
+
+	if key == "" || to == "" {
+		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, invalid headers.\n", r.URL))
+		return
+	}
+	hash, err := base64.StdEncoding.DecodeString(key)
+	if err != nil {
+		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, c11n-key header (%s) is not a valid key.\n", r.URL, key))
+		return
+	}
+	public, err := base64.StdEncoding.DecodeString(to)
+	if err != nil {
+		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, c11n-to header (%s) is not a valid key.\n", r.URL, to))
+		return
+	}
+
+	payload := RetrieveAndDecryptPayload(hash,w,public,r)
+	if payload != nil {
+		w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
+	}
 
 }
 

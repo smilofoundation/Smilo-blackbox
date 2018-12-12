@@ -11,7 +11,6 @@ import (
 	"Smilo-blackbox/src/server/encoding"
 
 	"github.com/gorilla/mux"
-	"encoding/hex"
 	"io/ioutil"
 )
 
@@ -119,25 +118,8 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	retrieveAndDecryptPayload(key, w, to, r)
+	RetrieveJsonPayload(key, w, to, r)
 
-}
-
-func retrieveAndDecryptPayload(key []byte, w http.ResponseWriter, to []byte, r *http.Request) {
-	encTrans := data.FindEncryptedTransaction(key)
-	if encTrans == nil {
-		requestError(http.StatusNotFound, w, fmt.Sprintf("Transaction key: %s not found\n", hex.EncodeToString(key)))
-		return
-	}
-	encodedPayloadData := encoding.Deserialize([]byte(encTrans.Encoded_Payload))
-	payload := encodedPayloadData.Decode(to)
-	if payload == nil {
-		requestError(http.StatusInternalServerError, w, fmt.Sprintf("Error Encoding Payload on Request: %s\n", r.URL))
-        return
-	}
-	receiveResp := ReceiveResponse{Payload: base64.StdEncoding.EncodeToString(payload)}
-	json.NewEncoder(w).Encode(receiveResp)
-	w.Header().Set("Content-Type", "application/json")
 }
 
 // it receives a GET request with a hash on path and query var "to" with encoded hash and to, returns decrypted payload
@@ -161,7 +143,7 @@ func TransactionGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	retrieveAndDecryptPayload(key, w, to, r)
+	RetrieveJsonPayload(key, w, to, r)
 
 }
 
