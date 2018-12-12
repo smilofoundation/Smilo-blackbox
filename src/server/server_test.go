@@ -68,14 +68,6 @@ func TestHttpVersion(t *testing.T) {
 	}
 }
 
-func TestUnixTransactionGet(t *testing.T) {
-	response := doUnixRequest("/transaction/1?to=2", t)
-
-	if !reflect.DeepEqual(response, "1") {
-		t.Fail()
-	}
-}
-
 func TestHttpTransactionDelete(t *testing.T) {
 	_, status := doDeleteRequest("http://localhost:9000/transaction/1", t)
 
@@ -125,6 +117,35 @@ func TestUnixSend(t *testing.T) {
 	}
 }
 
+func TestUnixSendRawTransactionGet(t *testing.T) {
+	to := make([]string,1)
+	to[0] = "OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="
+	payload := "1234567890abcdefghijklmnopqrs"
+	encPayload := base64.StdEncoding.EncodeToString([]byte(payload))
+	from := "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="
+	response := doUnixPostRequest("/sendraw", t, []byte(encPayload), http.Header{"c11n-from" : []string{from}, "c11n-to" : to})
+
+	key, err := base64.StdEncoding.DecodeString(response)
+    if err != nil {
+    	t.Fail()
+	}
+	urlEncodedKey := base64.URLEncoding.EncodeToString(key)
+	log.Debug("Send Response: " + response)
+    toBytes, err := base64.StdEncoding.DecodeString(to[0])
+    if err != nil {
+    	t.Fail()
+	}
+	urlEncodedTo := base64.URLEncoding.EncodeToString(toBytes)
+	response = doUnixRequest("/transaction/" + urlEncodedKey + "?to="+urlEncodedTo, t)
+	var receiveResponse api.ReceiveResponse
+	json.Unmarshal([]byte(response),&receiveResponse)
+    retorno, _ := base64.StdEncoding.DecodeString(receiveResponse.Payload)
+	log.Debug("Receive Response: " + receiveResponse.Payload)
+	if string(payload) != string(retorno) {
+		t.Fail()
+	}
+}
+
 func doUnixPostJsonRequest(endpoint string, t *testing.T, json string) string {
 	client := getSocketClient()
 
@@ -159,6 +180,18 @@ func doUnixRequest(endpoint string, t *testing.T) string {
 	client := getSocketClient()
 
 	response, err := client.Get("http+unix://myservice" + endpoint)
+	ret := getResponseData(err, t, response)
+	return ret
+}
+
+func doUnixPostRequest(endpoint string, t *testing.T, payload []byte, headers http.Header) string {
+	client := getSocketClient()
+
+	req, _ := http.NewRequest("POST","http+unix://myservice" + endpoint, bytes.NewBuffer(payload))
+	req.Header = headers
+	req.Header.Set("Content-Type", "application/octet-stream")
+	response, err := client.Do(req)
+
 	ret := getResponseData(err, t, response)
 	return ret
 }

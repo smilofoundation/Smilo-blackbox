@@ -85,7 +85,7 @@ func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
     if len(masterKey) > 0 {
     	return crypt.DecryptPayload(masterKey, e.Cipher, e.Nonce)
 	} else {
-		return []byte{}
+		return nil
 	}
 }
 
