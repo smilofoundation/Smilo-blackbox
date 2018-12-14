@@ -3,7 +3,6 @@ package data
 import (
 	"time"
 
-	"github.com/golang/glog"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -36,20 +35,20 @@ func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp t
 	return &trans
 }
 
-func FindEncryptedTransaction(hash []byte) *Encrypted_Transaction {
+func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error) {
 	var t Encrypted_Transaction
 	err := db.One("Hash", hash, &t)
 	if err != nil {
-		glog.Error("Unable to find transaction.")
-		return nil
+		log.Error("Unable to find transaction.")
+		return nil, err
 	}
-	return &t
+	return &t, nil
 }
 
-func (et *Encrypted_Transaction) Save() {
-	db.Save(et)
+func (et *Encrypted_Transaction) Save() error {
+	return db.Save(et)
 }
 
-func (et *Encrypted_Transaction) Delete() {
-	db.DeleteStruct(et)
+func (et *Encrypted_Transaction) Delete() error {
+	return db.DeleteStruct(et)
 }

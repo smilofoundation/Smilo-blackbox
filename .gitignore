@@ -1,2 +1,5 @@
 blackbox
 .idea
+src/server/*.db
+src/server/*.sock
+src/data/*.db

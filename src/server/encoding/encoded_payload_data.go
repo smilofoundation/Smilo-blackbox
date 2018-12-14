@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/binary"
 
-	"Smilo-blackbox/src/crypt"
 	"io/ioutil"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 type Encoded_Payload_Data struct {
@@ -71,7 +72,7 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
 	var publicKey = to
 	privateKey := crypt.GetPrivateKey(e.Sender)
-	if privateKey == nil  {
+	if privateKey == nil {
 		privateKey = crypt.GetPrivateKey(to)
 		publicKey = e.Sender
 	}
@@ -80,10 +81,12 @@ func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
 	var masterKey []byte
 	for _, recipient := range e.RecipientList {
 		masterKey = crypt.DecryptPayload(sharedKey, recipient, e.RecipientNonce)
-		if len(masterKey) > 0 { break }
+		if len(masterKey) > 0 {
+			break
+		}
 	}
-    if len(masterKey) > 0 {
-    	return crypt.DecryptPayload(masterKey, e.Cipher, e.Nonce)
+	if len(masterKey) > 0 {
+		return crypt.DecryptPayload(masterKey, e.Cipher, e.Nonce)
 	} else {
 		return nil
 	}
@@ -92,7 +95,7 @@ func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
 func serializeBytes(data []byte, buffer *bytes.Buffer) {
 	tmp := make([]byte, 8)
 	size := len(data)
-	buffer.Grow(size+8)
+	buffer.Grow(size + 8)
 	binary.BigEndian.PutUint64(tmp, uint64(size))
 	buffer.Write(tmp)
 	buffer.Write(data)
@@ -109,7 +112,7 @@ func serializeArray(data [][]byte, buffer *bytes.Buffer) {
 }
 
 func deserializeBytes(buffer *bytes.Buffer) []byte {
-	var sizeB = make([]byte,8)
+	var sizeB = make([]byte, 8)
 	buffer.Read(sizeB)
 	size := binary.BigEndian.Uint64(sizeB)
 	data := buffer.Next(int(size))

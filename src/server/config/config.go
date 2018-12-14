@@ -1,58 +1,72 @@
 package config
 
 import (
-	flag "github.com/spf13/pflag"
-	"os"
-	"io/ioutil"
-	"encoding/json"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
+
 	"encoding/base64"
+	"encoding/json"
+	"flag"
+	"io/ioutil"
+	"os"
+
+	"github.com/Sirupsen/logrus"
+	"gopkg.in/urfave/cli.v1"
+
 	"Smilo-blackbox/src/crypt"
-	"strconv"
 )
 
-var config Config
-
-
-
-func Init() {
-	InitFlags()
-    flag.Parse()
-	LoadConfig(flag.Lookup("configfile").Value.String())
-	mergeConfigValues()
-}
-
-func mergeConfigValues () {
-	setValueOnNotDefault("port", string(config.Server.Port))
-	setValueOnNotDefault("socket", config.UnixSocket)
-	setValueOnNotDefault("hostname", string(config.HostName))
-}
-
-func setValueOnNotDefault(flagName string, flagValue string) {
-	fg := flag.Lookup(flagName)
-	if fg.Value.String() == fg.DefValue && flagValue != "" {
-		fg.Value.Set(flagValue)
-	}
-}
-
-func InitFlags() {
+var (
+	log    *logrus.Entry
+	config Config
 
 	//flag.String("generate-keys", "", "Generate a new keypair")
-	flag.String("configfile", "./blackBox.conf", "Config file name")
-	flag.Int("port", 9000, "Local port to the Public API")
-	flag.String("socket", "./blackBox.ipc", "IPC socket to the Private API")
-	flag.String("othernodes", "", "\"Boot nodes\" to connect")
-	flag.String("publickeys", "", "Public keys")
-	flag.String("privatekeys", "", "Private keys")
-	flag.String("storage", "./blackBox.db", "Database file name")
+	ConfigFile  = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	DBFile      = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	Port        = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+	Socket      = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
+	OtherNodes  = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
+	PublicKeys  = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
+	PrivateKeys = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
+	Storage     = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
 
-	//flag.Bool("tls", false, "Use TLS to secure HTTP communications")
-	//flag.String("tlsservercert", "", "The server certificate to be used")
-	//flag.String("tlsserverkey", "", "The server private key")
-	flag.String("hostname" , "http://localhost", "HostName for public API")
+	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
 
+	WorkDir  = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
+	IsTLS    = cli.StringFlag{Name: "tls", Value: "", Usage: ""}
+	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
+	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
+)
 
+func initLog() {
+	log = logrus.WithFields(logrus.Fields{
+		"package": "config",
+	})
 }
 
+func Init() {
+	initLog()
+	pflag.Parse()
+	LoadConfig(ConfigFile.Value)
+	//mergeConfigValues()
+
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	viper.BindPFlags(pflag.CommandLine) // Binding the flags to test the initial configuration
+}
+
+//
+//func mergeConfigValues() {
+//	setValueOnNotDefault("port", string(config.Server.Port))
+//	setValueOnNotDefault("socket", config.UnixSocket)
+//	setValueOnNotDefault("hostname", string(config.HostName))
+//}
+
+//func setValueOnNotDefault(flagName string, flagValue string) {
+//	fg := pflag.Lookup(flagName)
+//	if fg.Value == fg.DefValue && flagValue != "" {
+//		fg.Value.Set(flagValue)
+//	}
+//}
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
@@ -61,21 +75,23 @@ func LoadConfig(configPath string) error {
 	}
 
 	json.Unmarshal(byteValue, &config)
-    parseConfigValues()
-	return nil;
+	parseConfigValues()
+	return nil
 }
 
 func parseConfigValues() {
 	for _, keyPair := range config.Keys.KeyData {
 		primaryKey, err := ReadPrimaryKey(keyPair.PrivateKeyFile)
 		publicKey, err2 := ReadPublicKey(keyPair.PublicKeyFile)
-		if err != nil || err2 != nil { continue }
-		crypt.PutKeyPair(crypt.KeyPair{ PrimaryKey:primaryKey, PublicKey:publicKey})
+		if err != nil || err2 != nil {
+			continue
+		}
+		crypt.PutKeyPair(crypt.KeyPair{PrimaryKey: primaryKey, PublicKey: publicKey})
 	}
 	/*
-	for _, peerdata := range config.Peers {
-		sync.PeerAdd(peerdata.URL)
-	}
+		for _, peerdata := range config.Peers {
+			sync.PeerAdd(peerdata.URL)
+		}
 	*/
 }
 
@@ -97,8 +113,8 @@ func ReadPrimaryKey(pkFile string) ([]byte, error) {
 
 func ReadPublicKey(pubFile string) ([]byte, error) {
 	byteValue, err := readAllFile(pubFile)
-    if err != nil {
-    	return nil, err
+	if err != nil {
+		return nil, err
 	}
 	var publicKey = make([]byte, 33)
 
@@ -115,21 +131,4 @@ func readAllFile(file string) ([]byte, error) {
 	}
 	byteValue, _ := ioutil.ReadAll(plainFile)
 	return byteValue, nil
-}
-
-func GetSocketFile() string {
-	return flag.Lookup("socket").Value.String()
-}
-
-func GetHostName() string {
-	return flag.Lookup("hostname").Value.String()
-}
-
-func GetServerPort() int {
-	ret, _ := strconv.Atoi(flag.Lookup("port").Value.String())
-	return ret
-}
-
-func GetDatabaseName() string {
-	return flag.Lookup("storage").Value.String()
 }

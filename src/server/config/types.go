@@ -9,6 +9,7 @@ type PrivateKey struct {
 	Data PrivateKeyBytes `json:"data"`
 	Type string          `json:"type"`
 }
+
 //End of Private Key json file specification
 
 //Start of Config json file specification
@@ -22,19 +23,20 @@ type Peer struct {
 
 type Key struct {
 	PrivateKeyFile string `json:"config"`
-	PublicKeyFile string `json:"publicKey"`
+	PublicKeyFile  string `json:"publicKey"`
 }
 
 type Keys struct {
 	Passwords []string `json:"passwords"`
-    KeyData []Key      `json:"keyData"`
+	KeyData   []Key    `json:"keyData"`
 }
 
 type Config struct {
 	Server     Server `json:"server"`
 	HostName   string `json:"hostName"`
-    Peers      []Peer `json:"peer"`
-    Keys       Keys   `json:"keys"`
-    UnixSocket string `json:"unixSocketFile"`
+	Peers      []Peer `json:"peer"`
+	Keys       Keys   `json:"keys"`
+	UnixSocket string `json:"unixSocketFile"`
 }
+
 //End of Config json file specification

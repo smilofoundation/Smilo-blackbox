@@ -1,13 +1,14 @@
 package api
 
 import (
-	"net/http"
-	"Smilo-blackbox/src/data"
-	"fmt"
-	"encoding/hex"
-	"Smilo-blackbox/src/server/encoding"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"net/http"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/encoding"
 )
 
 const BlackBoxVersion = "Smilo Black Box 0.1.0"
@@ -31,8 +32,9 @@ func Upcheck(w http.ResponseWriter, r *http.Request) {
 func Api(w http.ResponseWriter, r *http.Request) {
 
 }
-func RetrieveJsonPayload(key []byte, w http.ResponseWriter, to []byte, r *http.Request) {
-	payload := RetrieveAndDecryptPayload(key, w, to, r)
+
+func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
+	payload := RetrieveAndDecryptPayload(w, r, key, to)
 	if payload != nil {
 		receiveResp := ReceiveResponse{Payload: base64.StdEncoding.EncodeToString(payload)}
 		json.NewEncoder(w).Encode(receiveResp)
@@ -40,16 +42,18 @@ func RetrieveJsonPayload(key []byte, w http.ResponseWriter, to []byte, r *http.R
 	}
 }
 
-func RetrieveAndDecryptPayload(key []byte, w http.ResponseWriter, to []byte, r *http.Request) []byte {
-	encTrans := data.FindEncryptedTransaction(key)
-	if encTrans == nil {
-		requestError(http.StatusNotFound, w, fmt.Sprintf("Transaction key: %s not found\n", hex.EncodeToString(key)))
+func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) []byte {
+	encTrans, err := data.FindEncryptedTransaction(key)
+	if err != nil || encTrans == nil {
+		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", hex.EncodeToString(key)))
 		return nil
 	}
+
 	encodedPayloadData := encoding.Deserialize([]byte(encTrans.Encoded_Payload))
 	payload := encodedPayloadData.Decode(to)
+
 	if payload == nil {
-		requestError(http.StatusInternalServerError, w, fmt.Sprintf("Error Encoding Payload on Request: %s\n", r.URL))
+		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Error Encoding Payload on Request: %s\n", r.URL))
 	}
 	return payload
 }

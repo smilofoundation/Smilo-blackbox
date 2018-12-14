@@ -1,8 +1,9 @@
 package config
 
 import (
-	"testing"
 	"os"
+	"testing"
+
 	"Smilo-blackbox/src/crypt"
 )
 
@@ -20,7 +21,7 @@ func TestLoadConfig(t *testing.T) {
 		t.Fail()
 	}
 
-	publicKey,err := ReadPublicKey("./public.pub")
+	publicKey, err := ReadPublicKey("./public.pub")
 	if err != nil {
 		t.Fail()
 	}

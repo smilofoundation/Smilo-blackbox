@@ -10,8 +10,9 @@ import (
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 
-	"github.com/gorilla/mux"
 	"io/ioutil"
+
+	"github.com/gorilla/mux"
 )
 
 // It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
@@ -20,42 +21,42 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	to := r.Header.Get("c11n-to")
 
 	if from == "" || to == "" {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, invalid headers.\n", r.URL))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers.\n", r.URL))
 		return
 	}
 	sender, err := base64.StdEncoding.DecodeString(from)
-    if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
-        return
+	if err != nil {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
+		return
 	}
 	encodedRecipients := strings.Split(to, ",")
 	var error []string
 	var recipients = make([][]byte, len(encodedRecipients))
-	for i:=0; i<len(encodedRecipients); i++ {
+	for i := 0; i < len(encodedRecipients); i++ {
 		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
 		if err != nil {
 			error = append(error, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
 		}
 		recipients[i] = decodedValue
 	}
-    if len(error) > 0 {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(error,", ")))
+	if len(error) > 0 {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(error, ", ")))
 		return
 	}
-	encPayload,_ := ioutil.ReadAll(r.Body)
+	encPayload, _ := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	if encPayload == nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
 		return
 	}
 
 	payload, err := base64.StdEncoding.DecodeString(string(encPayload))
-    if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
+	if err != nil {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
 		return
 	}
 
-	encTrans := createNewEncodedTransaction(payload, sender, recipients, w, r)
+	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
 
 	if encTrans != nil {
 		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
@@ -69,30 +70,30 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&sendReq)
 	r.Body.Close()
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
 		return
 	}
 
 	payload, sender, recipients, msgs := sendReq.Parse()
 
 	if len(msgs) > 0 {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
 		return
 	}
 
-	encTrans := createNewEncodedTransaction(payload, sender, recipients, w, r)
+	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
 
-    if encTrans != nil {
+	if encTrans != nil {
 		sendResp := SendResponse{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
 		json.NewEncoder(w).Encode(sendResp)
 		w.Header().Set("Content-Type", "application/json")
 	}
 }
 
-func createNewEncodedTransaction(payload []byte, sender []byte, recipients [][]byte, w http.ResponseWriter, r *http.Request) *data.Encrypted_Transaction {
+func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, sender []byte, recipients [][]byte) *data.Encrypted_Transaction {
 	encPayload, err := encoding.EncodePayloadData(payload, sender, recipients)
 	if err != nil {
-		requestError(http.StatusInternalServerError, w, fmt.Sprintf("Error Encoding Payload on Request: %s\n %s\n", r.URL, err))
+		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Error Encoding Payload on Request: %s\n %s\n", r.URL, err))
 		return nil
 	}
 	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
@@ -107,18 +108,18 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&receiveReq)
 	r.Body.Close()
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
 		return
 	}
 
 	key, to, msgs := receiveReq.Parse()
 
 	if len(msgs) > 0 {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
 		return
 	}
 
-	RetrieveJsonPayload(key, w, to, r)
+	RetrieveJsonPayload(w, r, key, to)
 
 }
 
@@ -129,25 +130,29 @@ func TransactionGet(w http.ResponseWriter, r *http.Request) {
 	encodedTo := r.Form.Get("to")
 	hash := params["hash"]
 	if hash == "" || encodedTo == "" {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, invalid query.\n", r.URL))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid query.\n", r.URL))
 		return
 	}
 	var errors []string
 	key, err := base64.URLEncoding.DecodeString(hash)
-	if err != nil { errors = append(errors, "Invalid hash value.") }
+	if err != nil {
+		errors = append(errors, "Invalid hash value.")
+	}
 	to, err2 := base64.URLEncoding.DecodeString(encodedTo)
-    if err2 != nil { errors = append(errors, "Invalid reciepient(to) value.") }
+	if err2 != nil {
+		errors = append(errors, "Invalid reciepient(to) value.")
+	}
 
 	if len(errors) > 0 {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(errors, "\n")))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(errors, "\n")))
 		return
 	}
 
-	RetrieveJsonPayload(key, w, to, r)
+	RetrieveJsonPayload(w, r, key, to)
 
 }
 
-func requestError(returnCode int, w http.ResponseWriter, message string) {
+func requestError(w http.ResponseWriter, returnCode int, message string) {
 	log.Error(message)
 	w.WriteHeader(returnCode)
 	fmt.Fprintf(w, message)
