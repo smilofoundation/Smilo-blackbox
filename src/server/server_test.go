@@ -11,6 +11,7 @@ import (
 
 	"github.com/drewolson/testflight"
 	"github.com/stretchr/testify/require"
+	"encoding/base64"
 )
 
 func TestPublicAPI(t *testing.T) {
@@ -99,7 +100,9 @@ func TestPrivateAPI(t *testing.T) {
 			endpoint         string
 			method           string
 			body             string
+			bodyRaw          []byte
 			contentType      string
+			headers          http.Header
 			response         string
 			statusCode       int
 			expectedErr      error
@@ -148,6 +151,22 @@ func TestPrivateAPI(t *testing.T) {
 				followUpEndpoint: "/receive",
 				followUpMethod:   "GET+BODY",
 			},
+
+			{
+				name:     "test send raw & get transaction",
+				endpoint: "/sendraw",
+				method:   "CUSTOM",
+				body:     string([]byte(base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs")))),
+				headers: http.Header{"c11n-from": []string{"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="},
+					"c11n-to": []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				response:    "",
+				statusCode:  200,
+				expectedErr: nil,
+
+				followUp:         false,
+				followUpEndpoint: "/transaction",
+				followUpMethod:   "GET",
+			},
 		}
 
 		for _, test := range testCases {
@@ -161,22 +180,33 @@ func TestPrivateAPI(t *testing.T) {
 					response = r.Post(test.endpoint, test.contentType, test.body)
 				} else if test.method == "DELETE" {
 					response = r.Delete(test.endpoint, test.contentType, test.body)
+				} else if test.method == "CUSTOM" {
+
+					newrequest, err := http.NewRequest("POST", test.endpoint, bytes.NewBuffer([]byte(test.body)))
+					newrequest.Header = test.headers
+					require.Empty(t, err)
+					require.NotEmpty(t, newrequest)
+
+					response = r.Do(newrequest)
 				}
 
+				require.NotEmpty(t, response)
+				require.NotEmpty(t, response.StatusCode)
+				require.NotEmpty(t, response.RawBody)
 				if test.response != "" {
-					require.NotEmpty(t, response)
-					require.NotEmpty(t, response.StatusCode)
-					require.NotEmpty(t, response.RawBody)
 					require.Equal(t, test.response, response.Body)
 				}
 
 				require.Equal(t, test.statusCode, response.StatusCode)
 
-				if test.followUp {
+				var err error
+				var sendRequest api.SendRequest
+				var sendResponse api.SendResponse
+				var followUpResponse *testflight.Response
 
-					var err error
-					var sendRequest api.SendRequest
-					var sendResponse api.SendResponse
+				if test.followUpEndpoint == "/receive" {
+
+					t.SkipNow()
 
 					err = json.Unmarshal([]byte(test.body), &sendRequest)
 					require.Empty(t, err)
@@ -189,28 +219,46 @@ func TestPrivateAPI(t *testing.T) {
 					targetObject, err := json.Marshal(receiveRequest)
 					require.Empty(t, err)
 
-					var followUpResponse *testflight.Response
 
-					if test.followUpMethod == "GET+BODY" {
+					//TODO: Fix this test
+					targetBody := string(targetObject)
 
-						return
+					newrequest, err := http.NewRequest("GET", test.followUpEndpoint, bytes.NewBuffer([]byte(targetBody)))
+					newrequest.Header.Set("Content-Type", "application/json")
 
-						//TODO: Fix this test
-						targetBody := string(targetObject)
+					require.Empty(t, err)
+					require.NotEmpty(t, newrequest)
 
-						newrequest, err := http.NewRequest("GET", test.followUpEndpoint, bytes.NewBuffer([]byte(targetBody)))
-						newrequest.Header.Set("Content-Type", "application/json")
+					followUpResponse = r.Do(newrequest)
 
-						require.Empty(t, err)
-						require.NotEmpty(t, newrequest)
+				} else if test.followUpEndpoint == "/transaction" {
 
-						followUpResponse = r.Do(newrequest)
+
+					//TODO: Fix this test
+
+					t.SkipNow()
+
+					key, err := base64.StdEncoding.DecodeString(response.Body)
+					if err != nil {
+						t.Fail()
 					}
+					urlEncodedKey := base64.URLEncoding.EncodeToString(key)
+					log.Debug("Send Response: ", response)
+					toBytes, err := base64.StdEncoding.DecodeString("OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w")
+					if err != nil {
+						t.Fail()
+					}
+					urlEncodedTo := base64.URLEncoding.EncodeToString(toBytes)
 
-					require.NotEmpty(t, followUpResponse)
-					require.NotEmpty(t, followUpResponse.StatusCode)
-					require.Equal(t, sendRequest.Payload, followUpResponse.Body)
+					targetURL := "/transaction/" + urlEncodedKey + "?to=" + urlEncodedTo
+					followUpResponse = r.Get(targetURL)
+
+				} else {
+					return
 				}
+				require.NotEmpty(t, followUpResponse)
+				require.NotEmpty(t, followUpResponse.StatusCode)
+				require.Equal(t, sendRequest.Payload, followUpResponse.Body)
 
 			})
 		}
