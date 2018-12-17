@@ -206,8 +206,6 @@ func TestPrivateAPI(t *testing.T) {
 
 				if test.followUpEndpoint == "/receive" {
 
-					t.SkipNow()
-
 					err = json.Unmarshal([]byte(test.body), &sendRequest)
 					require.Empty(t, err)
 
@@ -219,8 +217,6 @@ func TestPrivateAPI(t *testing.T) {
 					targetObject, err := json.Marshal(receiveRequest)
 					require.Empty(t, err)
 
-
-					//TODO: Fix this test
 					targetBody := string(targetObject)
 
 					newrequest, err := http.NewRequest("GET", test.followUpEndpoint, bytes.NewBuffer([]byte(targetBody)))
@@ -230,13 +226,11 @@ func TestPrivateAPI(t *testing.T) {
 					require.NotEmpty(t, newrequest)
 
 					followUpResponse = r.Do(newrequest)
+					var responseJson api.ReceiveResponse
+					json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJson)
+					require.Equal(t, sendRequest.Payload, responseJson.Payload)
 
 				} else if test.followUpEndpoint == "/transaction" {
-
-
-					//TODO: Fix this test
-
-					t.SkipNow()
 
 					key, err := base64.StdEncoding.DecodeString(response.Body)
 					if err != nil {
@@ -244,7 +238,7 @@ func TestPrivateAPI(t *testing.T) {
 					}
 					urlEncodedKey := base64.URLEncoding.EncodeToString(key)
 					log.Debug("Send Response: ", response)
-					toBytes, err := base64.StdEncoding.DecodeString("OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w")
+					toBytes, err := base64.StdEncoding.DecodeString("OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w=")
 					if err != nil {
 						t.Fail()
 					}
@@ -252,13 +246,15 @@ func TestPrivateAPI(t *testing.T) {
 
 					targetURL := "/transaction/" + urlEncodedKey + "?to=" + urlEncodedTo
 					followUpResponse = r.Get(targetURL)
+					var responseJson api.ReceiveResponse
+					json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJson)
+					require.Equal(t, test.body, responseJson.Payload)
 
 				} else {
 					return
 				}
 				require.NotEmpty(t, followUpResponse)
 				require.NotEmpty(t, followUpResponse.StatusCode)
-				require.Equal(t, sendRequest.Payload, followUpResponse.Body)
 
 			})
 		}
