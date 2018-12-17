@@ -4,19 +4,19 @@ import (
 	"os"
 
 	"github.com/asdine/storm"
+
+	"Smilo-blackbox/src/server/config"
 )
 
-var databaseFile string
 var db *storm.DB
 
-func Start(_databaseFile string) {
-	if _databaseFile != "" {
-		databaseFile = _databaseFile
-	} else {
-		databaseFile = "blackbox.db"
-	}
+func init() {
+	Start()
+}
+
+func Start() {
 	var err error
-	db, err = storm.Open(databaseFile)
+	db, err = storm.Open(config.DBFile.Value)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
