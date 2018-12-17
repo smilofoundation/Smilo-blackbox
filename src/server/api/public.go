@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"encoding/base64"
 	"Smilo-blackbox/src/server/encoding"
+	"strings"
 )
 
 //TODO
@@ -83,7 +84,30 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 // It receives a POST request with a json ResendRequest containing type (INDIVIDUAL, ALL), publicKey and key(for individual requests),
 // it returns encoded payload for INDIVIDUAL or it does one push request for each payload and returns empty for type ALL.
 func Resend(w http.ResponseWriter, r *http.Request) {
+	var jsonReq ResendRequest
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	err:= json.Unmarshal(body, &jsonReq)
+	if err != nil {
+		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		return
+	}
+	if strings.ToUpper(jsonReq.Type) == "INDIVIDUAL" {
+		key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
+		if err != nil {
+			requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
+			return
+		}
+		encTrans := data.FindEncryptedTransaction(key)
+		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Encoded_Payload)))
+		w.WriteHeader(http.StatusOK)
+	} else {
+		if strings.ToUpper(jsonReq.Type) == "ALL" {
 
+		} else {
+			requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Type))
+		}
+	}
 }
 
 // Deprecated API
