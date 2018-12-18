@@ -25,19 +25,19 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 func Push(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			requestError(http.StatusInternalServerError, w, fmt.Sprintf("Cannot deserialize payload."))
+			requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot deserialize payload."))
 		}
 	}()
 	encPayload,_ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if encPayload == nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
 		return
 	}
 
 	payload, err := base64.StdEncoding.DecodeString(string(encPayload))
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
 		return
 	}
 
@@ -45,13 +45,13 @@ func Push(w http.ResponseWriter, r *http.Request) {
     encTrans := data.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
-		requestError(http.StatusInternalServerError, w, fmt.Sprintf("Cannot save transaction."))
+		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot save transaction."))
 		return
 	}
 
 	encTrans.Save()
-	w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
 	w.WriteHeader(http.StatusCreated)
+    w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
 }
 
 // Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
@@ -90,23 +90,24 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err:= json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
 		return
 	}
 	if strings.ToUpper(jsonReq.Type) == "INDIVIDUAL" {
 		key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
 		if err != nil {
-			requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
+			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
 			return
 		}
-		encTrans := data.FindEncryptedTransaction(key)
+		encTrans, err := data.FindEncryptedTransaction(key)
 		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Encoded_Payload)))
 		w.WriteHeader(http.StatusOK)
 	} else {
 		if strings.ToUpper(jsonReq.Type) == "ALL" {
 
+			w.WriteHeader(http.StatusNoContent)
 		} else {
-			requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Type))
+			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Type))
 		}
 	}
 }
@@ -119,34 +120,35 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
 		return
 	}
 	key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
 	if err != nil {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
 		return
 	}
-	encTrans := data.FindEncryptedTransaction(key)
+	encTrans, err := data.FindEncryptedTransaction(key)
 	if encTrans == nil {
-		requestError(http.StatusNotFound, w, fmt.Sprintf("Transaction key: %s not found\n", jsonReq.Key))
+		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", jsonReq.Key))
 		return
 	}
     encTrans.Delete()
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Delete successful"))
 }
 
 // It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
 func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	key, err := base64.StdEncoding.DecodeString(params["key"])
+	key, err := base64.URLEncoding.DecodeString(params["key"])
 	if err != nil || params["key"] == "" {
-		requestError(http.StatusBadRequest, w, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, params["key"]))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, params["key"]))
 		return
 	}
-	encTrans := data.FindEncryptedTransaction(key)
+	encTrans, err := data.FindEncryptedTransaction(key)
 	if encTrans == nil {
-		requestError(http.StatusNotFound, w, fmt.Sprintf("Transaction key: %s not found\n", params["key"]))
+		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", params["key"]))
 		return
 	}
 	encTrans.Delete()

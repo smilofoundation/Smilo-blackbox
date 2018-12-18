@@ -12,7 +12,11 @@ import (
 	"github.com/drewolson/testflight"
 	"github.com/stretchr/testify/require"
 	"encoding/base64"
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/encoding"
 )
+
+var testEncryptedTransaction = createEncryptedTransaction()
 
 func TestPublicAPI(t *testing.T) {
 
@@ -49,8 +53,18 @@ func TestPublicAPI(t *testing.T) {
 				expectedErr: nil,
 			},
 			{
+				name:        "test push",
+				endpoint:    "/push",
+				method:      "POST",
+				body: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				contentType: "application/octet-stream",
+				response: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash),
+				statusCode:  201,
+				expectedErr: nil,
+			},
+			{
 				name:        "test transaction delete",
-				endpoint:    "/transaction/1",
+				endpoint:    "/transaction/"+base64.URLEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash),
 				method:      "DELETE",
 				contentType: "application/json",
 				response:    "",
@@ -70,7 +84,6 @@ func TestPublicAPI(t *testing.T) {
 					response = r.Post(test.endpoint, test.contentType, test.body)
 				} else if test.method == "DELETE" {
 					response = r.Delete(test.endpoint, test.contentType, test.body)
-
 				}
 
 				if test.response != "" {
@@ -133,8 +146,8 @@ func TestPrivateAPI(t *testing.T) {
 				endpoint:    "/delete",
 				method:      "POST",
 				contentType: "application/json",
-				body:        `{"key": "123456"}`,
-				response:    "",
+				body:        `{"key": "`+base64.StdEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash)+`"}`,
+				response:    "Delete successful",
 				statusCode:  200,
 				expectedErr: nil,
 			},
@@ -261,4 +274,19 @@ func TestPrivateAPI(t *testing.T) {
 
 	})
 
+}
+
+func createEncryptedTransactionForDeletion() *data.Encrypted_Transaction {
+	encTrans := createEncryptedTransaction()
+	encTrans.Save()
+	return encTrans
+}
+
+func createEncryptedTransaction() *data.Encrypted_Transaction {
+	toValues := make([][]byte, 1)
+	toValues[0] = []byte("09876543210987654321098765432109")
+	fromValue := []byte("12345678901234567890123456789012")
+	encPayloadData, _ := encoding.EncodePayloadData([]byte("123456"), fromValue, toValues)
+	encTrans := data.NewEncryptedTransaction(*encPayloadData.Serialize())
+	return encTrans
 }
