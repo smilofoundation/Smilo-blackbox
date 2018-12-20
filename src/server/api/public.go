@@ -81,7 +81,6 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 
 }
 
-//TODO
 // It receives a POST request with a json ResendRequest containing type (INDIVIDUAL, ALL), publicKey and key(for individual requests),
 // it returns encoded payload for INDIVIDUAL or it does one push request for each payload and returns empty for type ALL.
 func Resend(w http.ResponseWriter, r *http.Request) {
@@ -100,11 +99,11 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		encTrans, err := data.FindEncryptedTransaction(key)
-		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Encoded_Payload)))
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Encoded_Payload)))
 	} else {
 		if strings.ToUpper(jsonReq.Type) == "ALL" {
-
+			//TODO Implement loop of push requests
 			w.WriteHeader(http.StatusNoContent)
 		} else {
 			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Type))

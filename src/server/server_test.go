@@ -63,6 +63,16 @@ func TestPublicAPI(t *testing.T) {
 				expectedErr: nil,
 			},
 			{
+				name:        "test resend individual",
+				endpoint:    "/resend",
+				method:      "POST",
+				body: "{ \"type\": \"Individual\", \"publicKey\": \""+base64.StdEncoding.EncodeToString([]byte("12345678901234567890123456789012"))+"\", \"key\": \"" + base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash) + "\" }",
+				contentType: "application/json",
+				response: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				statusCode:  200,
+				expectedErr: nil,
+			},
+			{
 				name:        "test transaction delete",
 				endpoint:    "/transaction/"+base64.URLEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash),
 				method:      "DELETE",
