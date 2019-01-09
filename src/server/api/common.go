@@ -57,3 +57,7 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 	}
 	return payload
 }
+
+func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transaction, recipient []byte) {
+
+}

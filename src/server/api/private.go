@@ -98,6 +98,7 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 	}
 	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
 	encTrans.Save()
+	// TODO: PUSH to other recipient nodes
 	return encTrans
 }
 
