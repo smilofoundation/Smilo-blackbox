@@ -1,12 +1,8 @@
 package config
 
 import (
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
-
 	"encoding/base64"
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"os"
 
@@ -20,7 +16,7 @@ var (
 	log    *logrus.Entry
 	config Config
 
-	//flag.String("generate-keys", "", "Generate a new keypair")
+	GenerateKeys = cli.StringFlag{Name:"generate-keys", Value:"", Usage:"Generate a new keypair"}
 	ConfigFile  = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
 	DBFile      = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
 	Port        = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
@@ -44,16 +40,16 @@ func initLog() {
 	})
 }
 
-func Init() {
+func Init(app *cli.App) {
 	initLog()
-	pflag.Parse()
-	LoadConfig(ConfigFile.Value)
+	setCommandList(app)
 	//mergeConfigValues()
-
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	viper.BindPFlags(pflag.CommandLine) // Binding the flags to test the initial configuration
 }
 
+func setCommandList(app *cli.App) {
+app.Flags = []cli.Flag{ GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey }
+
+}
 //
 //func mergeConfigValues() {
 //	setValueOnNotDefault("port", string(config.Server.Port))
@@ -67,6 +63,8 @@ func Init() {
 //		fg.Value.Set(flagValue)
 //	}
 //}
+
+
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
