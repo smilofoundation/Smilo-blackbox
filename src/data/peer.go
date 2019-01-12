@@ -2,15 +2,15 @@ package data
 
 type Peer struct {
 	publicKey []byte `storm:"id"`
-	url string
+	url       string
 }
 
-func NewPeer(pKey []byte, nodeURL string) (*Peer) {
-	p := Peer{ publicKey:pKey, url:nodeURL}
+func NewPeer(pKey []byte, nodeURL string) *Peer {
+	p := Peer{publicKey: pKey, url: nodeURL}
 	return &p
 }
 
-func Update(pKey []byte, nodeURL string) (*Peer) {
+func Update(pKey []byte, nodeURL string) *Peer {
 	p, err := FindPeer(pKey)
 	if err != nil {
 		p = NewPeer(pKey, nodeURL)

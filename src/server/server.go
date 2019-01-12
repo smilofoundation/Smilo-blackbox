@@ -24,7 +24,10 @@ var (
 	publicAPI  *mux.Router
 
 	serverStatus               = status{false, false}
-	log          *logrus.Entry = logrus.WithField("package", "server")
+	log          *logrus.Entry = logrus.WithFields(logrus.Fields{
+		"app":     "blackbox",
+		"package": "server",
+	})
 )
 
 type status struct {

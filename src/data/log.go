@@ -5,7 +5,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Entry = logrus.WithField("package", "data")
+var log *logrus.Entry = logrus.WithFields(logrus.Fields{
+	"app":     "blackbox",
+	"package": "data",
+})
 
 // SetLogger set the logger
 func SetLogger(loggers *logrus.Entry) {

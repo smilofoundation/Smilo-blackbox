@@ -12,8 +12,9 @@
 
 ## <a name="pkg-index">Index</a>
 * [type Encoded_Payload_Data](#Encoded_Payload_Data)
-  * [func Deserialize(encoded_payload []byte) *Encoded_Payload_Data](#Deserialize)
+  * [func Deserialize(encodedPayload []byte) *Encoded_Payload_Data](#Deserialize)
   * [func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Encoded_Payload_Data, error)](#EncodePayloadData)
+  * [func (e *Encoded_Payload_Data) Decode(to []byte) []byte](#Encoded_Payload_Data.Decode)
   * [func (e *Encoded_Payload_Data) Serialize() *[]byte](#Encoded_Payload_Data.Serialize)
 
 
@@ -25,7 +26,7 @@
 
 
 
-## <a name="Encoded_Payload_Data">type</a> [Encoded_Payload_Data](/src/target/encoded_payload_data.go?s=87:240#L10)
+## <a name="Encoded_Payload_Data">type</a> [Encoded_Payload_Data](/src/target/encoded_payload_data.go?s=101:254#L12)
 ``` go
 type Encoded_Payload_Data struct {
     Sender         []byte
@@ -41,12 +42,12 @@ type Encoded_Payload_Data struct {
 
 
 
-### <a name="Deserialize">func</a> [Deserialize](/src/target/encoded_payload_data.go?s=542:604#L29)
+### <a name="Deserialize">func</a> [Deserialize](/src/target/encoded_payload_data.go?s=583:644#L31)
 ``` go
-func Deserialize(encoded_payload []byte) *Encoded_Payload_Data
+func Deserialize(encodedPayload []byte) *Encoded_Payload_Data
 ```
 
-### <a name="EncodePayloadData">func</a> [EncodePayloadData](/src/target/encoded_payload_data.go?s=873:978#L40)
+### <a name="EncodePayloadData">func</a> [EncodePayloadData](/src/target/encoded_payload_data.go?s=932:1037#L42)
 ``` go
 func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Encoded_Payload_Data, error)
 ```
@@ -54,7 +55,14 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 
 
 
-### <a name="Encoded_Payload_Data.Serialize">func</a> (\*Encoded\_Payload\_Data) [Serialize](/src/target/encoded_payload_data.go?s=242:292#L18)
+### <a name="Encoded_Payload_Data.Decode">func</a> (\*Encoded\_Payload\_Data) [Decode](/src/target/encoded_payload_data.go?s=1849:1904#L72)
+``` go
+func (e *Encoded_Payload_Data) Decode(to []byte) []byte
+```
+
+
+
+### <a name="Encoded_Payload_Data.Serialize">func</a> (\*Encoded\_Payload\_Data) [Serialize](/src/target/encoded_payload_data.go?s=256:306#L20)
 ``` go
 func (e *Encoded_Payload_Data) Serialize() *[]byte
 ```

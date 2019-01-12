@@ -12,14 +12,19 @@
 
 ## <a name="pkg-index">Index</a>
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
-* [func Start(_databaseFile string)](#Start)
+* [func Start()](#Start)
 * [type Encrypted_Transaction](#Encrypted_Transaction)
-  * [func CreateEncryptedTransaction(hash string, encoded_payload string, timestamp time.Time) *Encrypted_Transaction](#CreateEncryptedTransaction)
-  * [func FindEncryptedTransaction(hash string) *Encrypted_Transaction](#FindEncryptedTransaction)
-  * [func NewEncryptedTransaction(encoded_payload string) *Encrypted_Transaction](#NewEncryptedTransaction)
-  * [func (et *Encrypted_Transaction) Delete()](#Encrypted_Transaction.Delete)
-  * [func (et *Encrypted_Transaction) Save()](#Encrypted_Transaction.Save)
+  * [func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction](#CreateEncryptedTransaction)
+  * [func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error)](#FindEncryptedTransaction)
+  * [func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction](#NewEncryptedTransaction)
+  * [func (et *Encrypted_Transaction) Delete() error](#Encrypted_Transaction.Delete)
+  * [func (et *Encrypted_Transaction) Save() error](#Encrypted_Transaction.Save)
 * [type Peer](#Peer)
+  * [func FindPeer(publicKey []byte) (*Peer, error)](#FindPeer)
+  * [func NewPeer(pKey []byte, nodeURL string) *Peer](#NewPeer)
+  * [func Update(pKey []byte, nodeURL string) *Peer](#Update)
+  * [func (p *Peer) Delete() error](#Peer.Delete)
+  * [func (p *Peer) Save() error](#Peer.Save)
 
 
 #### <a name="pkg-files">Package files</a>
@@ -29,7 +34,7 @@
 
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=181:218#L11)
+## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=225:262#L14)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -37,18 +42,18 @@ SetLogger set the logger
 
 
 
-## <a name="Start">func</a> [Start](/src/target/db.go?s=102:134#L12)
+## <a name="Start">func</a> [Start](/src/target/db.go?s=141:153#L17)
 ``` go
-func Start(_databaseFile string)
+func Start()
 ```
 
 
 
-## <a name="Encrypted_Transaction">type</a> [Encrypted_Transaction](/src/target/encrypted_transaction.go?s=89:230#L10)
+## <a name="Encrypted_Transaction">type</a> [Encrypted_Transaction](/src/target/encrypted_transaction.go?s=63:204#L9)
 ``` go
 type Encrypted_Transaction struct {
-    Hash            string `storm:"id"`
-    Encoded_Payload string
+    Hash            []byte `storm:"id"`
+    Encoded_Payload []byte
     Timestamp       time.Time `storm:"index"`
 }
 ```
@@ -58,41 +63,42 @@ type Encrypted_Transaction struct {
 
 
 
-### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=605:717#L30)
+### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=563:675#L29)
 ``` go
-func CreateEncryptedTransaction(hash string, encoded_payload string, timestamp time.Time) *Encrypted_Transaction
+func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction
 ```
 
-### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=865:930#L39)
+### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=823:897#L38)
 ``` go
-func FindEncryptedTransaction(hash string) *Encrypted_Transaction
+func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error)
 ```
 
-### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=232:307#L16)
+### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=206:281#L15)
 ``` go
-func NewEncryptedTransaction(encoded_payload string) *Encrypted_Transaction
-```
-
-
-
-
-### <a name="Encrypted_Transaction.Delete">func</a> (\*Encrypted\_Transaction) [Delete](/src/target/encrypted_transaction.go?s=1144:1185#L53)
-``` go
-func (et *Encrypted_Transaction) Delete()
+func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction
 ```
 
 
 
-### <a name="Encrypted_Transaction.Save">func</a> (\*Encrypted\_Transaction) [Save](/src/target/encrypted_transaction.go?s=1086:1125#L49)
+
+### <a name="Encrypted_Transaction.Delete">func</a> (\*Encrypted\_Transaction) [Delete](/src/target/encrypted_transaction.go?s=1133:1180#L52)
 ``` go
-func (et *Encrypted_Transaction) Save()
+func (et *Encrypted_Transaction) Delete() error
 ```
 
 
 
-## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=14:34#L3)
+### <a name="Encrypted_Transaction.Save">func</a> (\*Encrypted\_Transaction) [Save](/src/target/encrypted_transaction.go?s=1062:1107#L48)
+``` go
+func (et *Encrypted_Transaction) Save() error
+```
+
+
+
+## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=14:83#L3)
 ``` go
 type Peer struct {
+    // contains filtered or unexported fields
 }
 ```
 
@@ -101,6 +107,35 @@ type Peer struct {
 
 
 
+### <a name="FindPeer">func</a> [FindPeer](/src/target/peer.go?s=366:412#L24)
+``` go
+func FindPeer(publicKey []byte) (*Peer, error)
+```
+
+### <a name="NewPeer">func</a> [NewPeer](/src/target/peer.go?s=85:132#L8)
+``` go
+func NewPeer(pKey []byte, nodeURL string) *Peer
+```
+
+### <a name="Update">func</a> [Update](/src/target/peer.go?s=191:237#L13)
+``` go
+func Update(pKey []byte, nodeURL string) *Peer
+```
+
+
+
+
+### <a name="Peer.Delete">func</a> (\*Peer) [Delete](/src/target/peer.go?s=615:644#L38)
+``` go
+func (p *Peer) Delete() error
+```
+
+
+
+### <a name="Peer.Save">func</a> (\*Peer) [Save](/src/target/peer.go?s=563:590#L34)
+``` go
+func (p *Peer) Save() error
+```
 
 
 

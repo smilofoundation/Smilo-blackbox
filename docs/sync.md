@@ -11,6 +11,7 @@
 
 
 ## <a name="pkg-index">Index</a>
+* [func PeerAdd(url string)](#PeerAdd)
 * [func StartSync()](#StartSync)
 
 
@@ -21,7 +22,13 @@
 
 
 
-## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=14:30#L3)
+## <a name="PeerAdd">func</a> [PeerAdd](/src/target/main.go?s=97:121#L11)
+``` go
+func PeerAdd(url string)
+```
+
+
+## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=74:90#L7)
 ``` go
 func StartSync()
 ```

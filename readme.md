@@ -2,7 +2,7 @@
 
 ## Running locally
 
-
+`go run main.go --generate-keys test1`
 
 ### Dependencies
 - Golang 1.11

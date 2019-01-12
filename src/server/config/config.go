@@ -16,15 +16,15 @@ var (
 	log    *logrus.Entry
 	config Config
 
-	GenerateKeys = cli.StringFlag{Name:"generate-keys", Value:"", Usage:"Generate a new keypair"}
-	ConfigFile  = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
-	DBFile      = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
-	Port        = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
-	Socket      = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
-	OtherNodes  = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
-	PublicKeys  = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
-	PrivateKeys = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
-	Storage     = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
+	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
+	ConfigFile   = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	DBFile       = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	Port         = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+	Socket       = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
+	OtherNodes   = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
+	PublicKeys   = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
+	PrivateKeys  = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
+	Storage      = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
 
 	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
 
@@ -36,6 +36,7 @@ var (
 
 func initLog() {
 	log = logrus.WithFields(logrus.Fields{
+		"app":     "blackbox",
 		"package": "config",
 	})
 }
@@ -47,9 +48,10 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-app.Flags = []cli.Flag{ GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey }
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
 
 }
+
 //
 //func mergeConfigValues() {
 //	setValueOnNotDefault("port", string(config.Server.Port))
@@ -63,8 +65,6 @@ app.Flags = []cli.Flag{ GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNod
 //		fg.Value.Set(flagValue)
 //	}
 //}
-
-
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
