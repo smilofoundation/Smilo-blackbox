@@ -9,8 +9,9 @@ import (
 	"Smilo-blackbox/src/data"
 
 	"encoding/base64"
-	"Smilo-blackbox/src/server/encoding"
 	"strings"
+
+	"Smilo-blackbox/src/server/encoding"
 
 	"github.com/gorilla/mux"
 )
@@ -28,7 +29,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 			requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot deserialize payload."))
 		}
 	}()
-	encPayload,_ := ioutil.ReadAll(r.Body)
+	encPayload, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if encPayload == nil {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
@@ -42,7 +43,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoding.Deserialize(payload)
-    encTrans := data.NewEncryptedTransaction(payload)
+	encTrans := data.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
 		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot save transaction."))
@@ -51,7 +52,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 
 	encTrans.Save()
 	w.WriteHeader(http.StatusCreated)
-    w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
+	w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
 }
 
 // Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
@@ -87,7 +88,7 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 	var jsonReq ResendRequest
 	body, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
-	err:= json.Unmarshal(body, &jsonReq)
+	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
 		return
@@ -132,7 +133,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", jsonReq.Key))
 		return
 	}
-    encTrans.Delete()
+	encTrans.Delete()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Delete successful"))
 }

@@ -9,9 +9,11 @@ import (
 	"bytes"
 	"encoding/json"
 
+	"encoding/base64"
+
 	"github.com/drewolson/testflight"
 	"github.com/stretchr/testify/require"
-	"encoding/base64"
+
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 )
@@ -56,9 +58,9 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test push",
 				endpoint:    "/push",
 				method:      "POST",
-				body: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				body:        base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
 				contentType: "application/octet-stream",
-				response: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash),
+				response:    base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash),
 				statusCode:  201,
 				expectedErr: nil,
 			},
@@ -66,15 +68,15 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test resend individual",
 				endpoint:    "/resend",
 				method:      "POST",
-				body: "{ \"type\": \"Individual\", \"publicKey\": \""+base64.StdEncoding.EncodeToString([]byte("12345678901234567890123456789012"))+"\", \"key\": \"" + base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash) + "\" }",
+				body:        "{ \"type\": \"Individual\", \"publicKey\": \"" + base64.StdEncoding.EncodeToString([]byte("12345678901234567890123456789012")) + "\", \"key\": \"" + base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash) + "\" }",
 				contentType: "application/json",
-				response: base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				response:    base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
 				statusCode:  200,
 				expectedErr: nil,
 			},
 			{
 				name:        "test transaction delete",
-				endpoint:    "/transaction/"+base64.URLEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash),
+				endpoint:    "/transaction/" + base64.URLEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash),
 				method:      "DELETE",
 				contentType: "application/json",
 				response:    "",
@@ -156,7 +158,7 @@ func TestPrivateAPI(t *testing.T) {
 				endpoint:    "/delete",
 				method:      "POST",
 				contentType: "application/json",
-				body:        `{"key": "`+base64.StdEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash)+`"}`,
+				body:        `{"key": "` + base64.StdEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash) + `"}`,
 				response:    "Delete successful",
 				statusCode:  200,
 				expectedErr: nil,

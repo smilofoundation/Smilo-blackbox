@@ -15,29 +15,29 @@
 * [func InitRouting() (*mux.Router, *mux.Router)](#InitRouting)
 * [func NewServer(Port string) (*http.Server, *http.Server)](#NewServer)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
-* [func StartServer(Port string, sockFilePath string)](#StartServer)
+* [func StartServer()](#StartServer)
 
 
 #### <a name="pkg-files">Package files</a>
-[server.go](/src/Smilo-blackbox/src/server/server.go) 
+[server.go](/src/Smilo-blackbox/src/server/server.go) [test_utils.go](/src/Smilo-blackbox/src/server/test_utils.go) 
 
 
 
 
 
-## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=1467:1512#L82)
+## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=2780:2825#L138)
 ``` go
 func InitRouting() (*mux.Router, *mux.Router)
 ```
 
 
-## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=703:759#L42)
+## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=756:812#L48)
 ``` go
 func NewServer(Port string) (*http.Server, *http.Server)
 ```
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=555:592#L33)
+## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=608:645#L39)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -45,9 +45,9 @@ SetLogger set the logger
 
 
 
-## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=924:974#L55)
+## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=977:995#L61)
 ``` go
-func StartServer(Port string, sockFilePath string)
+func StartServer()
 ```
 
 

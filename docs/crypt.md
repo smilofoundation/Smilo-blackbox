@@ -14,15 +14,18 @@
 * [func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte](#ComputeSharedKey)
 * [func DecryptPayload(sharedKey []byte, encrypted_payload []byte, nounce []byte) []byte](#DecryptPayload)
 * [func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) []byte](#EncryptPayload)
-* [func GetPrivateKey(publickey []byte) []byte](#GetPrivateKey)
+* [func GenerateKeys(generateKeys string)](#GenerateKeys)
+* [func GetPrivateKey(publicKey []byte) []byte](#GetPrivateKey)
 * [func NewRandomKey() ([]byte, error)](#NewRandomKey)
 * [func NewRandomNonce() ([]byte, error)](#NewRandomNonce)
 * [func PutKeyPair(pair KeyPair)](#PutKeyPair)
+* [func WritePrivateKeyFile(key string, filename string) error](#WritePrivateKeyFile)
+* [func WritePublicKeyFile(key string, filename string) error](#WritePublicKeyFile)
 * [type KeyPair](#KeyPair)
 
 
 #### <a name="pkg-files">Package files</a>
-[safe.go](/src/Smilo-blackbox/src/crypt/safe.go) 
+[keys.go](/src/Smilo-blackbox/src/crypt/keys.go) [safe.go](/src/Smilo-blackbox/src/crypt/safe.go) 
 
 
 
@@ -46,9 +49,15 @@ func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) []byte
 ```
 
 
+## <a name="GenerateKeys">func</a> [GenerateKeys](/src/target/keys.go?s=342:380#L30)
+``` go
+func GenerateKeys(generateKeys string)
+```
+
+
 ## <a name="GetPrivateKey">func</a> [GetPrivateKey](/src/target/safe.go?s=417:460#L24)
 ``` go
-func GetPrivateKey(publickey []byte) []byte
+func GetPrivateKey(publicKey []byte) []byte
 ```
 
 
@@ -68,6 +77,22 @@ func NewRandomNonce() ([]byte, error)
 ``` go
 func PutKeyPair(pair KeyPair)
 ```
+
+
+## <a name="WritePrivateKeyFile">func</a> [WritePrivateKeyFile](/src/target/keys.go?s=837:896#L41)
+``` go
+func WritePrivateKeyFile(key string, filename string) error
+```
+WritePrivateKeyFile creates a json file with the private key
+
+
+
+## <a name="WritePublicKeyFile">func</a> [WritePublicKeyFile](/src/target/keys.go?s=1343:1401#L58)
+``` go
+func WritePublicKeyFile(key string, filename string) error
+```
+WritePublicKeyFile creates a file with the pubKey
+
 
 
 
