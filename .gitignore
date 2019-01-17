@@ -1,3 +1,4 @@
+blackbox.db
 blackbox
 .idea
 src/server/*.db

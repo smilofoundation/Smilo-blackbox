@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"Smilo-blackbox/src/crypt"
+	"github.com/stretchr/testify/require"
 )
 
 const configFile = "./config_test.conf"
@@ -16,24 +17,16 @@ func TestMain(m *testing.M) {
 
 func TestLoadConfig(t *testing.T) {
 	err := LoadConfig(configFile)
-
-	if err != nil {
-		t.Fail()
-	}
+	require.Empty(t, err, "could not open config file")
 
 	publicKey, err := ReadPublicKey("./public.pub")
-	if err != nil {
-		t.Fail()
-	}
+	require.Empty(t, err, "could not open public key")
 
 	configPrivateKey, err := ReadPrimaryKey("./private.key")
-	if err != nil {
-		t.Fail()
-	}
+	require.Empty(t, err, "could not open private key")
 
 	privateKey := crypt.GetPrivateKey(publicKey)
 
-	if string(privateKey) != string(configPrivateKey) {
-		t.Fail()
-	}
+	require.Equal(t, string(configPrivateKey), string(privateKey), "could not open config file")
+
 }
