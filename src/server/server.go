@@ -17,6 +17,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"Smilo-blackbox/src/server/config"
+	"time"
 )
 
 var (
@@ -101,16 +102,18 @@ func StartServer() {
 
 	} else {
 		go func() {
-			err := gracehttp.Serve(
-				pub)
+			err := gracehttp.Serve(pub)
 			if err != nil {
-				log.Fatalf("Error starting server: %v", err)
-				os.Exit(1)
+				log.Fatalf("Error starting API server: %v", err)
+				os.Exit(0)
 			}
 		}()
 	}
 
 	socketFile := config.Socket.Value
+	os.Remove(socketFile)
+
+	time.Sleep(1 * time.Second)
 	err := os.MkdirAll(filepath.Join(workDir, socketFile), os.FileMode(0755))
 	if err != nil {
 		log.Fatalf("Failed to start IPC Server at %s", socketFile)
