@@ -40,7 +40,7 @@ func getSocketClient() *http.Client {
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 
-	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
+	socketFile := filepath.Join(config.WorkDir, config.Socket)
 
 	if _, err := os.Stat(socketFile); os.IsNotExist(err) {
 		log.Error(err)

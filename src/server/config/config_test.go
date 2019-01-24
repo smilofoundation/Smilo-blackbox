@@ -1,25 +1,33 @@
 package config
 
 import (
-	"os"
 	"testing"
 
-	"Smilo-blackbox/src/crypt"
 	"github.com/stretchr/testify/require"
+
+	"Smilo-blackbox/src/crypt"
 )
 
-const configFile = "./config_test.conf"
-
-func TestMain(m *testing.M) {
-	retcode := m.Run()
-	os.Exit(retcode)
-}
+const configFile = "./config_test.toml"
 
 func TestLoadConfig(t *testing.T) {
-	err := LoadConfig(configFile)
+	err := ConfigLoad(configFile)
 	require.Empty(t, err, "could not open config file")
 
-	publicKey, err := ReadPublicKey("./public.pub")
+	conf := AllSettings()
+	require.NotEmpty(t, conf)
+
+}
+
+func TestPublicPrivateKeysLoad(t *testing.T) {
+	err := ConfigLoad(configFile)
+	require.Empty(t, err, "could not open config file")
+
+	conf := AllSettings()
+	require.NotEmpty(t, conf)
+	pub := PrivateKeys
+
+	publicKey, err := ReadPublicKey(pub)
 	require.Empty(t, err, "could not open public key")
 
 	configPrivateKey, err := ReadPrimaryKey("./private.key")

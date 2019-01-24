@@ -5,6 +5,8 @@ import (
 
 	"github.com/asdine/storm"
 
+	"path"
+
 	"Smilo-blackbox/src/server/config"
 )
 
@@ -16,9 +18,13 @@ func init() {
 
 func Start() {
 	var err error
-	db, err = storm.Open(config.DBFile.Value)
+	DBFile := config.GetString(config.DBFileStr)
+
+	dbPATH := path.Join(config.WorkDir, DBFile)
+	db, err = storm.Open(dbPATH)
+
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Could not open DBFile: ", dbPATH, ", error: ", err)
 		os.Exit(1)
 	}
 }

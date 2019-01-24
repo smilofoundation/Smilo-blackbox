@@ -10,6 +10,10 @@ clean:
 build: clean
 	go build -o blackbox main.go
 
+build-mv: clean
+	go build -o blackbox main.go
+	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox
+
 test: clean ## Run tests
 	go test ./src/... -timeout=10m
 

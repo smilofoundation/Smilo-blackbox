@@ -33,8 +33,8 @@ func main() {
 	defer handlePanic()
 
 	app := cli.NewApp()
-	config.Init(app)
-	config.LoadConfig(config.ConfigFile.Value)
+	config.ConfigLoad(config.ConfigFile)
+	//log.Info("DUMP CONFIG, ", config.AllSettings())
 
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
@@ -44,16 +44,20 @@ func main() {
 			crypt.GenerateKeys(generateKeys)
 		} else {
 			server.StartServer()
+			server.InitP2p()
 		}
 		return nil
 	}
 
 	dir, _ := os.Getwd() // gives us the source path if we haven't installed.
-	config.WorkDir.Value = dir
+	config.WorkDir = dir
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	select {}
+
 }
 
 func handlePanic() {

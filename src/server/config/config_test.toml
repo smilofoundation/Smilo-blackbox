@@ -1,0 +1,14 @@
+port = 9001
+workdir = "data"
+socket = "constellation.ipc"
+othernodes = ["http://127.0.0.1:9000/"]
+publickeys = ["foo.pub"]
+privatekeys = ["foo.key"]
+alwayssendto = []
+passwords = "passwords"
+dbfile = "blackbox.db"
+verbosity = 1
+ipwhitelist = ["10.0.0.1", "2001:0db8:85a3:0000:0000:8a2e:0370:7334"]
+tls = "strict"
+server_cert = "tls-server_cert-cert.pem"
+server_key = "tls-server_cert-key.pem"
