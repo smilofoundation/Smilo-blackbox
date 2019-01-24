@@ -40,10 +40,13 @@ func getSocketClient() *http.Client {
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 
-	socketFile := filepath.Join(config.WorkDir, config.Socket)
+	socketFilePath := config.GetString(config.SocketStr)
+	workDir := config.GetString(config.WorkDirStr)
+
+	socketFile := filepath.Join(workDir, socketFilePath)
 
 	if _, err := os.Stat(socketFile); os.IsNotExist(err) {
-		log.Error(err)
+		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ",err)
 		os.Exit(1)
 	}
 

@@ -94,7 +94,7 @@ func init() {
 	flag.String(PortStr, "9000", "Local port to the Public API")
 	Port = GetString(PortStr)
 
-	flag.String(WorkDirStr, ".", "")
+	flag.String(WorkDirStr, "../../", "")
 	WorkDir = GetString(WorkDirStr)
 
 	flag.String(SocketStr, "blackbox.ipc", "IPC socket to the Private API")

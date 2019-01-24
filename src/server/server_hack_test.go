@@ -19,10 +19,10 @@ import (
 func TestMain(m *testing.M) {
 	removeIfExists("blackbox.db")
 	removeIfExists("blackbox.ipc")
-	config.LoadConfig("./server_test.conf")
+	config.ConfigLoad("./server_test.conf")
 	go StartServer()
 
-	config.WorkDir.Value = ""
+	config.WorkDir = ""
 
 	time.Sleep(500000000)
 	retcode := m.Run()

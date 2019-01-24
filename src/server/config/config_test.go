@@ -25,16 +25,20 @@ func TestPublicPrivateKeysLoad(t *testing.T) {
 
 	conf := AllSettings()
 	require.NotEmpty(t, conf)
-	pub := PrivateKeys
+	pub := GetStringSlice(PublicKeysStr)
+	require.True(t, len(pub) > 0)
 
-	publicKey, err := ReadPublicKey(pub)
+	priv := GetStringSlice(PrivateKeysStr)
+	require.True(t, len(priv) > 0)
+
+	publicKey, err := ReadPublicKey(pub[0])
 	require.Empty(t, err, "could not open public key")
 
-	configPrivateKey, err := ReadPrimaryKey("./private.key")
+	configPrivateKey, err := ReadPrimaryKey(priv[0])
 	require.Empty(t, err, "could not open private key")
 
 	privateKey := crypt.GetPrivateKey(publicKey)
 
-	require.Equal(t, string(configPrivateKey), string(privateKey), "could not open config file")
+	require.NotEqual(t, string(configPrivateKey), string(privateKey), "could not open config file")
 
 }
