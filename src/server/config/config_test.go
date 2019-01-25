@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"Smilo-blackbox/src/crypt"
+	"encoding/base64"
 )
 
 const configFile = "./config_test.toml"
@@ -16,7 +17,6 @@ func TestLoadConfig(t *testing.T) {
 
 	conf := AllSettings()
 	require.NotEmpty(t, conf)
-
 }
 
 func TestPublicPrivateKeysLoad(t *testing.T) {
@@ -25,20 +25,27 @@ func TestPublicPrivateKeysLoad(t *testing.T) {
 
 	conf := AllSettings()
 	require.NotEmpty(t, conf)
-	pub := GetStringSlice(PublicKeysStr)
-	require.True(t, len(pub) > 0)
+	PublicKeysStr := GetStringSlice(PublicKeysStr)
+	require.True(t, len(PublicKeysStr) > 0, "PublicKeysStr len is zero")
 
-	priv := GetStringSlice(PrivateKeysStr)
-	require.True(t, len(priv) > 0)
+	PrivateKeysStr := GetStringSlice(PrivateKeysStr)
+	require.True(t, len(PrivateKeysStr) > 0, "PrivateKeysStr len is zero")
 
-	publicKey, err := ReadPublicKey(pub[0])
+	publicKey, err := ReadPublicKey(PublicKeysStr[0])
 	require.Empty(t, err, "could not open public key")
+	require.True(t, len(publicKey) > 0, "publicKey len is zero")
 
-	configPrivateKey, err := ReadPrimaryKey(priv[0])
+	configPrivateKey, err := ReadPrimaryKey(PrivateKeysStr[0])
 	require.Empty(t, err, "could not open private key")
+	require.True(t, len(configPrivateKey) > 0, "configPrivateKey len is zero")
+
+	crypt.PutKeyPair(crypt.KeyPair{PublicKey:publicKey,PrimaryKey:configPrivateKey})
 
 	privateKey := crypt.GetPrivateKey(publicKey)
 
-	require.NotEqual(t, string(configPrivateKey), string(privateKey), "could not open config file")
+	expected := base64.StdEncoding.EncodeToString(configPrivateKey)
+	actual := base64.StdEncoding.EncodeToString(privateKey)
+
+	require.Equal(t, expected, actual, "configPrivateKey should be equal to privateKey")
 
 }

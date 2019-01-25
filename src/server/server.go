@@ -83,7 +83,10 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 }
 
 func StartServer() {
+	config.Init()
+
 	port, isTLS, workDir := config.Port, config.IsTLS, config.WorkDir
+
 
 	log.Info("Starting server")
 	pub, priv := NewServer(port)

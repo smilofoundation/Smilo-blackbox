@@ -19,7 +19,7 @@ var (
 	config Config
 
 	GenerateKeysStr = "generate-keys"
-	GenerateKeys    = "generate-keys"
+	GenerateKeys    = ""
 
 	ConfigFileStr = "configfile"
 	ConfigFile    = "configfile"
@@ -79,73 +79,79 @@ func initLog() {
 	})
 }
 
-func init() {
+func Init() {
 	initLog()
 
 	flag.String(GenerateKeysStr, "", "Generate a new keypair")
-	GenerateKeys = GetString(GenerateKeysStr)
 
 	flag.String(ConfigFileStr, "blackbox.conf", "Config file name")
-	ConfigFile = GetString(ConfigFileStr)
 
 	flag.String(DBFileStr, "blackbox.db", "DB file name")
-	DBFile = GetString(DBFileStr)
 
 	flag.String(PortStr, "9000", "Local port to the Public API")
-	Port = GetString(PortStr)
 
 	flag.String(WorkDirStr, "../../", "")
-	WorkDir = GetString(WorkDirStr)
 
 	flag.String(SocketStr, "blackbox.ipc", "IPC socket to the Private API")
-	Socket = GetString(SocketStr)
 
 	flag.String(OtherNodesStr, "", "\"Boot nodes\" to connect")
-	OtherNodes = GetString(OtherNodesStr)
 
 	flag.String(PublicKeysStr, "", "Public keys")
-	PublicKeys = GetString(PublicKeysStr)
 
 	flag.String(PrivateKeysStr, "", "Private keys")
-	PrivateKeys = GetString(PrivateKeysStr)
 
 	flag.String(AlwaysSendToStr, "", "List of public keys for nodes to send all transactions too")
-	AlwaysSendTo = GetString(AlwaysSendToStr)
 
 	flag.Int(VerbosityStr, 1, "Verbosity level of logs")
-	Verbosity = GetInt(VerbosityStr)
 
 	flag.String(HostNameStr, "http://localhost", "HostName for public API")
-	HostName = GetString(HostNameStr)
 
 	flag.String(IsTLSStr, "", "")
-	IsTLS = GetString(IsTLS)
 
 	flag.String(ServerKeyStr, "", "")
-	ServerKey = GetString(ServerKeyStr)
 
 	flag.String(ServerCertStr, "", "")
-	ServerCert = GetString(ServerCertStr)
 
 	flag.String(MaxPeersNetworkStr, "", "")
-	MaxPeersNetwork = GetString(MaxPeersNetworkStr)
 
 	flag.String(P2PDestinationStr, "", "")
-	P2PDestination = GetString(P2PDestinationStr)
 
 	flag.String(P2PPortStr, "30300", "")
-	P2PPort = GetString(P2PPortStr)
 
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	viper.BindPFlags(pflag.CommandLine)
 	setCommandList()
-
 }
 
 func ConfigLoad(path string) error {
+	//Init()
 	viper.SetConfigType("hcl")
 	viper.SetConfigFile(path)
-	return viper.ReadInConfig()
+	err := viper.ReadInConfig()
+
+	//Init()
+
+	GenerateKeys = GetString(GenerateKeysStr)
+	ConfigFile = GetString(ConfigFileStr)
+	DBFile = GetString(DBFileStr)
+	Port = GetString(PortStr)
+	WorkDir = GetString(WorkDirStr)
+	Socket = GetString(SocketStr)
+	OtherNodes = GetString(OtherNodesStr)
+	PublicKeys = GetString(PublicKeysStr)
+	PrivateKeys = GetString(PrivateKeysStr)
+	AlwaysSendTo = GetString(AlwaysSendToStr)
+	Verbosity = GetInt(VerbosityStr)
+	HostName = GetString(HostNameStr)
+
+	IsTLS = GetString(IsTLS)
+	ServerKey = GetString(ServerKeyStr)
+	ServerCert = GetString(ServerCertStr)
+	MaxPeersNetwork = GetString(MaxPeersNetworkStr)
+	P2PDestination = GetString(P2PDestinationStr)
+	P2PPort = GetString(P2PPortStr)
+
+	return err
 }
 
 func RefreshAllKeys() {

@@ -1,30 +1,28 @@
 package data
 
 import (
-	"os"
-
 	"github.com/asdine/storm"
 
-	"path"
-
 	"Smilo-blackbox/src/server/config"
+	"os"
+	"path"
 )
 
 var db *storm.DB
 
-func init() {
-	Start()
-}
+func Start(dbFile string) {
 
-func Start() {
 	var err error
-	DBFile := config.GetString(config.DBFileStr)
+	if dbFile == "" {
+		dbFile = config.GetString(config.DBFileStr)
 
-	dbPATH := path.Join(config.WorkDir, DBFile)
-	db, err = storm.Open(dbPATH)
+		dbFile = path.Join(config.WorkDir, dbFile)
+	}
 
+	db, err = storm.Open(dbFile)
 	if err != nil {
-		log.Fatal("Could not open DBFile: ", dbPATH, ", error: ", err)
+		defer db.Close()
+		log.Fatal("Could not open DBFile: ", dbFile, ", error: ", err)
 		os.Exit(1)
 	}
 }
