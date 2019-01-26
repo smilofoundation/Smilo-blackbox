@@ -3,73 +3,42 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"os"
 
-	"strings"
-
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/pflag"
-	"github.com/spf13/viper"
+	"gopkg.in/urfave/cli.v1"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 var (
 	log    *logrus.Entry
 	config Config
 
-	GenerateKeysStr = "generate-keys"
-	GenerateKeys    = ""
+	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
+	ConfigFile   = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	DBFile       = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	Port         = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+	Socket       = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
+	OtherNodes   = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
+	PublicKeys   = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
+	PrivateKeys  = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
+	Storage      = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
 
-	ConfigFileStr = "configfile"
-	ConfigFile    = "configfile"
-	DBFileStr     = "dbfile"
-	DBFile        = ""
+	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
 
-	PortStr = "port"
-	Port    = ""
+	WorkDir  = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
+	IsTLS    = cli.StringFlag{Name: "tls", Value: "", Usage: ""}
+	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
+	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
 
-	WorkDirStr = "workdir"
-	WorkDir    = ""
 
-	SocketStr = "socket"
-	Socket    = ""
+	MaxPeersNetwork = cli.StringFlag{Name: "maxpeersnetwork", Value: "", Usage: ""}
 
-	OtherNodesStr = "othernodes"
-	OtherNodes    = ""
+	P2PDestination = cli.StringFlag{Name: "p2p_dest", Value: "", Usage: ""}
 
-	PublicKeysStr = "publickeys"
-	PublicKeys    = ""
-
-	PrivateKeysStr = "privatekeys"
-	PrivateKeys    = ""
-
-	AlwaysSendToStr = "alwayssendto"
-	AlwaysSendTo    = ""
-
-	VerbosityStr = "verbosity"
-	Verbosity    = 0
-
-	HostNameStr = "hostname"
-	HostName    = ""
-
-	IsTLSStr = "tls"
-	IsTLS    = ""
-
-	ServerCertStr = "server_cert"
-	ServerCert    = ""
-
-	ServerKeyStr = "server_key"
-	ServerKey    = ""
-
-	MaxPeersNetworkStr = "maxpeersnetwork"
-	MaxPeersNetwork    = ""
-
-	P2PDestinationStr = "p2p_dest"
-	P2PDestination    = ""
-
-	P2PPortStr = "p2p_port"
-	P2PPort    = ""
+	P2PPort = cli.StringFlag{Name: "p2p_port", Value: "", Usage: ""}
 )
 
 func initLog() {
@@ -79,127 +48,14 @@ func initLog() {
 	})
 }
 
-func Init() {
+func Init(app *cli.App) {
 	initLog()
-
-	flag.String(GenerateKeysStr, "", "Generate a new keypair")
-
-	flag.String(ConfigFileStr, "blackbox.conf", "Config file name")
-
-	flag.String(DBFileStr, "blackbox.db", "DB file name")
-
-	flag.String(PortStr, "9000", "Local port to the Public API")
-
-	flag.String(WorkDirStr, "../../", "")
-
-	flag.String(SocketStr, "blackbox.ipc", "IPC socket to the Private API")
-
-	flag.String(OtherNodesStr, "", "\"Boot nodes\" to connect")
-
-	flag.String(PublicKeysStr, "", "Public keys")
-
-	flag.String(PrivateKeysStr, "", "Private keys")
-
-	flag.String(AlwaysSendToStr, "", "List of public keys for nodes to send all transactions too")
-
-	flag.Int(VerbosityStr, 1, "Verbosity level of logs")
-
-	flag.String(HostNameStr, "http://localhost", "HostName for public API")
-
-	flag.String(IsTLSStr, "", "")
-
-	flag.String(ServerKeyStr, "", "")
-
-	flag.String(ServerCertStr, "", "")
-
-	flag.String(MaxPeersNetworkStr, "", "")
-
-	flag.String(P2PDestinationStr, "", "")
-
-	flag.String(P2PPortStr, "30300", "")
-
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	viper.BindPFlags(pflag.CommandLine)
-	setCommandList()
+	setCommandList(app)
+	//mergeConfigValues()
 }
 
-func ConfigLoad(path string) error {
-	//Init()
-	viper.SetConfigType("hcl")
-	viper.SetConfigFile(path)
-	err := viper.ReadInConfig()
-
-	//Init()
-
-	GenerateKeys = GetString(GenerateKeysStr)
-	ConfigFile = GetString(ConfigFileStr)
-	DBFile = GetString(DBFileStr)
-	Port = GetString(PortStr)
-	WorkDir = GetString(WorkDirStr)
-	Socket = GetString(SocketStr)
-	OtherNodes = GetString(OtherNodesStr)
-	PublicKeys = GetString(PublicKeysStr)
-	PrivateKeys = GetString(PrivateKeysStr)
-	AlwaysSendTo = GetString(AlwaysSendToStr)
-	Verbosity = GetInt(VerbosityStr)
-	HostName = GetString(HostNameStr)
-
-	IsTLS = GetString(IsTLS)
-	ServerKey = GetString(ServerKeyStr)
-	ServerCert = GetString(ServerCertStr)
-	MaxPeersNetwork = GetString(MaxPeersNetworkStr)
-	P2PDestination = GetString(P2PDestinationStr)
-	P2PPort = GetString(P2PPortStr)
-
-	return err
-}
-
-func RefreshAllKeys() {
-
-}
-
-func AllSettings() map[string]interface{} {
-	return viper.AllSettings()
-}
-
-func GetBool(key string) bool {
-	return viper.GetBool(key)
-}
-
-func GetInt(key string) int {
-	return viper.GetInt(key)
-}
-
-func GetString(key string) string {
-	return viper.GetString(key)
-}
-
-func GetStringSlice(key string) []string {
-	return viper.GetStringSlice(key)
-}
-
-func setCommandList() {
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
-	viper.BindPFlags(pflag.CommandLine)
-
-	args := os.Args
-	if len(args) == 1 {
-		//log.Fatalln("No args defined")
-	}
-
-	for _, arg := range args[1:] {
-		if strings.Contains(arg, ".conf") {
-			err := ConfigLoad(arg)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			break
-		}
-	}
-	pflag.Parse()
-	viper.BindPFlags(pflag.CommandLine)
-
-	//app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
+func setCommandList(app *cli.App) {
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
 
 }
 
@@ -216,6 +72,33 @@ func setCommandList() {
 //		fg.Value.Set(flagValue)
 //	}
 //}
+
+func LoadConfig(configPath string) error {
+	byteValue, err := readAllFile(configPath)
+	if err != nil {
+		return err
+	}
+
+	json.Unmarshal(byteValue, &config)
+	parseConfigValues()
+	return nil
+}
+
+func parseConfigValues() {
+	for _, keyPair := range config.Keys.KeyData {
+		primaryKey, err := ReadPrimaryKey(keyPair.PrivateKeyFile)
+		publicKey, err2 := ReadPublicKey(keyPair.PublicKeyFile)
+		if err != nil || err2 != nil {
+			continue
+		}
+		crypt.PutKeyPair(crypt.KeyPair{PrimaryKey: primaryKey, PublicKey: publicKey})
+	}
+	/*
+		for _, peerdata := range config.Peers {
+			sync.PeerAdd(peerdata.URL)
+		}
+	*/
+}
 
 func ReadPrimaryKey(pkFile string) ([]byte, error) {
 	byteValue, err := readAllFile(pkFile)

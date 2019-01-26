@@ -83,10 +83,7 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 }
 
 func StartServer() {
-	config.Init()
-
-	port, isTLS, workDir := config.Port, config.IsTLS, config.WorkDir
-
+	port, isTLS, workDir := config.Port.Value, config.IsTLS.Value, config.WorkDir.Value
 
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
@@ -94,8 +91,8 @@ func StartServer() {
 
 	if isTLS != "" {
 		log.Info("Will start TLS Mode")
-		servCert := config.ServerCert
-		servKey := config.ServerKey
+		servCert := config.ServCert.Value
+		servKey := config.ServKey.Value
 
 		if (len(servCert) != len(servKey)) || (len(servCert) <= 0) {
 			log.Fatalf("Please provide server certificate and key for TLS %s %s %d ", servKey, servCert, len(servCert))
@@ -131,21 +128,18 @@ func StartServer() {
 			err := gracehttp.Serve(pub)
 			if err != nil {
 				log.Fatalf("Error starting API server: %v", err)
-				os.Exit(1)
+				os.Exit(0)
 			}
 		}()
 	}
 
-	socketFile := config.GetString(config.SocketStr)
+	socketFile := config.Socket.Value
 	os.Remove(socketFile)
 
 	time.Sleep(1 * time.Second)
-	finalPath := filepath.Join(workDir, socketFile)
-	err := os.MkdirAll(finalPath, os.FileMode(0755))
+	err := os.MkdirAll(filepath.Join(workDir, socketFile), os.FileMode(0755))
 	if err != nil {
 		log.Fatalf("Failed to start IPC Server at %s", socketFile)
-	} else {
-		log.Infof("Start IPC Server at %s", socketFile)
 	}
 
 	os.Remove(socketFile)

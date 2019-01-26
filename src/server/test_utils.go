@@ -14,6 +14,9 @@ import (
 	"github.com/tv42/httpunix"
 
 	"Smilo-blackbox/src/server/config"
+	"strings"
+	"fmt"
+	"path"
 )
 
 func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
@@ -40,10 +43,29 @@ func getSocketClient() *http.Client {
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 
-	socketFilePath := config.GetString(config.SocketStr)
-	workDir := config.GetString(config.WorkDirStr)
 
-	socketFile := filepath.Join(workDir, socketFilePath)
+	currentDir, _ := os.Getwd()
+	var workDir string
+
+	isServer := strings.HasSuffix(currentDir, "/server")
+	isData := strings.HasSuffix(currentDir, "/data")
+	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
+	if isServer {
+		workDir = "../../"
+		fmt.Println("Contains /server")
+	} else if isData  {
+		workDir = "../../"
+		fmt.Println("Contains /data")
+	} else if isRoot {
+		fmt.Println("is root dir")
+		workDir = ""
+	}
+
+	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
+	finalPath := path.Join(workDir, socketFile)
+
+	finalPath = path.Join(currentDir, finalPath)
+
 
 	if _, err := os.Stat(socketFile); os.IsNotExist(err) {
 		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ",err)

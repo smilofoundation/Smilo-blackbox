@@ -33,8 +33,8 @@ func main() {
 	defer handlePanic()
 
 	app := cli.NewApp()
-	config.ConfigLoad(config.ConfigFile)
-	//log.Info("DUMP CONFIG, ", config.AllSettings())
+	config.Init(app)
+	config.LoadConfig(config.ConfigFile.Value)
 
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
@@ -50,7 +50,7 @@ func main() {
 	}
 
 	dir, _ := os.Getwd() // gives us the source path if we haven't installed.
-	config.WorkDir = dir
+	config.WorkDir.Value = dir
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

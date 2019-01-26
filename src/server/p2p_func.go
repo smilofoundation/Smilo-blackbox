@@ -23,7 +23,8 @@ import (
 
 func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error) {
 
-	host := config.GetString(config.P2PDestinationStr)
+	host := config.P2PDestination.Value
+
 	if host == "" {
 		var err error
 		host, err = GetExternalIP()
@@ -32,9 +33,9 @@ func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error) {
 		}
 	}
 
-	port := config.GetInt(config.P2PPortStr)
+	port := config.P2PPort.Value
 
-	strCon := fmt.Sprintf("%s:%d", host, port)
+	strCon := fmt.Sprintf("%s:%s", host, port)
 	log.WithField("strCon", strCon).Info("Starting P2P ")
 
 	nodekey, err := crypto.LoadECDSA("key.txt")
@@ -78,7 +79,7 @@ func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error) {
 }
 
 func InitP2p() {
-	maxPeersNetwork = config.GetInt("maxpeersnetwork")
+	maxPeersNetwork = 20
 	var err error
 
 	var peerNodes []model.PeerNode

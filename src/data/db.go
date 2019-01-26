@@ -1,25 +1,50 @@
 package data
 
 import (
+	"os"
+
 	"github.com/asdine/storm"
 
 	"Smilo-blackbox/src/server/config"
-	"os"
+	"strings"
+	"fmt"
 	"path"
 )
 
 var db *storm.DB
 
-func Start(dbFile string) {
+func init() {
+	Start()
+}
 
+func Start() {
 	var err error
-	if dbFile == "" {
-		dbFile = config.GetString(config.DBFileStr)
+	currentDir, _ := os.Getwd()
+	var workDir string
+	var newDBFile string
+	var dbFile = config.DBFile.Value
 
-		dbFile = path.Join(config.WorkDir, dbFile)
+	isServer := strings.HasSuffix(currentDir, "/server")
+	isData := strings.HasSuffix(currentDir, "/data")
+	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
+	if isServer {
+		workDir = "../../"
+		fmt.Println("db, Contains /server")
+	} else if isData {
+		workDir = "../../"
+		fmt.Println("db, Contains /data")
+	} else if isRoot {
+		fmt.Println("db, is root dir")
+		workDir = ""
 	}
 
-	db, err = storm.Open(dbFile)
+	newDBFile = path.Join(currentDir, workDir)
+
+	newDBFile = path.Join(newDBFile, dbFile)
+
+	fmt.Println("Opening DB: ", newDBFile)
+	db, err = storm.Open(newDBFile)
+
 	if err != nil {
 		defer db.Close()
 		log.Fatal("Could not open DBFile: ", dbFile, ", error: ", err)

@@ -3,43 +3,35 @@ package config
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"Smilo-blackbox/src/crypt"
+	"github.com/stretchr/testify/require"
 	"encoding/base64"
 )
 
-const configFile = "./config_test.toml"
+const configFile = "./config_test.conf"
 
 func TestLoadConfig(t *testing.T) {
-	err := ConfigLoad(configFile)
+	err := LoadConfig(configFile)
 	require.Empty(t, err, "could not open config file")
-
-	conf := AllSettings()
-	require.NotEmpty(t, conf)
 }
 
 func TestPublicPrivateKeysLoad(t *testing.T) {
-	err := ConfigLoad(configFile)
+	err := LoadConfig(configFile)
 	require.Empty(t, err, "could not open config file")
 
-	conf := AllSettings()
-	require.NotEmpty(t, conf)
-	PublicKeysStr := GetStringSlice(PublicKeysStr)
-	require.True(t, len(PublicKeysStr) > 0, "PublicKeysStr len is zero")
+	pubKeyFile := config.Keys.KeyData[0].PublicKeyFile
+	require.True(t, len(pubKeyFile) > 0, "pubKeyFile len is zero")
 
-	PrivateKeysStr := GetStringSlice(PrivateKeysStr)
-	require.True(t, len(PrivateKeysStr) > 0, "PrivateKeysStr len is zero")
+	privKeyFile := config.Keys.KeyData[0].PrivateKeyFile
+	require.True(t, len(privKeyFile) > 0, "privKeyFile len is zero")
 
-	publicKey, err := ReadPublicKey(PublicKeysStr[0])
+	publicKey, err := ReadPublicKey(pubKeyFile)
 	require.Empty(t, err, "could not open public key")
 	require.True(t, len(publicKey) > 0, "publicKey len is zero")
 
-	configPrivateKey, err := ReadPrimaryKey(PrivateKeysStr[0])
+	configPrivateKey, err := ReadPrimaryKey(privKeyFile)
 	require.Empty(t, err, "could not open private key")
 	require.True(t, len(configPrivateKey) > 0, "configPrivateKey len is zero")
-
-	crypt.PutKeyPair(crypt.KeyPair{PublicKey:publicKey,PrimaryKey:configPrivateKey})
 
 	privateKey := crypt.GetPrivateKey(publicKey)
 
