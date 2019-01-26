@@ -10,6 +10,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"Smilo-blackbox/src/crypt"
+	"github.com/spf13/pflag"
 )
 
 var (
@@ -51,7 +52,7 @@ func initLog() {
 func Init(app *cli.App) {
 	initLog()
 	setCommandList(app)
-	//mergeConfigValues()
+	mergeConfigValues()
 }
 
 func setCommandList(app *cli.App) {
@@ -59,19 +60,19 @@ func setCommandList(app *cli.App) {
 
 }
 
-//
-//func mergeConfigValues() {
-//	setValueOnNotDefault("port", string(config.Server.Port))
-//	setValueOnNotDefault("socket", config.UnixSocket)
-//	setValueOnNotDefault("hostname", string(config.HostName))
-//}
 
-//func setValueOnNotDefault(flagName string, flagValue string) {
-//	fg := pflag.Lookup(flagName)
-//	if fg.Value == fg.DefValue && flagValue != "" {
-//		fg.Value.Set(flagValue)
-//	}
-//}
+func mergeConfigValues() {
+	setValueOnNotDefault("port", string(config.Server.Port))
+	setValueOnNotDefault("socket", config.UnixSocket)
+	setValueOnNotDefault("hostname", string(config.HostName))
+}
+
+func setValueOnNotDefault(flagName string, flagValue string) {
+	fg := pflag.Lookup(flagName)
+	if fg.Value.String() == fg.DefValue && flagValue != "" {
+		fg.Value.Set(flagValue)
+	}
+}
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)

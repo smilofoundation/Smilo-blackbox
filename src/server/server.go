@@ -23,6 +23,8 @@ import (
 	"github.com/tidwall/buntdb"
 
 	"Smilo-blackbox/src/server/config"
+	"strings"
+	"fmt"
 )
 
 var (
@@ -44,13 +46,13 @@ var (
 )
 
 func init() {
-	var err error
-	StormDBPeers, err = storm.Open("blackbox-peers.db")
-	if err != nil {
-		defer StormDBPeers.Close()
-		log.WithError(err).Error("Could not open StormDBPeers")
-		os.Exit(1)
-	}
+	//var err error
+	//StormDBPeers, err = storm.Open("blackbox-peers.db")
+	//if err != nil {
+	//	defer StormDBPeers.Close()
+	//	log.WithError(err).Error("Could not open StormDBPeers")
+	//	os.Exit(1)
+	//}
 
 }
 
@@ -132,24 +134,44 @@ func StartServer() {
 			}
 		}()
 	}
+	currentDir, _ := os.Getwd()
 
-	socketFile := config.Socket.Value
-	os.Remove(socketFile)
+	isServer := strings.HasSuffix(currentDir, "/server")
+	isData := strings.HasSuffix(currentDir, "/data")
+	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
+	if isServer {
+		workDir = "../../"
+		fmt.Println("Contains /server")
+	} else if isData  {
+		workDir = "../../"
+		fmt.Println("Contains /data")
+	} else if isRoot {
+		fmt.Println("is root dir")
+		workDir = ""
+	}
+
+	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
+
+	finalPath := path.Join(workDir, socketFile)
+
+	finalPath = path.Join(currentDir, finalPath)
+
+	os.Remove(finalPath)
 
 	time.Sleep(1 * time.Second)
-	err := os.MkdirAll(filepath.Join(workDir, socketFile), os.FileMode(0755))
+	err := os.MkdirAll(finalPath, os.FileMode(0755))
 	if err != nil {
 		log.Fatalf("Failed to start IPC Server at %s", socketFile)
 	}
 
-	os.Remove(socketFile)
+	os.Remove(finalPath)
 
 	defer func() {
-		os.Remove(socketFile)
+		os.Remove(finalPath)
 	}()
 
 	go func() {
-		sock, err := net.Listen("unix", socketFile)
+		sock, err := net.Listen("unix", finalPath)
 		if err != nil {
 			log.Fatalf("Failed to start IPC Server at %s", socketFile)
 		}

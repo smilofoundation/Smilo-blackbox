@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -14,9 +13,10 @@ import (
 	"github.com/tv42/httpunix"
 
 	"Smilo-blackbox/src/server/config"
+	"path/filepath"
+	"path"
 	"strings"
 	"fmt"
-	"path"
 )
 
 func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
@@ -62,17 +62,17 @@ func getSocketClient() *http.Client {
 	}
 
 	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
+
 	finalPath := path.Join(workDir, socketFile)
 
 	finalPath = path.Join(currentDir, finalPath)
 
-
-	if _, err := os.Stat(socketFile); os.IsNotExist(err) {
+	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
 		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ",err)
 		os.Exit(1)
 	}
 
-	u.RegisterLocation("myservice", socketFile)
+	u.RegisterLocation("myservice", finalPath)
 	var client = http.Client{
 		Transport: u,
 	}
