@@ -3,9 +3,11 @@ package config
 import (
 	"testing"
 
-	"Smilo-blackbox/src/crypt"
-	"github.com/stretchr/testify/require"
 	"encoding/base64"
+
+	"github.com/stretchr/testify/require"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 const configFile = "./config_test.conf"

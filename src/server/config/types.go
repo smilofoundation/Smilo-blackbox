@@ -36,7 +36,7 @@ type Config struct {
 	HostName   string `json:"hostName"`
 	Peers      []Peer `json:"peer"`
 	Keys       Keys   `json:"keys"`
-	UnixSocket string `json:"unixSocketFile"`
+	UnixSocket string `json:"socket"`
 }
 
 //End of Config json file specification

@@ -5,10 +5,10 @@ import (
 
 	"github.com/asdine/storm"
 
-	"Smilo-blackbox/src/server/config"
-	"fmt"
-	"strings"
 	"path"
+	"strings"
+
+	"Smilo-blackbox/src/server/config"
 )
 
 var db *storm.DB
@@ -29,12 +29,9 @@ func Start() {
 	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
 	if isServer {
 		workDir = "../../"
-		fmt.Println("db, Contains /server")
 	} else if isData {
 		workDir = "../../"
-		fmt.Println("db, Contains /data")
 	} else if isRoot {
-		fmt.Println("db, is root dir")
 		workDir = ""
 	}
 
@@ -42,7 +39,7 @@ func Start() {
 
 	newDBFile = path.Join(newDBFile, dbFile)
 
-	fmt.Println("Opening DB: ", newDBFile)
+	log.Info("Opening DB: ", newDBFile)
 	db, err = storm.Open(newDBFile)
 
 	if err != nil {

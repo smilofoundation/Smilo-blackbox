@@ -22,9 +22,9 @@ import (
 	"github.com/asdine/storm"
 	"github.com/tidwall/buntdb"
 
-	"Smilo-blackbox/src/server/config"
 	"strings"
-	"fmt"
+
+	"Smilo-blackbox/src/server/config"
 )
 
 var (
@@ -46,13 +46,13 @@ var (
 )
 
 func init() {
-	//var err error
-	//StormDBPeers, err = storm.Open("blackbox-peers.db")
-	//if err != nil {
-	//	defer StormDBPeers.Close()
-	//	log.WithError(err).Error("Could not open StormDBPeers")
-	//	os.Exit(1)
-	//}
+	var err error
+	StormDBPeers, err = storm.Open("blackbox-peers.db")
+	if err != nil {
+		defer StormDBPeers.Close()
+		log.WithError(err).Error("Could not open StormDBPeers")
+		os.Exit(1)
+	}
 
 }
 
@@ -141,12 +141,9 @@ func StartServer() {
 	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
 	if isServer {
 		workDir = "../../"
-		fmt.Println("Contains /server")
-	} else if isData  {
+	} else if isData {
 		workDir = "../../"
-		fmt.Println("Contains /data")
 	} else if isRoot {
-		fmt.Println("is root dir")
 		workDir = ""
 	}
 
