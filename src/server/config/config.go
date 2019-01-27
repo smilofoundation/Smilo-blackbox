@@ -11,6 +11,7 @@ import (
 
 	"Smilo-blackbox/src/crypt"
 	"github.com/spf13/pflag"
+	"Smilo-blackbox/src/server/sync"
 )
 
 var (
@@ -94,11 +95,11 @@ func parseConfigValues() {
 		}
 		crypt.PutKeyPair(crypt.KeyPair{PrimaryKey: primaryKey, PublicKey: publicKey})
 	}
-	/*
-		for _, peerdata := range config.Peers {
-			sync.PeerAdd(peerdata.URL)
-		}
-	*/
+
+	for _, peerdata := range config.Peers {
+		sync.PeerAdd(peerdata.URL)
+	}
+
 }
 
 func ReadPrimaryKey(pkFile string) ([]byte, error) {

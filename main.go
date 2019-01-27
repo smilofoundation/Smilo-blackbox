@@ -11,6 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
+	"Smilo-blackbox/src/server/sync"
 )
 
 var (
@@ -45,6 +46,7 @@ func main() {
 		} else {
 			server.StartServer()
 			server.InitP2p()
+			sync.StartSync()
 		}
 		return nil
 	}
