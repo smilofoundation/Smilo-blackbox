@@ -9,8 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 
-	"Smilo-blackbox/src/crypt"
 	"github.com/spf13/pflag"
+
+	"Smilo-blackbox/src/crypt"
+
 	"Smilo-blackbox/src/server/sync"
 )
 
@@ -34,7 +36,6 @@ var (
 	IsTLS    = cli.StringFlag{Name: "tls", Value: "", Usage: ""}
 	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
 	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
-
 
 	MaxPeersNetwork = cli.StringFlag{Name: "maxpeersnetwork", Value: "", Usage: ""}
 
@@ -61,17 +62,18 @@ func setCommandList(app *cli.App) {
 
 }
 
-
 func mergeConfigValues() {
-	setValueOnNotDefault("port", string(config.Server.Port))
-	setValueOnNotDefault("socket", config.UnixSocket)
-	setValueOnNotDefault("hostname", string(config.HostName))
+	setValueOnNotDefault("port", Port.Value)
+	setValueOnNotDefault("socket", Socket.Value)
+	setValueOnNotDefault("hostname", HostName.Value)
 }
 
 func setValueOnNotDefault(flagName string, flagValue string) {
 	fg := pflag.Lookup(flagName)
-	if fg.Value.String() == fg.DefValue && flagValue != "" {
+	if fg != nil && fg.Value != nil && fg.Value.String() == fg.DefValue && flagValue != "" {
 		fg.Value.Set(flagValue)
+	} else {
+		log.Warn("setValueOnNotDefault, ", "flagName, ", flagName, ", flagValue, ", flagValue)
 	}
 }
 

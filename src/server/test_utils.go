@@ -12,11 +12,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/tv42/httpunix"
 
-	"Smilo-blackbox/src/server/config"
-	"path/filepath"
 	"path"
+	"path/filepath"
 	"strings"
-	"fmt"
+
+	"Smilo-blackbox/src/server/config"
 )
 
 func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
@@ -43,7 +43,6 @@ func getSocketClient() *http.Client {
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 
-
 	currentDir, _ := os.Getwd()
 	var workDir string
 
@@ -52,12 +51,9 @@ func getSocketClient() *http.Client {
 	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
 	if isServer {
 		workDir = "../../"
-		fmt.Println("Contains /server")
-	} else if isData  {
+	} else if isData {
 		workDir = "../../"
-		fmt.Println("Contains /data")
 	} else if isRoot {
-		fmt.Println("is root dir")
 		workDir = ""
 	}
 
@@ -68,7 +64,7 @@ func getSocketClient() *http.Client {
 	finalPath = path.Join(currentDir, finalPath)
 
 	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
-		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ",err)
+		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ", err)
 		os.Exit(1)
 	}
 

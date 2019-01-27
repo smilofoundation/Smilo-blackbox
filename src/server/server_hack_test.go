@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 	"testing"
+
 	"Smilo-blackbox/src/server/api"
 
 	"encoding/base64"
@@ -10,14 +11,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"Smilo-blackbox/src/server/config"
 	"os"
 	"time"
+
+	"Smilo-blackbox/src/server/config"
 )
 
 func TestMain(m *testing.M) {
-	removeIfExists("./blackbox.db")
-	removeIfExists("./blackbox.ipc")
+	//removeIfExists("./blackbox.db")
+	//removeIfExists("./blackbox.ipc")
 	config.LoadConfig("./server_test.conf")
 
 	go StartServer()

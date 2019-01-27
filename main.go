@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"time"
-
 	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server"
 	"Smilo-blackbox/src/server/config"
+	"os"
+
+	"fmt"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
@@ -34,8 +34,8 @@ func main() {
 	defer handlePanic()
 
 	app := cli.NewApp()
-	config.Init(app)
 	config.LoadConfig(config.ConfigFile.Value)
+	config.Init(app)
 
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
