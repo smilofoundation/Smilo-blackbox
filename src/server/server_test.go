@@ -16,6 +16,8 @@ import (
 
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
+	"Smilo-blackbox/src/server/sync"
+	"Smilo-blackbox/src/crypt"
 )
 
 var testEncryptedTransaction = createEncryptedTransaction()
@@ -83,6 +85,16 @@ func TestPublicAPI(t *testing.T) {
 				statusCode:  204,
 				expectedErr: nil,
 			},
+			{
+				name:        "test party info",
+				endpoint:    "/partyinfo",
+				method:      "POST",
+				body:        "{ \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\" }",
+				contentType: "application/json",
+				response:    "",
+				statusCode:  200,
+				expectedErr: nil,
+			},
 		}
 
 		for _, test := range testCases {
@@ -107,6 +119,22 @@ func TestPublicAPI(t *testing.T) {
 
 				require.Equal(t, test.statusCode, response.StatusCode)
 
+				if test.endpoint == "/partyinfo" {
+					var respJson sync.PartyInfoResponse
+					err := json.Unmarshal([]byte(response.Body), &respJson)
+					if err == nil {
+						log.Debug("Public Key: %s Proof: %s", respJson.PublicKeys[0].Key, respJson.PublicKeys[0].Proof)
+						require.Equal(t, respJson.PublicKeys[0].Key, "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
+						pubKey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
+						proof, _ := base64.StdEncoding.DecodeString(respJson.PublicKeys[0].Proof)
+						ret := crypt.DecryptPayload(crypt.ComputeSharedKey(crypt.GetPrivateKey(pubKey), pubKey), proof, nil)
+						require.NotEmpty(t, ret)
+						log.Debug("Unboxed Proof: %s", ret)
+					} else {
+						log.Debug("Invalid json response.\n %s", response)
+						t.Fail()
+					}
+				}
 			})
 		}
 

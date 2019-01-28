@@ -11,18 +11,28 @@ var empty_return = []byte("")
 var empty_nounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000")
 
 type KeyPair struct {
-	PrimaryKey []byte
+	PrivateKey []byte
 	PublicKey  []byte
 }
 
-var keys = make(map[string][]byte)
+var keys = make(map[string]KeyPair)
+var pairs = make([]KeyPair,0,128)
 
 func PutKeyPair(pair KeyPair) {
-	keys[string(pair.PublicKey)] = pair.PrimaryKey
+	keys[string(pair.PublicKey)] = pair
+	pairs = append(pairs, pair)
+}
+
+func GetPublicKeys() [][]byte {
+	publicKeys := make([][]byte, 0, len(pairs))
+	for _, pair := range pairs {
+		publicKeys = append(publicKeys, pair.PublicKey)
+	}
+	return publicKeys
 }
 
 func GetPrivateKey(publicKey []byte) []byte {
-	return keys[string(publicKey)]
+	return keys[string(publicKey)].PrivateKey
 }
 
 func NewRandomKey() ([]byte, error) {

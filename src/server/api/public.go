@@ -14,12 +14,31 @@ import (
 	"Smilo-blackbox/src/server/encoding"
 
 	"github.com/gorilla/mux"
+	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/server/sync"
 )
 
 //TODO
-// It receives a POST request with a binary encoded PartyInfo, updates it and returns updated PartyInfo encoded.
+// It receives a POST request with a json containing url and key, returns local publicKeys and a proof that private key is known.
 func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
-
+	var jsonReq sync.PartyInfoRequest
+	body, _ := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	err := json.Unmarshal(body, &jsonReq)
+	if err != nil {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		return
+	}
+    key, err := base64.StdEncoding.DecodeString(jsonReq.SenderKey)
+    publicKeys := crypt.GetPublicKeys()
+    responseJson := sync.PartyInfoResponse{ PublicKeys: make([]sync.ProvenPublicKey,0,len(publicKeys))}
+    for _,pubkey := range publicKeys {
+    	sharedKey := crypt.ComputeSharedKey(crypt.GetPrivateKey(pubkey), key)
+    	randomPayload, _ := crypt.NewRandomKey()
+        responseJson.PublicKeys = append(responseJson.PublicKeys, sync.ProvenPublicKey{ Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nil))})
+	}
+	json.NewEncoder(w).Encode(responseJson)
+	w.Header().Set("Content-Type", "application/json")
 }
 
 // It receives a POST request with a payload and returns Status Code 201 with a payload generated hash, on error returns Status Code 500.

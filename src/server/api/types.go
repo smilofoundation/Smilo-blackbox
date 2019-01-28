@@ -46,10 +46,6 @@ type UpdatePartyInfo struct {
 	Parties    map[string]bool   `json:"parties"`
 }
 
-type PartyInfoResponse struct {
-	Payload []byte `json:"payload"`
-}
-
 func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {
 	msgs := make([]string, 0, len(e.To)+2)
 	payload, err := base64.StdEncoding.DecodeString(e.Payload)

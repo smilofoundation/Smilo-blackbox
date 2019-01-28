@@ -8,13 +8,14 @@ import (
 	"path"
 	"strings"
 
-	"Smilo-blackbox/src/server/config"
 )
 
 var db *storm.DB
 
-func init() {
-	Start()
+var dbFile string
+
+func SetFilename(filename string) {
+	dbFile = filename
 }
 
 func Start() {
@@ -22,10 +23,10 @@ func Start() {
 	currentDir, _ := os.Getwd()
 	var workDir string
 	var newDBFile string
-	var dbFile = config.DBFile.Value
 
 	isServer := strings.HasSuffix(currentDir, "/server")
 	isData := strings.HasSuffix(currentDir, "/data")
+	isConfig := strings.HasSuffix(currentDir, "/config")
 	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
 	if isServer {
 		workDir = "../../"
@@ -33,6 +34,8 @@ func Start() {
 		workDir = "../../"
 	} else if isRoot {
 		workDir = ""
+	} else if isConfig {
+		workDir = "../../../"
 	}
 
 	newDBFile = path.Join(currentDir, workDir)

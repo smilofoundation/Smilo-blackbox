@@ -9,6 +9,8 @@ import (
 
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
+	"Smilo-blackbox/src/server/sync"
+	"bytes"
 )
 
 const BlackBoxVersion = "Smilo Black Box 0.1.0"
@@ -59,5 +61,13 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 }
 
 func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transaction, recipient []byte) {
-
+	url, err := sync.GetPeerURL(recipient)
+	if err == nil {
+		_, err := new(http.Client).Post(url + "/push","application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.Encoded_Payload))))
+        if err != nil {
+        	log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
+		}
+	}
 }
+
+

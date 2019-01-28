@@ -14,6 +14,7 @@ import (
 	"Smilo-blackbox/src/crypt"
 
 	"Smilo-blackbox/src/server/sync"
+	"Smilo-blackbox/src/data"
 )
 
 var (
@@ -89,13 +90,14 @@ func LoadConfig(configPath string) error {
 }
 
 func parseConfigValues() {
+	data.SetFilename(DBFile.Value)
 	for _, keyPair := range config.Keys.KeyData {
 		primaryKey, err := ReadPrimaryKey(keyPair.PrivateKeyFile)
 		publicKey, err2 := ReadPublicKey(keyPair.PublicKeyFile)
 		if err != nil || err2 != nil {
 			continue
 		}
-		crypt.PutKeyPair(crypt.KeyPair{PrimaryKey: primaryKey, PublicKey: publicKey})
+		crypt.PutKeyPair(crypt.KeyPair{PrivateKey: primaryKey, PublicKey: publicKey})
 	}
 
 	for _, peerdata := range config.Peers {

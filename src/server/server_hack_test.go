@@ -15,11 +15,11 @@ import (
 	"time"
 
 	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/server/sync"
 )
 
 func TestMain(m *testing.M) {
-	//removeIfExists("./blackbox.db")
-	//removeIfExists("./blackbox.ipc")
 	config.LoadConfig("./server_test.conf")
 
 	go StartServer()
@@ -29,6 +29,14 @@ func TestMain(m *testing.M) {
 	time.Sleep(2000000000)
 	retcode := m.Run()
 	os.Exit(retcode)
+}
+
+func TestGetPublicKeysFromOtherNode(t *testing.T) {
+	t.SkipNow()
+	keys, err := sync.GetPublicKeysFromOtherNode("https://localhost:9000",crypt.GetPublicKeys()[0])
+    require.Nil(t, err, err)
+	require.Equal(t, len(keys), 1)
+	require.Equal(t, keys[0], crypt.GetPublicKeys()[0])
 }
 
 func TestUnixSend(t *testing.T) {

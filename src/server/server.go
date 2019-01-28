@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/data"
 )
 
 var (
@@ -90,6 +91,7 @@ func StartServer() {
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
 	log.Info("Server starting --> " + port)
+	data.Start()
 
 	if isTLS != "" {
 		log.Info("Will start TLS Mode")
@@ -191,7 +193,7 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	publicAPI.HandleFunc("/push", api.Push).Methods("POST")
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
-	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("GET")
+	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("POST")
 
 	// Restrict to IPC
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")
