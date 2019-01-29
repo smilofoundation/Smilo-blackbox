@@ -194,6 +194,7 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/push", api.Push).Methods("POST")
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
 	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("POST")
+	publicAPI.NotFoundHandler = http.HandlerFunc(api.UnknownRequest)
 
 	// Restrict to IPC
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")

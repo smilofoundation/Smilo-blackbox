@@ -32,8 +32,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestGetPublicKeysFromOtherNode(t *testing.T) {
-	t.SkipNow()
-	keys, err := sync.GetPublicKeysFromOtherNode("https://localhost:9000",crypt.GetPublicKeys()[0])
+	keys, err := sync.GetPublicKeysFromOtherNode("http://localhost:9001",crypt.GetPublicKeys()[0])
     require.Nil(t, err, err)
 	require.Equal(t, len(keys), 1)
 	require.Equal(t, keys[0], crypt.GetPublicKeys()[0])

@@ -15,6 +15,7 @@ import (
 
 	"Smilo-blackbox/src/server/sync"
 	"Smilo-blackbox/src/data"
+	"strconv"
 )
 
 var (
@@ -99,11 +100,10 @@ func parseConfigValues() {
 		}
 		crypt.PutKeyPair(crypt.KeyPair{PrivateKey: primaryKey, PublicKey: publicKey})
 	}
-
+    Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
 	for _, peerdata := range config.Peers {
 		sync.PeerAdd(peerdata.URL)
 	}
-
 }
 
 func ReadPrimaryKey(pkFile string) ([]byte, error) {

@@ -35,6 +35,10 @@ func Api(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func UnknownRequest(w http.ResponseWriter, r *http.Request) {
+	log.Debug("UnknowEndPoint")
+}
+
 func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
 	payload := RetrieveAndDecryptPayload(w, r, key, to)
 	if payload != nil {
