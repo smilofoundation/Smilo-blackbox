@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	    peerChannel          = make(chan *Peer)
+	    peerChannel          = make(chan *Peer,1024)
 		peerList            []*Peer
 		publicKeysHashMap    = NewSafePublicKeyMap()
 		keepRunning          = true
@@ -131,7 +131,7 @@ func peerAddAll(urls ...string) {
 }
 
 func PeerAdd(url string) {
-	go func() { peerChannel <- &Peer{url:url, publicKeys:make([][]byte, 0, 128), failures:0, tries:0} }()
+		peerChannel <- &Peer{url:url, publicKeys:make([][]byte, 0, 128), failures:0, tries:0}
 }
 
 func GetPeers() []string {
