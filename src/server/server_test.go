@@ -16,7 +16,7 @@ import (
 
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
-	"Smilo-blackbox/src/server/sync"
+	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/crypt"
 )
 
@@ -89,7 +89,7 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test party info",
 				endpoint:    "/partyinfo",
 				method:      "POST",
-				body:        "{ \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\" }",
+				body:        "{ \"url\": \"http://localhost:9000\", \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\" }",
 				contentType: "application/json",
 				response:    "",
 				statusCode:  200,
@@ -120,7 +120,7 @@ func TestPublicAPI(t *testing.T) {
 				require.Equal(t, test.statusCode, response.StatusCode)
 
 				if test.endpoint == "/partyinfo" {
-					var respJson sync.PartyInfoResponse
+					var respJson syncpeer.PartyInfoResponse
 					err := json.Unmarshal([]byte(response.Body), &respJson)
 					if err == nil {
 						log.Debug("Public Key: %s Proof: %s", respJson.PublicKeys[0].Key, respJson.PublicKeys[0].Proof)

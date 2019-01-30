@@ -13,7 +13,7 @@ import (
 
 	"Smilo-blackbox/src/crypt"
 
-	"Smilo-blackbox/src/server/sync"
+	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/data"
 	"strconv"
 )
@@ -102,7 +102,7 @@ func parseConfigValues() {
 	}
     Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
 	for _, peerdata := range config.Peers {
-		sync.PeerAdd(peerdata.URL)
+		syncpeer.PeerAdd(peerdata.URL)
 	}
 }
 
