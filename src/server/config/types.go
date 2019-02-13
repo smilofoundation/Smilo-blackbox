@@ -37,6 +37,8 @@ type Config struct {
 	Peers      []Peer `json:"peer"`
 	Keys       Keys   `json:"keys"`
 	UnixSocket string `json:"socket"`
+	DBFile     string `json:"dbfile,omitempty"`
+	PeersDBFile     string `json:"peersdbfile,omitempty"`
 }
 
 //End of Config json file specification

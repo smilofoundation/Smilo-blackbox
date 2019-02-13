@@ -4,19 +4,15 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/tv42/httpunix"
 
-	"path"
 	"path/filepath"
-	"strings"
-
 	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/utils"
 )
 
 func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
@@ -43,25 +39,9 @@ func getSocketClient() *http.Client {
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
 
-	currentDir, _ := os.Getwd()
-	var workDir string
-
-	isServer := strings.HasSuffix(currentDir, "/server")
-	isData := strings.HasSuffix(currentDir, "/data")
-	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
-	if isServer {
-		workDir = "../../"
-	} else if isData {
-		workDir = "../../"
-	} else if isRoot {
-		workDir = ""
-	}
-
 	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
 
-	finalPath := path.Join(workDir, socketFile)
-
-	finalPath = path.Join(currentDir, finalPath)
+	finalPath := utils.BuildFilename(socketFile)
 
 	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
 		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ", err)
@@ -95,36 +75,6 @@ func doUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers ht
 	return ret
 }
 
-func doDeleteRequest(t *testing.T, url string) (string, int) {
-	client := new(http.Client)
-	req, _ := http.NewRequest("DELETE", url, http.NoBody)
-	response, err := client.Do(req)
-	ret := getResponseData(t, err, response)
-	require.NotEmpty(t, ret)
-	return ret, response.StatusCode
-}
-
-func doPostRequest(t *testing.T, _url string, params url.Values) string {
-	client := new(http.Client)
-	response, err := client.PostForm(_url, params)
-	ret := getResponseData(t, err, response)
-	return ret
-}
-
-func doPostJsonRequest(t *testing.T, _url string, json string) string {
-	client := new(http.Client)
-	response, err := client.Post(_url, "application/json", bytes.NewBuffer([]byte(json)))
-	ret := getResponseData(t, err, response)
-	return ret
-}
-
-func doRequest(t *testing.T, url string) string {
-	client := new(http.Client)
-	response, err := client.Get(url)
-	ret := getResponseData(t, err, response)
-	return ret
-}
-
 func getResponseData(t *testing.T, err error, response *http.Response) string {
 	ret := ""
 	defer func() {
@@ -145,8 +95,3 @@ func getResponseData(t *testing.T, err error, response *http.Response) string {
 	return ret
 }
 
-func removeIfExists(file string) {
-	if _, err := os.Stat(file); !os.IsNotExist(err) {
-		os.Remove(file)
-	}
-}

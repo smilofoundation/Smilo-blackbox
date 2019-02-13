@@ -27,6 +27,10 @@ func init() {
 	initLog()
 }
 
+func ComputePublicKey(secret []byte) ([]byte, error) {
+	return tweetnacl.ScalarMultBase(secret)
+}
+
 func GenerateKeys(generateKeys string) {
 	log.WithField("generateKeys", generateKeys).Info("Going to generate encryption keys")
 	files := strings.Split(generateKeys, ",")

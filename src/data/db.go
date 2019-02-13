@@ -5,9 +5,6 @@ import (
 
 	"github.com/asdine/storm"
 
-	"path"
-	"strings"
-
 )
 
 var db *storm.DB
@@ -20,30 +17,9 @@ func SetFilename(filename string) {
 
 func Start() {
 	var err error
-	currentDir, _ := os.Getwd()
-	var workDir string
-	var newDBFile string
 
-	isServer := strings.HasSuffix(currentDir, "/server")
-	isData := strings.HasSuffix(currentDir, "/data")
-	isConfig := strings.HasSuffix(currentDir, "/config")
-	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
-	if isServer {
-		workDir = "../../"
-	} else if isData {
-		workDir = "../../"
-	} else if isRoot {
-		workDir = ""
-	} else if isConfig {
-		workDir = "../../../"
-	}
-
-	newDBFile = path.Join(currentDir, workDir)
-
-	newDBFile = path.Join(newDBFile, dbFile)
-
-	log.Info("Opening DB: ", newDBFile)
-	db, err = storm.Open(newDBFile)
+	log.Info("Opening DB: ", dbFile)
+	db, err = storm.Open(dbFile)
 
 	if err != nil {
 		defer db.Close()
@@ -51,3 +27,4 @@ func Start() {
 		os.Exit(1)
 	}
 }
+

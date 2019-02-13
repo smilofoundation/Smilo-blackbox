@@ -8,10 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"Smilo-blackbox/src/utils"
 )
 
 func TestMain(m *testing.M) {
-	SetFilename("blackbox.db")
+	SetFilename(utils.BuildFilename("blackbox.db"))
 	Start()
 	time.Sleep(100000000)
 	retcode := m.Run()

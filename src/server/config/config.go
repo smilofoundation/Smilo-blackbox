@@ -9,13 +9,12 @@ import (
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
 
-	"github.com/spf13/pflag"
-
 	"Smilo-blackbox/src/crypt"
 
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/data"
 	"strconv"
+	"Smilo-blackbox/src/utils"
 )
 
 var (
@@ -25,6 +24,7 @@ var (
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
 	ConfigFile   = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
 	DBFile       = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	PeersDBFile  = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
 	Port         = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
 	Socket       = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
 	OtherNodes   = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
@@ -56,28 +56,28 @@ func initLog() {
 func Init(app *cli.App) {
 	initLog()
 	setCommandList(app)
-	mergeConfigValues()
+	//mergeConfigValues()
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
 
 }
 
-func mergeConfigValues() {
-	setValueOnNotDefault("port", Port.Value)
-	setValueOnNotDefault("socket", Socket.Value)
-	setValueOnNotDefault("hostname", HostName.Value)
-}
+//func mergeConfigValues() {
+//	setValueOnNotDefault("port", Port.Value)
+//	setValueOnNotDefault("socket", Socket.Value)
+//	setValueOnNotDefault("hostname", HostName.Value)
+//}
 
-func setValueOnNotDefault(flagName string, flagValue string) {
-	fg := pflag.Lookup(flagName)
-	if fg != nil && fg.Value != nil && fg.Value.String() == fg.DefValue && flagValue != "" {
-		fg.Value.Set(flagValue)
-	} else {
-		log.Warn("setValueOnNotDefault, ", "flagName, ", flagName, ", flagValue, ", flagValue)
-	}
-}
+//func setValueOnNotDefault(flagName string, flagValue string) {
+//	fg := pflag.Lookup(flagName)
+//	if fg != nil && fg.Value != nil && fg.Value.String() == fg.DefValue && flagValue != "" {
+//		fg.Value.Set(flagValue)
+//	} else {
+//		log.Warn("setValueOnNotDefault, ", "flagName, ", flagName, ", flagValue, ", flagValue)
+//	}
+//}
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
@@ -91,7 +91,6 @@ func LoadConfig(configPath string) error {
 }
 
 func parseConfigValues() {
-	data.SetFilename(DBFile.Value)
 	for _, keyPair := range config.Keys.KeyData {
 		primaryKey, err := ReadPrimaryKey(keyPair.PrivateKeyFile)
 		publicKey, err2 := ReadPublicKey(keyPair.PublicKeyFile)
@@ -101,6 +100,16 @@ func parseConfigValues() {
 		crypt.PutKeyPair(crypt.KeyPair{PrivateKey: primaryKey, PublicKey: publicKey})
 	}
     Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
+    if config.UnixSocket != "" {
+		Socket.Value = config.UnixSocket
+	}
+	if config.DBFile != "" {
+		DBFile.Value = config.DBFile
+	}
+	if config.PeersDBFile != "" {
+		PeersDBFile.Value = config.PeersDBFile
+	}
+	data.SetFilename(utils.BuildFilename(DBFile.Value))
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)
 	}

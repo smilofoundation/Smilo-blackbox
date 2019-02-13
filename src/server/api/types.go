@@ -40,10 +40,8 @@ type ResendRequest struct {
 	Key       string `json:"key,omitempty"`
 }
 
-type UpdatePartyInfo struct {
+type PeerUrl struct {
 	Url        string            `json:"url"`
-	Recipients map[string][]byte `json:"recipients"`
-	Parties    map[string]bool   `json:"parties"`
 }
 
 func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {

@@ -9,7 +9,6 @@ import (
 
 	"crypto/tls"
 	"path"
-	"path/filepath"
 
 	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gorilla/mux"
@@ -22,10 +21,9 @@ import (
 	"github.com/asdine/storm"
 	"github.com/tidwall/buntdb"
 
-	"strings"
-
 	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/utils"
 )
 
 var (
@@ -46,9 +44,9 @@ var (
 
 )
 
-func init() {
+func initServer() {
 	var err error
-	StormDBPeers, err = storm.Open("blackbox-peers.db")
+	StormDBPeers, err = storm.Open(utils.BuildFilename(config.PeersDBFile.Value))
 	if err != nil {
 		defer StormDBPeers.Close()
 		log.WithError(err).Error("Could not open StormDBPeers")
@@ -87,7 +85,7 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 
 func StartServer() {
 	port, isTLS, workDir := config.Port.Value, config.IsTLS.Value, config.WorkDir.Value
-
+	initServer()
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
 	log.Info("Server starting --> " + port)
@@ -136,31 +134,14 @@ func StartServer() {
 			}
 		}()
 	}
-	currentDir, _ := os.Getwd()
 
-	isServer := strings.HasSuffix(currentDir, "/server")
-	isData := strings.HasSuffix(currentDir, "/data")
-	isRoot := strings.HasSuffix(currentDir, "/Smilo-blackbox")
-	if isServer {
-		workDir = "../../"
-	} else if isData {
-		workDir = "../../"
-	} else if isRoot {
-		workDir = ""
-	}
-
-	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
-
-	finalPath := path.Join(workDir, socketFile)
-
-	finalPath = path.Join(currentDir, finalPath)
-
+    finalPath := utils.BuildFilename(config.Socket.Value)
 	os.Remove(finalPath)
 
 	time.Sleep(1 * time.Second)
 	err := os.MkdirAll(finalPath, os.FileMode(0755))
 	if err != nil {
-		log.Fatalf("Failed to start IPC Server at %s", socketFile)
+		log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
 	}
 
 	os.Remove(finalPath)
@@ -172,9 +153,9 @@ func StartServer() {
 	go func() {
 		sock, err := net.Listen("unix", finalPath)
 		if err != nil {
-			log.Fatalf("Failed to start IPC Server at %s", socketFile)
+			log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
 		}
-		os.Chmod(socketFile, 0600)
+		os.Chmod(finalPath, 0600)
 
 		err = priv.Serve(sock)
 		if err != nil {

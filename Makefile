@@ -83,3 +83,13 @@ format:  # Formats the code. Must have goimports installed (use make install-lin
 	goimports -w -local go-smilo main.go
 	gofmt -s -w main.go
 
+integration-test: build
+	./blackbox --configfile ./test/test1.conf &
+	./blackbox --configfile ./test/test2.conf &
+	./blackbox --configfile ./test/test3.conf &
+	./blackbox --configfile ./test/test4.conf &
+	./blackbox --configfile ./test/test5.conf &
+	go test ./test/... -timeout=10m
+	killall -1 blackbox
+
+
