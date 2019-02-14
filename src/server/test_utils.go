@@ -33,26 +33,30 @@ func doUnixGetJsonRequest(t *testing.T, endpoint string, json string) string {
 }
 
 func getSocketClient() *http.Client {
+
+	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
+
+
+	client := GetSocketClient(socketFile)
+	return &client
+}
+
+func GetSocketClient(socketFile string) http.Client {
+	finalPath := utils.BuildFilename(socketFile)
 	u := &httpunix.Transport{
 		DialTimeout:           100 * time.Millisecond,
 		RequestTimeout:        1 * time.Second,
 		ResponseHeaderTimeout: 1 * time.Second,
 	}
-
-	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
-
-	finalPath := utils.BuildFilename(socketFile)
-
 	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
 		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ", err)
 		os.Exit(1)
 	}
-
 	u.RegisterLocation("myservice", finalPath)
 	var client = http.Client{
 		Transport: u,
 	}
-	return &client
+	return client
 }
 
 func doUnixRequest(t *testing.T, endpoint string) string {
