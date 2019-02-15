@@ -14,10 +14,10 @@ import (
 	"github.com/drewolson/testflight"
 	"github.com/stretchr/testify/require"
 
+	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
-	"Smilo-blackbox/src/crypt"
 )
 
 var testEncryptedTransaction = createEncryptedTransaction()

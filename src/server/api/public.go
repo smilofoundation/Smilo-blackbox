@@ -14,6 +14,7 @@ import (
 	"Smilo-blackbox/src/server/encoding"
 
 	"github.com/gorilla/mux"
+
 	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server/syncpeer"
 )
@@ -29,17 +30,17 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
 		return
 	}
-    key, err := base64.StdEncoding.DecodeString(jsonReq.SenderKey)
-    publicKeys := crypt.GetPublicKeys()
-    responseJson := syncpeer.PartyInfoResponse{ PublicKeys: make([]syncpeer.ProvenPublicKey,0,len(publicKeys)), PeerURLs: syncpeer.GetPeers()}
-    for _,pubkey := range publicKeys {
-    	sharedKey := crypt.ComputeSharedKey(crypt.GetPrivateKey(pubkey), key)
-    	randomPayload, _ := crypt.NewRandomKey()
-        responseJson.PublicKeys = append(responseJson.PublicKeys, syncpeer.ProvenPublicKey{ Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nil))})
+	key, err := base64.StdEncoding.DecodeString(jsonReq.SenderKey)
+	publicKeys := crypt.GetPublicKeys()
+	responseJson := syncpeer.PartyInfoResponse{PublicKeys: make([]syncpeer.ProvenPublicKey, 0, len(publicKeys)), PeerURLs: syncpeer.GetPeers()}
+	for _, pubkey := range publicKeys {
+		sharedKey := crypt.ComputeSharedKey(crypt.GetPrivateKey(pubkey), key)
+		randomPayload, _ := crypt.NewRandomKey()
+		responseJson.PublicKeys = append(responseJson.PublicKeys, syncpeer.ProvenPublicKey{Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nil))})
 	}
 	json.NewEncoder(w).Encode(responseJson)
 	w.Header().Set("Content-Type", "application/json")
-    syncpeer.PeerAdd(jsonReq.SenderURL)
+	syncpeer.PeerAdd(jsonReq.SenderURL)
 }
 
 // It receives a POST request with a payload and returns Status Code 201 with a payload generated hash, on error returns Status Code 500.
@@ -181,7 +182,7 @@ func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 	jsonReq := PeerUrl{}
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &jsonReq)
-    if err != nil {
+	if err != nil {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
 		return
 	}
@@ -193,7 +194,7 @@ func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 // Receive a GET request with index on path and return Status Code 200 and Peer json containing url, Status Code 404 if not found.
 func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	publicKey, err:= base64.URLEncoding.DecodeString(params["index"])
+	publicKey, err := base64.URLEncoding.DecodeString(params["index"])
 	if err != nil {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Public Key (%s) is not a valid BASE64 key.\n", r.URL, params["index"]))
 		return
@@ -203,7 +204,7 @@ func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusNotFound, fmt.Sprintf("Public key: %s not found\n", params["index"]))
 		return
 	}
-	jsonResponse := PeerUrl{Url:url}
+	jsonResponse := PeerUrl{Url: url}
 	out, _ := json.Marshal(jsonResponse)
 	w.WriteHeader(http.StatusOK)
 	w.Write(out)

@@ -1,29 +1,30 @@
 package syncpeer
 
 import (
-	"errors"
-	"Smilo-blackbox/src/crypt"
-	"io/ioutil"
-	"encoding/json"
-	"encoding/base64"
-	"net/http"
 	"bytes"
-	"time"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"io/ioutil"
+	"net/http"
 	sync2 "sync"
+	"time"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 var (
-	    peerChannel          = make(chan *Peer,1024)
-		peerList            []*Peer
-		publicKeysHashMap    = NewSafePublicKeyMap()
-		keepRunning          = true
-		mutex             sync2.RWMutex
-		timeBetweenCycles    = 13 * time.Second
-		timeBetweenRequests  = 2 * time.Second
+	peerChannel         = make(chan *Peer, 1024)
+	peerList            []*Peer
+	publicKeysHashMap   = NewSafePublicKeyMap()
+	keepRunning         = true
+	mutex               sync2.RWMutex
+	timeBetweenCycles   = 13 * time.Second
+	timeBetweenRequests = 2 * time.Second
 )
 
 func StartSync() {
-    go sync()
+	go sync()
 }
 
 func StopSync() {
@@ -67,19 +68,19 @@ func updatePeersList() {
 	}
 	for {
 		select {
-		    case p := <- peerChannel:
-		    	alreadyExists := false
-				for _, peer := range peerList {
-					if peer.url == p.url {
-						alreadyExists = true
-						break
-					}
+		case p := <-peerChannel:
+			alreadyExists := false
+			for _, peer := range peerList {
+				if peer.url == p.url {
+					alreadyExists = true
+					break
 				}
-				if !alreadyExists {
-					peerList = append(peerList, p)
-				}
-			default:
-				return
+			}
+			if !alreadyExists {
+				peerList = append(peerList, p)
+			}
+		default:
+			return
 		}
 	}
 }
@@ -110,7 +111,7 @@ func updatePeer(i int) {
 		peerList[i].tries = 0
 		peerList[i].publicKeys = publicKeys
 	}
-	for j, _ := range publicKeys {
+	for j := range publicKeys {
 		publicKeysHashMap.Store(string(publicKeys[j]), peerList[i])
 	}
 }
@@ -119,7 +120,7 @@ func queryPeer(url string) ([][]byte, error) {
 	retPublicKeys, urls, err := GetPublicKeysFromOtherNode(url, crypt.GetPublicKeys()[0])
 	peerAddAll(urls...)
 	if err != nil {
-		return make([][]byte,0,1), err
+		return make([][]byte, 0, 1), err
 	}
 	return retPublicKeys, nil
 }
@@ -131,7 +132,7 @@ func peerAddAll(urls ...string) {
 }
 
 func PeerAdd(url string) {
-		peerChannel <- &Peer{url:url, publicKeys:make([][]byte, 0, 128), failures:0, tries:0}
+	peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0}
 }
 
 func GetPeers() []string {
@@ -152,20 +153,20 @@ func GetPeerURL(publicKey []byte) (string, error) {
 	return "", errors.New("Unknow Public Key Peer")
 }
 
-func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string,  error) {
-	reqJson := PartyInfoRequest{SenderKey:base64.StdEncoding.EncodeToString(publicKey)}
+func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
+	reqJson := PartyInfoRequest{SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
 	reqStr, err := json.Marshal(reqJson)
 	privateKey := crypt.GetPrivateKey(publicKey)
 	var retPubKeys = make([][]byte, 0, 128)
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := new(http.Client).Post(url + "/partyinfo","application/json", bytes.NewBuffer(reqStr))
+	response, err := new(http.Client).Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
 	if err != nil {
 		return nil, nil, err
 	}
-    if response.StatusCode != http.StatusOK {
-    	return nil, nil, errors.New(response.Status)
+	if response.StatusCode != http.StatusOK {
+		return nil, nil, errors.New(response.Status)
 	}
 	defer func() {
 		if response != nil && response.Body != nil {

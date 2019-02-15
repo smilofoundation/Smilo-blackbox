@@ -1,10 +1,10 @@
 package utils
 
 import (
-	"os"
 	"flag"
-	"strings"
+	"os"
 	"path"
+	"strings"
 )
 
 func BuildFilename(filename string) string {

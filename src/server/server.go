@@ -21,8 +21,8 @@ import (
 	"github.com/asdine/storm"
 	"github.com/tidwall/buntdb"
 
-	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/utils"
 )
 
@@ -135,7 +135,7 @@ func StartServer() {
 		}()
 	}
 
-    finalPath := utils.BuildFilename(config.Socket.Value)
+	finalPath := utils.BuildFilename(config.Socket.Value)
 	os.Remove(finalPath)
 
 	time.Sleep(1 * time.Second)

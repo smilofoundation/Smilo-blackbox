@@ -4,10 +4,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	"github.com/twystd/tweetnacl-go"
 	"encoding/base64"
 	"fmt"
+
+	"github.com/stretchr/testify/require"
+	"github.com/twystd/tweetnacl-go"
 )
 
 var EMPTY = []byte("")
@@ -54,17 +55,17 @@ func TestEncryptDecryptPayload(t *testing.T) {
 
 func TestPublicKeyFromPrivateKey(t *testing.T) {
 	keyPair, _ := tweetnacl.CryptoBoxKeyPair()
-    public, _ := ComputePublicKey(keyPair.SecretKey)
-    require.Equal(t,keyPair.PublicKey,public,"Different Public Keys!")
+	public, _ := ComputePublicKey(keyPair.SecretKey)
+	require.Equal(t, keyPair.PublicKey, public, "Different Public Keys!")
 }
 
 func TestGenerateTestKeys(t *testing.T) {
-    t.SkipNow()
+	t.SkipNow()
 	for i := byte(1); i < 10; i++ {
 		privateKey := make([]byte, 32)
-		privateKey[31]=i
+		privateKey[31] = i
 		publicKey, _ := ComputePublicKey(privateKey)
-		WritePrivateKeyFile(base64.StdEncoding.EncodeToString(privateKey), "../../../keys/testkey"+ fmt.Sprint(i) +".key")
-		WritePublicKeyFile(base64.StdEncoding.EncodeToString(publicKey), "../../../keys/testkey" + fmt.Sprint(i) +".pub")
+		WritePrivateKeyFile(base64.StdEncoding.EncodeToString(privateKey), "../../../keys/testkey"+fmt.Sprint(i)+".key")
+		WritePublicKeyFile(base64.StdEncoding.EncodeToString(publicKey), "../../../keys/testkey"+fmt.Sprint(i)+".pub")
 	}
 }

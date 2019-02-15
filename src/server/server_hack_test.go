@@ -14,8 +14,8 @@ import (
 	"os"
 	"time"
 
-	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/server/syncpeer"
 )
 
@@ -41,7 +41,7 @@ func TestSyncCycle(t *testing.T) {
 	syncpeer.SetTimeBetweenCycles(1)
 	syncpeer.SetTimeBetweenRequests(0)
 	syncpeer.StartSync()
-	time.Sleep(5*time.Second)
+	time.Sleep(5 * time.Second)
 	url, err := syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
 	require.Nil(t, err, err)
 	require.Equal(t, url, peerURL)
@@ -49,7 +49,7 @@ func TestSyncCycle(t *testing.T) {
 
 func TestGetPublicKeysFromOtherNode(t *testing.T) {
 	keys, _, err := syncpeer.GetPublicKeysFromOtherNode("http://localhost:"+config.Port.Value, crypt.GetPublicKeys()[0])
-    require.Nil(t, err, err)
+	require.Nil(t, err, err)
 	require.Equal(t, len(keys), 1)
 	require.Equal(t, keys[0], crypt.GetPublicKeys()[0])
 }

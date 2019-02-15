@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/asdine/storm"
-
 )
 
 var db *storm.DB
@@ -27,4 +26,3 @@ func Start() {
 		os.Exit(1)
 	}
 }
-

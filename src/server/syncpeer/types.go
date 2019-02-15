@@ -1,30 +1,31 @@
 package syncpeer
 
-import ("time"
+import (
 	sync2 "sync"
+	"time"
 )
 
 type PartyInfoRequest struct {
 	SenderURL string `json:url`
-    SenderKey string `json:"key"`
+	SenderKey string `json:"key"`
 }
 
 type PartyInfoResponse struct {
 	PublicKeys []ProvenPublicKey `json:"publicKeys"`
-	PeerURLs []string `json:peers`
+	PeerURLs   []string          `json:peers`
 }
 
 type ProvenPublicKey struct {
-	Key string `json:"key"`
+	Key   string `json:"key"`
 	Proof string `json:"proof"`
 }
 
 type Peer struct {
-	url string
-	publicKeys [][]byte
-	failures int
+	url         string
+	publicKeys  [][]byte
+	failures    int
 	lastFailure time.Time
-	tries int
+	tries       int
 }
 
 type SafePublicKeyMap struct {
@@ -47,7 +48,7 @@ func (spm *SafePublicKeyMap) Get(key string) (value *Peer) {
 
 func (spm *SafePublicKeyMap) Delete(key string) {
 	spm.Lock()
-    defer spm.Unlock()
+	defer spm.Unlock()
 	delete(spm.internal, key)
 }
 

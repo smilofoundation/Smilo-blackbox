@@ -11,9 +11,10 @@ import (
 
 	"Smilo-blackbox/src/crypt"
 
-	"Smilo-blackbox/src/server/syncpeer"
-	"Smilo-blackbox/src/data"
 	"strconv"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
 )
 
@@ -99,8 +100,8 @@ func parseConfigValues() {
 		}
 		crypt.PutKeyPair(crypt.KeyPair{PrivateKey: primaryKey, PublicKey: publicKey})
 	}
-    Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
-    if config.UnixSocket != "" {
+	Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
+	if config.UnixSocket != "" {
 		Socket.Value = config.UnixSocket
 	}
 	if config.DBFile != "" {

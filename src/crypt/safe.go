@@ -16,7 +16,7 @@ type KeyPair struct {
 }
 
 var keys = make(map[string]KeyPair)
-var pairs = make([]KeyPair,0,128)
+var pairs = make([]KeyPair, 0, 128)
 
 func PutKeyPair(pair KeyPair) {
 	keys[string(pair.PublicKey)] = pair

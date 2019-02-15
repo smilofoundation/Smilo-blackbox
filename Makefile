@@ -4,6 +4,13 @@ PACKAGES = $(shell find ./src -type d -not -path '\./src')
 GOBIN = $(shell pwd)/build/bin
 GO ?= latest
 
+GIT_REV=$$(git rev-parse --short HEAD)
+
+VERSION='v0-1'
+
+version:
+	echo $(VERSION)
+
 clean:
 
 
@@ -12,7 +19,11 @@ build: clean
 
 build-mv: clean
 	go build -o blackbox main.go
-	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox
+	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)
+
+build-mv-rev: clean
+	go build -o blackbox main.go
+	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)-$(GIT_REV)
 
 test: clean ## Run tests
 	go test ./src/... -timeout=10m

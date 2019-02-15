@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"time"
 
+	"Smilo-blackbox/src/server/syncpeer"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
-	"Smilo-blackbox/src/server/syncpeer"
 )
 
 var (

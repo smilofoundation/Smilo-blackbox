@@ -41,7 +41,7 @@ type ResendRequest struct {
 }
 
 type PeerUrl struct {
-	Url        string            `json:"url"`
+	Url string `json:"url"`
 }
 
 func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {

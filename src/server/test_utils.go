@@ -11,6 +11,7 @@ import (
 	"github.com/tv42/httpunix"
 
 	"path/filepath"
+
 	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/utils"
 )
@@ -35,7 +36,6 @@ func doUnixGetJsonRequest(t *testing.T, endpoint string, json string) string {
 func getSocketClient() *http.Client {
 
 	socketFile := filepath.Join(config.WorkDir.Value, config.Socket.Value)
-
 
 	client := GetSocketClient(socketFile)
 	return &client
@@ -98,4 +98,3 @@ func getResponseData(t *testing.T, err error, response *http.Response) string {
 	}
 	return ret
 }
-
