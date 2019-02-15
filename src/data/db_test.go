@@ -3,17 +3,17 @@ package data
 import (
 	"encoding/hex"
 	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/utils"
 )
 
 func TestMain(m *testing.M) {
-	config.DBFile.Value = filepath.Join(os.TempDir(), "/test.db")
+	SetFilename(utils.BuildFilename("blackbox.db"))
+	Start()
 	time.Sleep(100000000)
 	retcode := m.Run()
 	os.Exit(retcode)

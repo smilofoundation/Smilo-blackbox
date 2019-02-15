@@ -1,13 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"time"
-
 	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server"
 	"Smilo-blackbox/src/server/config"
+	"os"
+
+	"fmt"
+	"time"
+
+	"Smilo-blackbox/src/server/syncpeer"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
@@ -34,16 +36,18 @@ func main() {
 
 	app := cli.NewApp()
 	config.Init(app)
-	config.LoadConfig(config.ConfigFile.Value)
-
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
 	app.Action = func(c *cli.Context) error {
 		generateKeys := c.String("generate-keys")
+		configFile := c.String("configfile")
 		if generateKeys != "" {
 			crypt.GenerateKeys(generateKeys)
 		} else {
+			config.LoadConfig(configFile)
 			server.StartServer()
+			server.InitP2p()
+			syncpeer.StartSync()
 		}
 		return nil
 	}
@@ -54,6 +58,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	select {}
+
 }
 
 func handlePanic() {

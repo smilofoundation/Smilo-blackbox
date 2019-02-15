@@ -2,9 +2,7 @@ package server
 
 import (
 	"net/http"
-	"os"
 	"testing"
-	"time"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -13,20 +11,47 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"os"
+	"time"
+
+	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/server/syncpeer"
 )
 
 func TestMain(m *testing.M) {
-	removeIfExists("blackbox.db")
-	removeIfExists("blackbox.ipc")
 	config.LoadConfig("./server_test.conf")
+
 	go StartServer()
 
 	config.WorkDir.Value = ""
 
-	time.Sleep(500000000)
+	time.Sleep(2000000000)
 	retcode := m.Run()
 	os.Exit(retcode)
+}
+
+func TestSyncCycle(t *testing.T) {
+	_, err := syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
+	require.NotNil(t, err, err)
+	peerURL := "http://localhost:" + config.Port.Value
+	syncpeer.PeerAdd(peerURL)
+	_, err = syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
+	require.NotNil(t, err, err)
+	syncpeer.SetTimeBetweenCycles(1)
+	syncpeer.SetTimeBetweenRequests(0)
+	syncpeer.StartSync()
+	time.Sleep(5 * time.Second)
+	url, err := syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
+	require.Nil(t, err, err)
+	require.Equal(t, url, peerURL)
+}
+
+func TestGetPublicKeysFromOtherNode(t *testing.T) {
+	keys, _, err := syncpeer.GetPublicKeysFromOtherNode("http://localhost:"+config.Port.Value, crypt.GetPublicKeys()[0])
+	require.Nil(t, err, err)
+	require.Equal(t, len(keys), 1)
+	require.Equal(t, keys[0], crypt.GetPublicKeys()[0])
 }
 
 func TestUnixSend(t *testing.T) {

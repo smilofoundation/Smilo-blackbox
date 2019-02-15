@@ -4,3 +4,5 @@ blackbox
 src/server/*.db
 src/server/*.sock
 src/data/*.db
+key.txt
+blackbox-peers.db

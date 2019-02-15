@@ -10,6 +10,12 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"Smilo-blackbox/src/crypt"
+
+	"strconv"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/syncpeer"
+	"Smilo-blackbox/src/utils"
 )
 
 var (
@@ -19,6 +25,7 @@ var (
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
 	ConfigFile   = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
 	DBFile       = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	PeersDBFile  = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
 	Port         = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
 	Socket       = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
 	OtherNodes   = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
@@ -32,6 +39,12 @@ var (
 	IsTLS    = cli.StringFlag{Name: "tls", Value: "", Usage: ""}
 	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
 	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
+
+	MaxPeersNetwork = cli.StringFlag{Name: "maxpeersnetwork", Value: "", Usage: ""}
+
+	P2PDestination = cli.StringFlag{Name: "p2p_dest", Value: "", Usage: ""}
+
+	P2PPort = cli.StringFlag{Name: "p2p_port", Value: "", Usage: ""}
 )
 
 func initLog() {
@@ -48,21 +61,22 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
 
 }
 
-//
 //func mergeConfigValues() {
-//	setValueOnNotDefault("port", string(config.Server.Port))
-//	setValueOnNotDefault("socket", config.UnixSocket)
-//	setValueOnNotDefault("hostname", string(config.HostName))
+//	setValueOnNotDefault("port", Port.Value)
+//	setValueOnNotDefault("socket", Socket.Value)
+//	setValueOnNotDefault("hostname", HostName.Value)
 //}
 
 //func setValueOnNotDefault(flagName string, flagValue string) {
 //	fg := pflag.Lookup(flagName)
-//	if fg.Value == fg.DefValue && flagValue != "" {
+//	if fg != nil && fg.Value != nil && fg.Value.String() == fg.DefValue && flagValue != "" {
 //		fg.Value.Set(flagValue)
+//	} else {
+//		log.Warn("setValueOnNotDefault, ", "flagName, ", flagName, ", flagValue, ", flagValue)
 //	}
 //}
 
@@ -84,13 +98,22 @@ func parseConfigValues() {
 		if err != nil || err2 != nil {
 			continue
 		}
-		crypt.PutKeyPair(crypt.KeyPair{PrimaryKey: primaryKey, PublicKey: publicKey})
+		crypt.PutKeyPair(crypt.KeyPair{PrivateKey: primaryKey, PublicKey: publicKey})
 	}
-	/*
-		for _, peerdata := range config.Peers {
-			sync.PeerAdd(peerdata.URL)
-		}
-	*/
+	Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
+	if config.UnixSocket != "" {
+		Socket.Value = config.UnixSocket
+	}
+	if config.DBFile != "" {
+		DBFile.Value = config.DBFile
+	}
+	if config.PeersDBFile != "" {
+		PeersDBFile.Value = config.PeersDBFile
+	}
+	data.SetFilename(utils.BuildFilename(DBFile.Value))
+	for _, peerdata := range config.Peers {
+		syncpeer.PeerAdd(peerdata.URL)
+	}
 }
 
 func ReadPrimaryKey(pkFile string) ([]byte, error) {

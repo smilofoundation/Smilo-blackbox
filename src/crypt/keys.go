@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/twystd/tweetnacl-go"
 )
 
@@ -25,6 +25,10 @@ func initLog() {
 
 func init() {
 	initLog()
+}
+
+func ComputePublicKey(secret []byte) ([]byte, error) {
+	return tweetnacl.ScalarMultBase(secret)
 }
 
 func GenerateKeys(generateKeys string) {

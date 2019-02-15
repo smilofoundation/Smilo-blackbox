@@ -9,27 +9,51 @@ import (
 
 	"crypto/tls"
 	"path"
-	"path/filepath"
 
 	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gorilla/mux"
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
 
-	"Smilo-blackbox/src/server/config"
+	"sync"
 	"time"
+
+	"github.com/asdine/storm"
+	"github.com/tidwall/buntdb"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/utils"
 )
 
 var (
+	msgC       = make(chan Message)
+	msgCmutex  = &sync.Mutex{}
 	privateAPI *mux.Router
 	publicAPI  *mux.Router
+
+	StormDBPeers *storm.DB
 
 	serverStatus               = status{false, false}
 	log          *logrus.Entry = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "server",
 	})
+
+	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
+
 )
+
+func initServer() {
+	var err error
+	StormDBPeers, err = storm.Open(utils.BuildFilename(config.PeersDBFile.Value))
+	if err != nil {
+		defer StormDBPeers.Close()
+		log.WithError(err).Error("Could not open StormDBPeers")
+		os.Exit(1)
+	}
+
+}
 
 type status struct {
 	httpServer bool
@@ -61,10 +85,11 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 
 func StartServer() {
 	port, isTLS, workDir := config.Port.Value, config.IsTLS.Value, config.WorkDir.Value
-
+	initServer()
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
 	log.Info("Server starting --> " + port)
+	data.Start()
 
 	if isTLS != "" {
 		log.Info("Will start TLS Mode")
@@ -110,32 +135,34 @@ func StartServer() {
 		}()
 	}
 
-	socketFile := config.Socket.Value
-	os.Remove(socketFile)
+	finalPath := utils.BuildFilename(config.Socket.Value)
+	os.Remove(finalPath)
 
 	time.Sleep(1 * time.Second)
-	err := os.MkdirAll(filepath.Join(workDir, socketFile), os.FileMode(0755))
+	err := os.MkdirAll(finalPath, os.FileMode(0755))
 	if err != nil {
-		log.Fatalf("Failed to start IPC Server at %s", socketFile)
+		log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
 	}
 
-	os.Remove(socketFile)
+	os.Remove(finalPath)
 
 	defer func() {
-		os.Remove(socketFile)
+		os.Remove(finalPath)
 	}()
 
-	sock, err := net.Listen("unix", socketFile)
-	if err != nil {
-		log.Fatalf("Failed to start IPC Server at %s", socketFile)
-	}
-	os.Chmod(socketFile, 0600)
+	go func() {
+		sock, err := net.Listen("unix", finalPath)
+		if err != nil {
+			log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
+		}
+		os.Chmod(finalPath, 0600)
 
-	err = priv.Serve(sock)
-	if err != nil {
-		log.Error("Error: %v", err)
-		os.Exit(1)
-	}
+		err = priv.Serve(sock)
+		if err != nil {
+			log.Error("Error: %v", err)
+			os.Exit(1)
+		}
+	}()
 }
 
 func InitRouting() (*mux.Router, *mux.Router) {
@@ -147,7 +174,8 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	publicAPI.HandleFunc("/push", api.Push).Methods("POST")
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
-	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("GET")
+	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("POST")
+	publicAPI.NotFoundHandler = http.HandlerFunc(api.UnknownRequest)
 
 	// Restrict to IPC
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")

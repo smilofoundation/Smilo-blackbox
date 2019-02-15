@@ -4,11 +4,26 @@ PACKAGES = $(shell find ./src -type d -not -path '\./src')
 GOBIN = $(shell pwd)/build/bin
 GO ?= latest
 
+GIT_REV=$$(git rev-parse --short HEAD)
+
+VERSION='v0-1'
+
+version:
+	echo $(VERSION)
+
 clean:
 
 
 build: clean
 	go build -o blackbox main.go
+
+build-mv: clean
+	go build -o blackbox main.go
+	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)
+
+build-mv-rev: clean
+	go build -o blackbox main.go
+	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)-$(GIT_REV)
 
 test: clean ## Run tests
 	go test ./src/... -timeout=10m
@@ -78,4 +93,21 @@ format:  # Formats the code. Must have goimports installed (use make install-lin
 		gofmt -s -w $(pkg);)
 	goimports -w -local go-smilo main.go
 	gofmt -s -w main.go
+
+integration-network-up:
+	rm ./test/*.db
+	rm ./test/*.ipc
+	./blackbox --configfile ./test/test1.conf &
+	./blackbox --configfile ./test/test2.conf &
+	./blackbox --configfile ./test/test3.conf &
+	./blackbox --configfile ./test/test4.conf &
+	./blackbox --configfile ./test/test5.conf &
+
+integration-test: build integration-network-up
+	go test ./test/... -timeout=10m || true
+	killall -1 blackbox
+
+integration-network-down:
+	killall -1 blackbox
+
 

@@ -7,8 +7,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"bytes"
+
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
+	"Smilo-blackbox/src/server/syncpeer"
 )
 
 const BlackBoxVersion = "Smilo Black Box 0.1.0"
@@ -31,6 +34,10 @@ func Upcheck(w http.ResponseWriter, r *http.Request) {
 // Request path "/api", response json rest api spec.
 func Api(w http.ResponseWriter, r *http.Request) {
 
+}
+
+func UnknownRequest(w http.ResponseWriter, r *http.Request) {
+	log.Debug("UnknowEndPoint")
 }
 
 func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
@@ -59,5 +66,11 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 }
 
 func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transaction, recipient []byte) {
-
+	url, err := syncpeer.GetPeerURL(recipient)
+	if err == nil {
+		_, err := new(http.Client).Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.Encoded_Payload))))
+		if err != nil {
+			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
+		}
+	}
 }
