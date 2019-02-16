@@ -45,8 +45,13 @@ var (
 )
 
 func initServer() {
-	var err error
-	StormDBPeers, err = storm.Open(utils.BuildFilename(config.PeersDBFile.Value))
+	finalPath := utils.BuildFilename(config.PeersDBFile.Value)
+	_, err := os.Create(finalPath)
+	if err != nil {
+		log.Fatalf("Failed to start StormDBPeers file at %s", config.Socket.Value)
+	}
+
+	StormDBPeers, err = storm.Open(finalPath)
 	if err != nil {
 		defer StormDBPeers.Close()
 		log.WithError(err).Error("Could not open StormDBPeers")
@@ -150,6 +155,7 @@ func StartServer() {
 		os.Remove(finalPath)
 	}()
 
+	log.Info("Starting IPC Server at, ", config.Socket.Value)
 	go func() {
 		sock, err := net.Listen("unix", finalPath)
 		if err != nil {

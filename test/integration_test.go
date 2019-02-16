@@ -22,7 +22,7 @@ var (
 	testServers = make([]TestServer,5)
 	TEST_PAYLOAD = base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs"))
 )
-func init() {
+func Init() {
 	testServers[0].Port = 9001
 	testServers[0].Client = server.GetSocketClient("./blackbox1.ipc")
 	testServers[0].PublicKey = "/TOE4TKtAqVsePRVR+5AA43HkAK5DSntkOCO7nYq5xU="
@@ -41,6 +41,8 @@ func init() {
 }
 
 func TestIntegrationSendAll(t *testing.T) {
+	Init()
+
 	waitNodesUp([]int{int(9001),int(9002),int(9003),int(9004),int(9005)})
 	time.Sleep(1 * time.Minute)
 	to := make([]string, 4)

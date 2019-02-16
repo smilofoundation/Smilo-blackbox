@@ -117,7 +117,11 @@ func updatePeer(i int) {
 }
 
 func queryPeer(url string) ([][]byte, error) {
-	retPublicKeys, urls, err := GetPublicKeysFromOtherNode(url, crypt.GetPublicKeys()[0])
+	pubKeys := crypt.GetPublicKeys()
+	if len(pubKeys) == 0 {
+		panic("Could find valid public keys, please provide a valid pub key and check your config file")
+	}
+	retPublicKeys, urls, err := GetPublicKeysFromOtherNode(url, pubKeys[0])
 	peerAddAll(urls...)
 	if err != nil {
 		return make([][]byte, 0, 1), err
@@ -150,7 +154,7 @@ func GetPeerURL(publicKey []byte) (string, error) {
 	if peer != nil {
 		return peer.url, nil
 	}
-	return "", errors.New("Unknow Public Key Peer")
+	return "", errors.New("unknown Public Key Peer")
 }
 
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
@@ -175,8 +179,8 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	}()
 
 	var responseJson PartyInfoResponse
-	p, error := ioutil.ReadAll(response.Body)
-	if error != nil {
+	p, err := ioutil.ReadAll(response.Body)
+	if err != nil {
 		return nil, nil, err
 	}
 	err = json.Unmarshal(p, &responseJson)

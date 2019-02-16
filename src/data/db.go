@@ -15,7 +15,10 @@ func SetFilename(filename string) {
 }
 
 func Start() {
-	var err error
+	_, err := os.Create(dbFile)
+	if err != nil {
+		log.Fatalf("Failed to start DB file at %s", dbFile)
+	}
 
 	log.Info("Opening DB: ", dbFile)
 	db, err = storm.Open(dbFile)
