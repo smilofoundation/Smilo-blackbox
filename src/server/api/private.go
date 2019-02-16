@@ -13,11 +13,13 @@ import (
 	"io/ioutil"
 
 	"github.com/gorilla/mux"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 // It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
 func SendRaw(w http.ResponseWriter, r *http.Request) {
-	var sender []byte
+	var fromEncoded []byte
 	var err error
 
 	from := r.Header.Get("c11n-from")
@@ -27,13 +29,24 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to))
 		return
 	}
+
 	if from != "" {
-		sender, err = base64.StdEncoding.DecodeString(from)
+		fromEncoded, err = base64.StdEncoding.DecodeString(from)
+		if err != nil {
+			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
+			return
+		}
+	} else {
+		//use default
+		defaultPubKey := base64.StdEncoding.EncodeToString(crypt.GetPublicKeys()[0])
+		fromEncoded, err = base64.StdEncoding.DecodeString(defaultPubKey)
+		log.WithField("defaultPubKey", defaultPubKey).Info("Request from NOT filled, will use default PubKey")
 		if err != nil {
 			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
 			return
 		}
 	}
+
 	encodedRecipients := strings.Split(to, ",")
 	var errors []string
 	var recipients = make([][]byte, len(encodedRecipients))
@@ -48,20 +61,26 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", ")))
 		return
 	}
-	encPayload, _ := ioutil.ReadAll(r.Body)
-	r.Body.Close()
-	if encPayload == nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
+	encPayload, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil || encPayload == nil {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload, err: %s", r.URL, err))
 		return
 	}
 
-	payload, err := base64.StdEncoding.DecodeString(string(encPayload))
+	dbuf := make([]byte, base64.StdEncoding.DecodedLen(len(encPayload)))
+	n, err := base64.StdEncoding.Decode(dbuf, encPayload)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s", r.URL, encPayload, err))
 		return
 	}
 
-	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
+	payload := dbuf[:n]
+	if len(payload) == 0 {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, len of payload after decode is zero: (%s), %s", r.URL, encPayload, err))
+	}
+
+	encTrans := createNewEncodedTransaction(w, r, payload, fromEncoded, recipients)
 
 	if encTrans != nil {
 		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
@@ -95,8 +114,8 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, sender []byte, recipients [][]byte) *data.Encrypted_Transaction {
-	encPayload, err := encoding.EncodePayloadData(payload, sender, recipients)
+func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.Encrypted_Transaction {
+	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
 		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Error Encoding Payload on Request: %s\n %s\n", r.URL, err))
 		return nil
