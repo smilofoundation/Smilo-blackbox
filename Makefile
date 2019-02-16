@@ -94,18 +94,26 @@ format:  # Formats the code. Must have goimports installed (use make install-lin
 	goimports -w -local go-smilo main.go
 	gofmt -s -w main.go
 
-integration-network-up:
-	rm ./test/*.db
-	rm ./test/*.ipc
-	./blackbox --configfile ./test/test1.conf &
-	./blackbox --configfile ./test/test2.conf &
-	./blackbox --configfile ./test/test3.conf &
-	./blackbox --configfile ./test/test4.conf &
-	./blackbox --configfile ./test/test5.conf &
+integration-clean:
+	rm ./test/*.db | true
+	rm ./test/*.ipc | true
 
-integration-test: build integration-network-up
+integration-network-up:
+	./blackbox --configfile ./test/test1.conf &
+	sleep 1
+	./blackbox --configfile ./test/test2.conf &
+	sleep 1
+	./blackbox --configfile ./test/test3.conf &
+	sleep 1
+	./blackbox --configfile ./test/test4.conf &
+	sleep 1
+	./blackbox --configfile ./test/test5.conf &
+	sleep 1
+
+integration-test: integration-clean build integration-network-up
 	go test ./test/... -timeout=10m || true
 	killall -1 blackbox
+	make integration-clean
 
 integration-network-down:
 	killall -1 blackbox

@@ -28,7 +28,9 @@ func BuildFilename(filename string) string {
 	} else {
 		workDir = ""
 	}
-	newDBFile = path.Join(currentDir, workDir)
-	newDBFile = path.Join(newDBFile, filename)
+	//if !strings.HasPrefix(currentDir, "/"){
+	//	newDBFile = path.Join(currentDir, workDir)
+	//}
+	newDBFile = path.Join(workDir, filename)
 	return newDBFile
 }
