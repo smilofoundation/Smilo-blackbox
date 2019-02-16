@@ -17,30 +17,35 @@ import (
 
 // It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
 func SendRaw(w http.ResponseWriter, r *http.Request) {
+	var sender []byte
+	var err error
+
 	from := r.Header.Get("c11n-from")
 	to := r.Header.Get("c11n-to")
 
-	if from == "" || to == "" {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers.\n", r.URL))
+	if to == "" {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to))
 		return
 	}
-	sender, err := base64.StdEncoding.DecodeString(from)
-	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
-		return
+	if from != "" {
+		sender, err = base64.StdEncoding.DecodeString(from)
+		if err != nil {
+			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
+			return
+		}
 	}
 	encodedRecipients := strings.Split(to, ",")
-	var error []string
+	var errors []string
 	var recipients = make([][]byte, len(encodedRecipients))
 	for i := 0; i < len(encodedRecipients); i++ {
 		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
 		if err != nil {
-			error = append(error, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
+			errors = append(errors, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
 		}
 		recipients[i] = decodedValue
 	}
-	if len(error) > 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(error, ", ")))
+	if len(errors) > 0 {
+		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", ")))
 		return
 	}
 	encPayload, _ := ioutil.ReadAll(r.Body)
