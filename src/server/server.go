@@ -48,7 +48,7 @@ func initServer() {
 	finalPath := utils.BuildFilename(config.PeersDBFile.Value)
 	_, err := os.Create(finalPath)
 	if err != nil {
-		log.Fatalf("Failed to start DB file at %s", config.Socket.Value)
+		log.Fatalf("Failed to start StormDBPeers file at %s", config.Socket.Value)
 	}
 
 	StormDBPeers, err = storm.Open(finalPath)
