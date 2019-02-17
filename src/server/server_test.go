@@ -146,6 +146,8 @@ func TestPrivateAPI(t *testing.T) {
 
 	_, private := InitRouting()
 
+	decodedOriginalPayload, _ := base64.StdEncoding.DecodeString("YIBgQFI0gBVhABBXYACA/VtQYEBRYCCAYQFhgzmBAYBgQFKBAZCAgFGQYCABkJKRkFBQUIBgAIGQVVBQYQEXgGEASmAAOWAA8wBggGBAUmAENhBgU1dgADV8AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACQBGP/////FoBjKhr82RRgWFeAY2D+R7EUYIBXgGNtTOY8FGCqV1tgAID9WzSAFWBjV2AAgP1bUGBqYNJWW2BAUYCCgVJgIAGRUFBgQFGAkQOQ81s0gBVgi1dgAID9W1BgqGAEgDYDgQGQgIA1kGAgAZCSkZBQUFBg2FZbAFs0gBVgtVdgAID9W1BgvGDiVltgQFGAgoFSYCABkVBQYEBRgJEDkPNbYABUgVZbgGAAgZBVUFBWW2AAgFSQUJBWAKFlYnp6cjBYIHHs+E1E+l/OvLe3U6qadnm3vgS167g523DIJF9Hv/ycACkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABpA===")
+
 	testflight.WithServer(private, func(r *testflight.Requester) {
 
 		testCases := []struct {
@@ -236,6 +238,22 @@ func TestPrivateAPI(t *testing.T) {
 				followUpEndpoint: "/transaction",
 				followUpMethod:   "GET",
 			},
+
+			{
+				name:     "test send encoded go-smilo test payload",
+				endpoint: "/sendraw",
+				method:   "CUSTOM",
+				body:     string([]byte(decodedOriginalPayload)),
+				headers:     http.Header{"c11n-to": []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				response:    "",
+				statusCode:  200,
+				expectedErr: nil,
+
+				followUp:         false,
+				followUpEndpoint: "/transaction",
+				followUpMethod:   "GET",
+			},
+
 		}
 
 		for _, test := range testCases {
