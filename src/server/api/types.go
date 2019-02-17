@@ -48,17 +48,17 @@ func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {
 	msgs := make([]string, 0, len(e.To)+2)
 	payload, err := base64.StdEncoding.DecodeString(e.Payload)
 	if err != nil {
-		msgs = append(msgs, fmt.Sprintf("Unable to decode payload: %s, error: %s\n", e.Payload, err))
+		msgs = append(msgs, fmt.Sprintf("Unable to decode payload: %s, error: %s", e.Payload, err))
 	}
 	sender, err := base64.StdEncoding.DecodeString(e.From)
 	if err != nil {
-		msgs = append(msgs, fmt.Sprintf("Unable to decode sender: %s, error: %s\n", e.From, err))
+		msgs = append(msgs, fmt.Sprintf("Unable to decode sender: %s, error: %s", e.From, err))
 	}
 	recipients := make([][]byte, len(e.To))
 	for i, value := range e.To {
 		recipient, err := base64.StdEncoding.DecodeString(value)
 		if err != nil {
-			msgs = append(msgs, fmt.Sprintf("Unable to decode recipient: %s, error: %s\n", value, err))
+			msgs = append(msgs, fmt.Sprintf("Unable to decode recipient: %s, error: %s", value, err))
 		} else {
 			recipients[i] = recipient
 		}
@@ -70,11 +70,11 @@ func (e *ReceiveRequest) Parse() ([]byte, []byte, []string) {
 	msgs := make([]string, 0, len(e.To)+2)
 	key, err := base64.StdEncoding.DecodeString(e.Key)
 	if err != nil {
-		msgs = append(msgs, fmt.Sprintf("Unable to decode Key: %s, error: %s\n", e.Key, err))
+		msgs = append(msgs, fmt.Sprintf("Unable to decode Key: %s, error: %s", e.Key, err))
 	}
 	to, err := base64.StdEncoding.DecodeString(e.To)
 	if err != nil {
-		msgs = append(msgs, fmt.Sprintf("Unable to decode To: %s, error: %s\n", e.To, err))
+		msgs = append(msgs, fmt.Sprintf("Unable to decode To: %s, error: %s", e.To, err))
 	}
 
 	return key, to, msgs

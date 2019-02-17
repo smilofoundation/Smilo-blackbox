@@ -131,7 +131,7 @@ func TestPublicAPI(t *testing.T) {
 						require.NotEmpty(t, ret)
 						log.Debug("Unboxed Proof: %s", ret)
 					} else {
-						log.Debug("Invalid json response.\n %s", response)
+						log.Debug("Invalid json response. %s", response)
 						t.Fail()
 					}
 				}
@@ -236,6 +236,7 @@ func TestPrivateAPI(t *testing.T) {
 				followUpEndpoint: "/transaction",
 				followUpMethod:   "GET",
 			},
+
 		}
 
 		for _, test := range testCases {
