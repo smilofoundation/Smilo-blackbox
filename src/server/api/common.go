@@ -37,7 +37,7 @@ func Api(w http.ResponseWriter, r *http.Request) {
 }
 
 func UnknownRequest(w http.ResponseWriter, r *http.Request) {
-	log.Debug("UnknowEndPoint")
+	log.Debug("UnknownEndPoint")
 }
 
 func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
@@ -52,7 +52,9 @@ func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to 
 func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) []byte {
 	encTrans, err := data.FindEncryptedTransaction(key)
 	if err != nil || encTrans == nil {
-		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", hex.EncodeToString(key)))
+		message := fmt.Sprintf("Transaction key: %s not found", hex.EncodeToString(key))
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
 		return nil
 	}
 
@@ -60,7 +62,9 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 	payload := encodedPayloadData.Decode(to)
 
 	if payload == nil {
-		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Error Encoding Payload on Request: %s\n", r.URL))
+		message := fmt.Sprintf("Error Encoding Payload on Request: %s", r.URL)
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
 	}
 	return payload
 }
@@ -73,4 +77,9 @@ func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transactio
 			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
 		}
 	}
+}
+
+func requestError(w http.ResponseWriter, returnCode int, message string) {
+	w.WriteHeader(returnCode)
+	fmt.Fprintf(w, message)
 }

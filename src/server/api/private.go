@@ -17,7 +17,7 @@ import (
 	"Smilo-blackbox/src/crypt"
 )
 
-// It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
+// SendRaw It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
 func SendRaw(w http.ResponseWriter, r *http.Request) {
 	var fromEncoded []byte
 	var err error
@@ -26,14 +26,18 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	to := r.Header.Get("c11n-to")
 
 	if to == "" {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to))
+		message := fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	if from != "" {
 		fromEncoded, err = base64.StdEncoding.DecodeString(from)
 		if err != nil {
-			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
+			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
+			log.Error(message)
+			requestError(w, http.StatusBadRequest, message)
 			return
 		}
 	} else {
@@ -42,7 +46,9 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		fromEncoded, err = base64.StdEncoding.DecodeString(defaultPubKey)
 		log.WithField("defaultPubKey", defaultPubKey).Info("Request from NOT filled, will use default PubKey")
 		if err != nil {
-			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.\n", r.URL, from))
+			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
+			log.Error(message)
+			requestError(w, http.StatusBadRequest, message)
 			return
 		}
 	}
@@ -58,26 +64,34 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		recipients[i] = decodedValue
 	}
 	if len(errors) > 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", ")))
+		message := fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", "))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	encPayload, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil || encPayload == nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload, err: %s", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, missing payload, err: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	dbuf := make([]byte, base64.StdEncoding.DecodedLen(len(encPayload)))
 	n, err := base64.StdEncoding.Decode(dbuf, encPayload)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s", r.URL, encPayload, err))
+		message := fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s", r.URL, encPayload, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	payload := dbuf[:n]
 	if len(payload) == 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, len of payload after decode is zero: (%s), %s", r.URL, encPayload, err))
+		message := fmt.Sprintf("Invalid request: %s, len of payload after decode is zero: (%s), %s", r.URL, encPayload, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 	}
 
 	encTrans := createNewEncodedTransaction(w, r, payload, fromEncoded, recipients)
@@ -88,20 +102,24 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// It receives json SendRequest with from, to and payload, returns Status Code 200 and json SendResponse with encoded key.
+// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json SendResponse with encoded key.
 func Send(w http.ResponseWriter, r *http.Request) {
 	var sendReq SendRequest
 	err := json.NewDecoder(r.Body).Decode(&sendReq)
 	r.Body.Close()
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	payload, sender, recipients, msgs := sendReq.Parse()
 
 	if len(msgs) > 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
+		message := fmt.Sprintf("Invalid request: %s %s", r.URL, strings.Join(msgs, "\n"))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
@@ -117,7 +135,9 @@ func Send(w http.ResponseWriter, r *http.Request) {
 func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.Encrypted_Transaction {
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
-		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Error Encoding Payload on Request: %s\n %s\n", r.URL, err))
+		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
 		return nil
 	}
 	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
@@ -128,21 +148,25 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 	return encTrans
 }
 
-// Deprecated API
+// Receive is a Deprecated API
 // It receives a ReceiveRequest json with an encoded key (hash) and to values, returns decrypted payload
 func Receive(w http.ResponseWriter, r *http.Request) {
 	var receiveReq ReceiveRequest
 	err := json.NewDecoder(r.Body).Decode(&receiveReq)
 	r.Body.Close()
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error: %s\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	key, to, msgs := receiveReq.Parse()
 
 	if len(msgs) > 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(msgs, "\n")))
+		message := fmt.Sprintf("Invalid request: %s %s", r.URL, strings.Join(msgs, "\n"))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
@@ -150,14 +174,16 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// it receives a GET request with a hash on path and query var "to" with encoded hash and to, returns decrypted payload
+// TransactionGet it receives a GET request with a hash on path and query var "to" with encoded hash and to, returns decrypted payload
 func TransactionGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	r.ParseForm()
 	encodedTo := r.Form.Get("to")
 	hash := params["hash"]
 	if hash == "" || encodedTo == "" {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid query.\n", r.URL))
+		message := fmt.Sprintf("Invalid request: %s, invalid query.", r.URL)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	var errors []string
@@ -171,16 +197,12 @@ func TransactionGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errors) > 0 {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s\n %s", r.URL, strings.Join(errors, "\n")))
+		message := fmt.Sprintf("Invalid request: %s %s", r.URL, strings.Join(errors, "\n"))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	RetrieveJsonPayload(w, r, key, to)
 
-}
-
-func requestError(w http.ResponseWriter, returnCode int, message string) {
-	log.Error(message)
-	w.WriteHeader(returnCode)
-	fmt.Fprintf(w, message)
 }

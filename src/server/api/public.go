@@ -20,14 +20,16 @@ import (
 )
 
 //TODO
-// It receives a POST request with a json containing url and key, returns local publicKeys and a proof that private key is known.
+// GetPartyInfo It receives a POST request with a json containing url and key, returns local publicKeys and a proof that private key is known.
 func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 	var jsonReq syncpeer.PartyInfoRequest
 	body, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	key, err := base64.StdEncoding.DecodeString(jsonReq.SenderKey)
@@ -43,23 +45,29 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 	syncpeer.PeerAdd(jsonReq.SenderURL)
 }
 
-// It receives a POST request with a payload and returns Status Code 201 with a payload generated hash, on error returns Status Code 500.
+// Push It receives a POST request with a payload and returns Status Code 201 with a payload generated hash, on error returns Status Code 500.
 func Push(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot deserialize payload."))
+			message := fmt.Sprintf("Cannot deserialize payload.")
+			log.Error(message)
+			requestError(w, http.StatusInternalServerError, message)
 		}
 	}()
 	encPayload, _ := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if encPayload == nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, missing payload.\n", r.URL))
+		message := fmt.Sprintf("Invalid request: %s, missing payload.", r.URL)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	payload, err := base64.StdEncoding.DecodeString(string(encPayload))
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s\n", r.URL, encPayload, err))
+		message := fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s", r.URL, encPayload, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
@@ -67,7 +75,9 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	encTrans := data.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
-		requestError(w, http.StatusInternalServerError, fmt.Sprintf("Cannot save transaction."))
+		message := fmt.Sprintf("Cannot save transaction.")
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
 		return
 	}
 
@@ -76,34 +86,52 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
 }
 
-// Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
+// ReceiveRaw Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
 func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 	key := r.Header.Get("c11n-key")
 	to := r.Header.Get("c11n-to")
 
-	if key == "" || to == "" {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, invalid headers.\n", r.URL))
+	if key == "" {
+		message := fmt.Sprintf("Invalid request: %s, invalid headers. key: %s", r.URL, key)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
+
+	if to == "" {
+		//use default
+		defaultPubKey := base64.StdEncoding.EncodeToString(crypt.GetPublicKeys()[0])
+		to = defaultPubKey
+		log.WithField("defaultPubKey", defaultPubKey).Info("Request to NOT filled, will use default PubKey")
+	}
+
 	hash, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-key header (%s) is not a valid key.\n", r.URL, key))
+		message := fmt.Sprintf("Invalid request: %s, c11n-key header (%s) is not a valid key.", r.URL, key)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	public, err := base64.StdEncoding.DecodeString(to)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, c11n-to header (%s) is not a valid key.\n", r.URL, to))
+		message := fmt.Sprintf("Invalid request: %s, c11n-to header (%s) is not a valid key.", r.URL, to)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
 	payload := RetrieveAndDecryptPayload(w, r, hash, public)
 	if payload != nil {
+		log.Info("Found transaction! ", base64.StdEncoding.EncodeToString(payload))
 		w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
+	} else {
+		log.WithField("key", key).WithField("hash",hash).WithField("public", public).
+			Error("Could not find valid data for the request.")
 	}
 
 }
 
-// It receives a POST request with a json ResendRequest containing type (INDIVIDUAL, ALL), publicKey and key(for individual requests),
+// Resend It receives a POST request with a json ResendRequest containing type (INDIVIDUAL, ALL), publicKey and key(for individual requests),
 // it returns encoded payload for INDIVIDUAL or it does one push request for each payload and returns empty for type ALL.
 func Resend(w http.ResponseWriter, r *http.Request) {
 	var jsonReq ResendRequest
@@ -111,13 +139,17 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	if strings.ToUpper(jsonReq.Type) == "INDIVIDUAL" {
 		key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
 		if err != nil {
-			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
+			message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, jsonReq.Key)
+			log.Error(message)
+			requestError(w, http.StatusBadRequest, message)
 			return
 		}
 		encTrans, err := data.FindEncryptedTransaction(key)
@@ -128,12 +160,14 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 			//TODO Implement loop of push requests
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Type))
+			message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, jsonReq.Type)
+			log.Error(message)
+			requestError(w, http.StatusBadRequest, message)
 		}
 	}
 }
 
-// Deprecated API
+// Delete Deprecated API
 // It receives a POST request with a json containing a DeleteRequest with key and returns Status 200 if succeed, 404 otherwise.
 func Delete(w http.ResponseWriter, r *http.Request) {
 	var jsonReq DeleteRequest
@@ -141,17 +175,23 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, jsonReq.Key))
+		message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, jsonReq.Key)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	encTrans, err := data.FindEncryptedTransaction(key)
 	if encTrans == nil {
-		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", jsonReq.Key))
+		message := fmt.Sprintf("Transaction key: %s not found", jsonReq.Key)
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
 		return
 	}
 	encTrans.Delete()
@@ -159,17 +199,21 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Delete successful"))
 }
 
-// It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
+// TransactionDelete It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
 func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	key, err := base64.URLEncoding.DecodeString(params["key"])
 	if err != nil || params["key"] == "" {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.\n", r.URL, params["key"]))
+		message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, params["key"])
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	encTrans, err := data.FindEncryptedTransaction(key)
 	if encTrans == nil {
-		requestError(w, http.StatusNotFound, fmt.Sprintf("Transaction key: %s not found\n", params["key"]))
+		message := fmt.Sprintf("Transaction key: %s not found", params["key"])
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
 		return
 	}
 	encTrans.Delete()
@@ -177,13 +221,15 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 }
 
 //TODO
-// It receives a PUT request with a json containing a Peer url and returns Status Code 200.
+// ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 	jsonReq := PeerUrl{}
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, error (%s) decoding json.\n", r.URL, err))
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	syncpeer.PeerAdd(jsonReq.Url)
@@ -191,17 +237,21 @@ func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 }
 
 //TODO
-// Receive a GET request with index on path and return Status Code 200 and Peer json containing url, Status Code 404 if not found.
+// ConfigPeersGet Receive a GET request with index on path and return Status Code 200 and Peer json containing url, Status Code 404 if not found.
 func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	publicKey, err := base64.URLEncoding.DecodeString(params["index"])
 	if err != nil {
-		requestError(w, http.StatusBadRequest, fmt.Sprintf("Invalid request: %s, Public Key (%s) is not a valid BASE64 key.\n", r.URL, params["index"]))
+		message := fmt.Sprintf("Invalid request: %s, Public Key (%s) is not a valid BASE64 key.", r.URL, params["index"])
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	url, err := syncpeer.GetPeerURL(publicKey)
 	if err != nil {
-		requestError(w, http.StatusNotFound, fmt.Sprintf("Public key: %s not found\n", params["index"]))
+		message := fmt.Sprintf("Public key: %s not found", params["index"])
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
 		return
 	}
 	jsonResponse := PeerUrl{Url: url}
@@ -211,7 +261,7 @@ func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 }
 
 //TODO
-// Receive a GET request and return Status Code 200 and server internal status information in plain text.
+// Metrics Receive a GET request and return Status Code 200 and server internal status information in plain text.
 func Metrics(w http.ResponseWriter, r *http.Request) {
 
 }
