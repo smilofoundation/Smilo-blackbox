@@ -43,6 +43,7 @@ func main() {
 		configFile := c.String("configfile")
 		if generateKeys != "" {
 			crypt.GenerateKeys(generateKeys)
+			os.Exit(0)
 		} else {
 			config.LoadConfig(configFile)
 			server.StartServer()
