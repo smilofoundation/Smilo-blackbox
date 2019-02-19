@@ -12,32 +12,133 @@
 
 
 ## <a name="pkg-index">Index</a>
+* [Variables](#pkg-variables)
+* [func AddPeer(node *discover.Node) error](#AddPeer)
+* [func GetExternalIP() (string, error)](#GetExternalIP)
+* [func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter)](#GetPeerListSend)
+* [func GetPeerNodeID(id string) string](#GetPeerNodeID)
+* [func GetSocketClient(socketFile string) http.Client](#GetSocketClient)
+* [func InitP2PPeers(peers []model.PeerNode)](#InitP2PPeers)
+* [func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error)](#InitP2PServer)
+* [func InitP2p()](#InitP2p)
 * [func InitRouting() (*mux.Router, *mux.Router)](#InitRouting)
+* [func IsPeerAlreadyAdded(parsedPeer *discover.Node) bool](#IsPeerAlreadyAdded)
+* [func IsPeerAlreadyConnected(parsedPeer *discover.Node) bool](#IsPeerAlreadyConnected)
 * [func NewServer(Port string) (*http.Server, *http.Server)](#NewServer)
+* [func PeerList(p2pMessage Message)](#PeerList)
+* [func SendMsg(peer *p2p.Peer, rw p2p.MsgReadWriter, err error, outmsg Message)](#SendMsg)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
 * [func StartServer()](#StartServer)
+* [func SubscribeP2P()](#SubscribeP2P)
+* [type Message](#Message)
+* [type Peer](#Peer)
 
 
 #### <a name="pkg-files">Package files</a>
-[server.go](/src/Smilo-blackbox/src/server/server.go) [test_utils.go](/src/Smilo-blackbox/src/server/test_utils.go) 
+[p2p.go](/src/Smilo-blackbox/src/server/p2p.go) [p2p_func.go](/src/Smilo-blackbox/src/server/p2p_func.go) [server.go](/src/Smilo-blackbox/src/server/server.go) [test_utils.go](/src/Smilo-blackbox/src/server/test_utils.go) 
 
 
 
+## <a name="pkg-variables">Variables</a>
+``` go
+var (
+    StormDBPeers *storm.DB
+
+    DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
+
+)
+```
 
 
-## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=2780:2825#L138)
+## <a name="AddPeer">func</a> [AddPeer](/src/target/p2p_func.go?s=5181:5220#L216)
+``` go
+func AddPeer(node *discover.Node) error
+```
+
+
+## <a name="GetExternalIP">func</a> [GetExternalIP](/src/target/p2p_func.go?s=10643:10679#L442)
+``` go
+func GetExternalIP() (string, error)
+```
+
+
+## <a name="GetPeerListSend">func</a> [GetPeerListSend](/src/target/p2p_func.go?s=8964:9022#L359)
+``` go
+func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter)
+```
+TODO: return 10 peers from our database order by last seen, make sure I'm not in it
+
+
+
+## <a name="GetPeerNodeID">func</a> [GetPeerNodeID](/src/target/p2p_func.go?s=9684:9720#L394)
+``` go
+func GetPeerNodeID(id string) string
+```
+
+
+## <a name="GetSocketClient">func</a> [GetSocketClient](/src/target/test_utils.go?s=1808:1859#L60)
+``` go
+func GetSocketClient(socketFile string) http.Client
+```
+
+
+## <a name="InitP2PPeers">func</a> [InitP2PPeers](/src/target/p2p_func.go?s=5562:5603#L233)
+``` go
+func InitP2PPeers(peers []model.PeerNode)
+```
+
+
+## <a name="InitP2PServer">func</a> [InitP2PServer](/src/target/p2p_func.go?s=1200:1272#L40)
+``` go
+func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error)
+```
+
+
+## <a name="InitP2p">func</a> [InitP2p](/src/target/p2p_func.go?s=2577:2591#L97)
+``` go
+func InitP2p()
+```
+
+
+## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=4415:4460#L190)
 ``` go
 func InitRouting() (*mux.Router, *mux.Router)
 ```
 
 
-## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=756:812#L48)
+## <a name="IsPeerAlreadyAdded">func</a> [IsPeerAlreadyAdded](/src/target/p2p_func.go?s=10082:10137#L415)
+``` go
+func IsPeerAlreadyAdded(parsedPeer *discover.Node) bool
+```
+
+
+## <a name="IsPeerAlreadyConnected">func</a> [IsPeerAlreadyConnected](/src/target/p2p_func.go?s=9778:9837#L399)
+``` go
+func IsPeerAlreadyConnected(parsedPeer *discover.Node) bool
+```
+
+
+## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=2217:2273#L94)
 ``` go
 func NewServer(Port string) (*http.Server, *http.Server)
 ```
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=608:645#L39)
+## <a name="PeerList">func</a> [PeerList](/src/target/p2p_func.go?s=8520:8553#L342)
+``` go
+func PeerList(p2pMessage Message)
+```
+TODO: process a list of peers into our database / try to connect
+
+
+
+## <a name="SendMsg">func</a> [SendMsg](/src/target/p2p.go?s=3679:3756#L168)
+``` go
+func SendMsg(peer *p2p.Peer, rw p2p.MsgReadWriter, err error, outmsg Message)
+```
+
+
+## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=2069:2106#L85)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -45,10 +146,49 @@ SetLogger set the logger
 
 
 
-## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=977:995#L61)
+## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=2438:2456#L107)
 ``` go
 func StartServer()
 ```
+
+
+## <a name="SubscribeP2P">func</a> [SubscribeP2P](/src/target/p2p_func.go?s=4010:4029#L168)
+``` go
+func SubscribeP2P()
+```
+
+
+
+## <a name="Message">type</a> [Message](/src/target/p2p.go?s=919:1003#L27)
+``` go
+type Message struct {
+    Header string `json:"content"`
+    Body   string `json:"body"`
+}
+```
+
+
+
+
+
+
+
+
+
+## <a name="Peer">type</a> [Peer](/src/target/p2p.go?s=1005:1079#L32)
+``` go
+type Peer struct {
+    ID         string
+    Dest       string
+    SourcePort int
+}
+```
+
+
+
+
+
+
 
 
 
