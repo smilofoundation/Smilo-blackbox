@@ -1,3 +1,19 @@
+// Copyright 2019 The Smilo-blackbox Authors
+// This file is part of the Smilo-blackbox library.
+//
+// The Smilo-blackbox library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Smilo-blackbox library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
+
 package api
 
 import (
@@ -15,15 +31,16 @@ import (
 	"github.com/gorilla/mux"
 
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/utils"
 )
 
-// SendRaw It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
+// SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns Status Code 200 and encoded key plain text.
 func SendRaw(w http.ResponseWriter, r *http.Request) {
 	var fromEncoded []byte
 	var err error
 
-	from := r.Header.Get("c11n-from")
-	to := r.Header.Get("c11n-to")
+	from := r.Header.Get(utils.HeaderFrom)
+	to := r.Header.Get(utils.HeaderTo)
 
 	if to == "" {
 		message := fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to)
@@ -35,7 +52,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	if from != "" {
 		fromEncoded, err = base64.StdEncoding.DecodeString(from)
 		if err != nil {
-			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
+			message := fmt.Sprintf("Invalid request: %s, bb0x-from header (%s) is not a valid key.", r.URL, from)
 			log.Error(message)
 			requestError(w, http.StatusBadRequest, message)
 			return
@@ -46,7 +63,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		fromEncoded, err = base64.StdEncoding.DecodeString(defaultPubKey)
 		log.WithField("defaultPubKey", defaultPubKey).Info("Request from NOT filled, will use default PubKey")
 		if err != nil {
-			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
+			message := fmt.Sprintf("Invalid request: %s, bb0x-from header (%s) is not a valid key.", r.URL, from)
 			log.Error(message)
 			requestError(w, http.StatusBadRequest, message)
 			return
@@ -59,7 +76,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(encodedRecipients); i++ {
 		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
+			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
 		}
 		recipients[i] = decodedValue
 	}
