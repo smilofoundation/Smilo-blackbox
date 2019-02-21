@@ -7,10 +7,27 @@
 * [Index](#pkg-index)
 
 ## <a name="pkg-overview">Overview</a>
+Copyright 2019 The Smilo-blackbox Authors
+This file is part of the Smilo-blackbox library.
+
+The Smilo-blackbox library is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+The Smilo-blackbox library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with the Smilo-blackbox library. If not, see <<a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>>.
+
 
 
 
 ## <a name="pkg-index">Index</a>
+* [func SetFilename(filename string)](#SetFilename)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
 * [func Start()](#Start)
 * [type Encrypted_Transaction](#Encrypted_Transaction)
@@ -34,7 +51,13 @@
 
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=225:262#L14)
+## <a name="SetFilename">func</a> [SetFilename](/src/target/db.go?s=905:938#L29)
+``` go
+func SetFilename(filename string)
+```
+
+
+## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=1033:1070#L30)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -42,14 +65,14 @@ SetLogger set the logger
 
 
 
-## <a name="Start">func</a> [Start](/src/target/db.go?s=141:153#L17)
+## <a name="Start">func</a> [Start](/src/target/db.go?s=963:975#L33)
 ``` go
 func Start()
 ```
 
 
 
-## <a name="Encrypted_Transaction">type</a> [Encrypted_Transaction](/src/target/encrypted_transaction.go?s=63:204#L9)
+## <a name="Encrypted_Transaction">type</a> [Encrypted_Transaction](/src/target/encrypted_transaction.go?s=871:1012#L25)
 ``` go
 type Encrypted_Transaction struct {
     Hash            []byte `storm:"id"`
@@ -63,17 +86,17 @@ type Encrypted_Transaction struct {
 
 
 
-### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=563:675#L29)
+### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=1371:1483#L45)
 ``` go
 func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction
 ```
 
-### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=823:897#L38)
+### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=1631:1705#L54)
 ``` go
 func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error)
 ```
 
-### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=206:281#L15)
+### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=1014:1089#L31)
 ``` go
 func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction
 ```
@@ -81,21 +104,21 @@ func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction
 
 
 
-### <a name="Encrypted_Transaction.Delete">func</a> (\*Encrypted\_Transaction) [Delete](/src/target/encrypted_transaction.go?s=1133:1180#L52)
+### <a name="Encrypted_Transaction.Delete">func</a> (\*Encrypted\_Transaction) [Delete](/src/target/encrypted_transaction.go?s=1941:1988#L68)
 ``` go
 func (et *Encrypted_Transaction) Delete() error
 ```
 
 
 
-### <a name="Encrypted_Transaction.Save">func</a> (\*Encrypted\_Transaction) [Save](/src/target/encrypted_transaction.go?s=1062:1107#L48)
+### <a name="Encrypted_Transaction.Save">func</a> (\*Encrypted\_Transaction) [Save](/src/target/encrypted_transaction.go?s=1870:1915#L64)
 ``` go
 func (et *Encrypted_Transaction) Save() error
 ```
 
 
 
-## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=14:83#L3)
+## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=821:890#L18)
 ``` go
 type Peer struct {
     // contains filtered or unexported fields
@@ -107,17 +130,17 @@ type Peer struct {
 
 
 
-### <a name="FindPeer">func</a> [FindPeer](/src/target/peer.go?s=366:412#L24)
+### <a name="FindPeer">func</a> [FindPeer](/src/target/peer.go?s=1173:1219#L39)
 ``` go
 func FindPeer(publicKey []byte) (*Peer, error)
 ```
 
-### <a name="NewPeer">func</a> [NewPeer](/src/target/peer.go?s=85:132#L8)
+### <a name="NewPeer">func</a> [NewPeer](/src/target/peer.go?s=892:939#L23)
 ``` go
 func NewPeer(pKey []byte, nodeURL string) *Peer
 ```
 
-### <a name="Update">func</a> [Update](/src/target/peer.go?s=191:237#L13)
+### <a name="Update">func</a> [Update](/src/target/peer.go?s=998:1044#L28)
 ``` go
 func Update(pKey []byte, nodeURL string) *Peer
 ```
@@ -125,14 +148,14 @@ func Update(pKey []byte, nodeURL string) *Peer
 
 
 
-### <a name="Peer.Delete">func</a> (\*Peer) [Delete](/src/target/peer.go?s=615:644#L38)
+### <a name="Peer.Delete">func</a> (\*Peer) [Delete](/src/target/peer.go?s=1422:1451#L53)
 ``` go
 func (p *Peer) Delete() error
 ```
 
 
 
-### <a name="Peer.Save">func</a> (\*Peer) [Save](/src/target/peer.go?s=563:590#L34)
+### <a name="Peer.Save">func</a> (\*Peer) [Save](/src/target/peer.go?s=1370:1397#L49)
 ``` go
 func (p *Peer) Save() error
 ```

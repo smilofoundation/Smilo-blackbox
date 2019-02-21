@@ -1,3 +1,19 @@
+// Copyright 2019 The Smilo-blackbox Authors
+// This file is part of the Smilo-blackbox library.
+//
+// The Smilo-blackbox library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Smilo-blackbox library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
+
 package api
 
 import (
@@ -17,6 +33,7 @@ import (
 
 	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server/syncpeer"
+	"Smilo-blackbox/src/utils"
 )
 
 //TODO
@@ -99,10 +116,10 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
 }
 
-// ReceiveRaw Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
+// ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return unencrypted payload
 func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
-	key := r.Header.Get("c11n-key")
-	to := r.Header.Get("c11n-to")
+	key := r.Header.Get(utils.HeaderKey)
+	to := r.Header.Get(utils.HeaderTo)
 
 	if key == "" {
 		message := fmt.Sprintf("Invalid request: %s, invalid headers. key: %s", r.URL, key)
@@ -120,14 +137,14 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, c11n-key header (%s) is not a valid key.", r.URL, key)
+		message := fmt.Sprintf("Invalid request: %s, bb0x-key header (%s) is not a valid key.", r.URL, key)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	public, err := base64.StdEncoding.DecodeString(to)
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, c11n-to header (%s) is not a valid key.", r.URL, to)
+		message := fmt.Sprintf("Invalid request: %s, bb0x-to header (%s) is not a valid key.", r.URL, to)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return

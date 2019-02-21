@@ -1,3 +1,19 @@
+// Copyright 2019 The Smilo-blackbox Authors
+// This file is part of the Smilo-blackbox library.
+//
+// The Smilo-blackbox library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Smilo-blackbox library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
+
 package server
 
 import (
@@ -18,6 +34,7 @@ import (
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
+	"Smilo-blackbox/src/utils"
 )
 
 var testEncryptedTransaction = createEncryptedTransaction()
@@ -53,7 +70,7 @@ func TestPublicAPI(t *testing.T) {
 				endpoint:    "/version",
 				method:      "GET",
 				contentType: "application/json",
-				response:    api.BlackBoxVersion,
+				response:    utils.BlackBoxVersion,
 				statusCode:  200,
 				expectedErr: nil,
 			},
@@ -178,7 +195,7 @@ func TestPrivateAPI(t *testing.T) {
 				endpoint:    "/version",
 				method:      "GET",
 				contentType: "application/json",
-				response:    api.BlackBoxVersion,
+				response:    utils.BlackBoxVersion,
 				statusCode:  200,
 				expectedErr: nil,
 			},
@@ -210,8 +227,8 @@ func TestPrivateAPI(t *testing.T) {
 				endpoint: "/sendraw",
 				method:   "CUSTOM",
 				body:     string([]byte(base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs")))),
-				headers: http.Header{"c11n-from": []string{"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="},
-					"c11n-to": []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				headers: http.Header{utils.HeaderFrom: []string{"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="},
+					utils.HeaderTo: []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
 				response:    "",
 				statusCode:  200,
 				expectedErr: nil,
@@ -228,7 +245,7 @@ func TestPrivateAPI(t *testing.T) {
 				body:     string([]byte(base64.StdEncoding.EncodeToString([]byte("`\x80`@R4\x80\x15a\x00\x10W`\x00\x80\xfd[P`@Q` \x80a\x01a\x839\x81\x01\x80`@R\x81\x01\x90\x80\x80Q\x90` \x01\x90\x92\x91\x90PPP\x80`\x00\x81\x90UPPa\x01\x17\x80a\x00J`\x009`\x00\xf3\x00`\x80`@R`\x046\x10`SW`\x005|\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x90\x04c\xff\xff\xff\xff\x16\x80c*\x1a\xfc\xd9\x14`XW\x80c`\xfeG\xb1\x14`\x80W\x80cmL\xe6<\x14`\xaaW[`\x00\x80\xfd[4\x80\x15`cW`\x00\x80\xfd[P`j`\xd2V[`@Q\x80\x82\x81R` \x01\x91PP`@Q\x80\x91\x03\x90\xf3[4\x80\x15`\x8bW`\x00\x80\xfd[P`\xa8`\x04\x806\x03\x81\x01\x90\x80\x805\x90` \x01\x90\x92\x91\x90PPP`\xd8V[\x00[4\x80\x15`\xb5W`\x00\x80\xfd[P`\xbc`\xe2V[`@Q\x80\x82\x81R` \x01\x91PP`@Q\x80\x91\x03\x90\xf3[`\x00T\x81V[\x80`\x00\x81\x90UPPV[`\x00\x80T\x90P\x90V\x00\xa1ebzzr0X q\xec\xf8MD\xfa_μ\xb7\xb7S\xaa\x9avy\xb7\xbe\x04\xb5\xeb\xb89\xdbp\xc8$_G\xbf\xfc\x9c\x00)\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xa4")))),
 				//body:     string([]byte("`\x80`@R4\x80\x15a\x00\x10W`\x00\x80\xfd[P`@Q` \x80a\x01a\x839\x81\x01\x80`@R\x81\x01\x90\x80\x80Q\x90` \x01\x90\x92\x91\x90PPP\x80`\x00\x81\x90UPPa\x01\x17\x80a\x00J`\x009`\x00\xf3\x00`\x80`@R`\x046\x10`SW`\x005|\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x90\x04c\xff\xff\xff\xff\x16\x80c*\x1a\xfc\xd9\x14`XW\x80c`\xfeG\xb1\x14`\x80W\x80cmL\xe6<\x14`\xaaW[`\x00\x80\xfd[4\x80\x15`cW`\x00\x80\xfd[P`j`\xd2V[`@Q\x80\x82\x81R` \x01\x91PP`@Q\x80\x91\x03\x90\xf3[4\x80\x15`\x8bW`\x00\x80\xfd[P`\xa8`\x04\x806\x03\x81\x01\x90\x80\x805\x90` \x01\x90\x92\x91\x90PPP`\xd8V[\x00[4\x80\x15`\xb5W`\x00\x80\xfd[P`\xbc`\xe2V[`@Q\x80\x82\x81R` \x01\x91PP`@Q\x80\x91\x03\x90\xf3[`\x00T\x81V[\x80`\x00\x81\x90UPPV[`\x00\x80T\x90P\x90V\x00\xa1ebzzr0X q\xec\xf8MD\xfa_μ\xb7\xb7S\xaa\x9avy\xb7\xbe\x04\xb5\xeb\xb89\xdbp\xc8$_G\xbf\xfc\x9c\x00)\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xa4")),
 
-				headers:     http.Header{"c11n-to": []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				headers:     http.Header{utils.HeaderTo: []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
 				response:    "",
 				statusCode:  200,
 				expectedErr: nil,

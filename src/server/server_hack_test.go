@@ -1,3 +1,19 @@
+// Copyright 2019 The Smilo-blackbox Authors
+// This file is part of the Smilo-blackbox library.
+//
+// The Smilo-blackbox library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Smilo-blackbox library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
+
 package server
 
 import (
@@ -17,6 +33,7 @@ import (
 	"Smilo-blackbox/src/crypt"
 	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/server/syncpeer"
+	"Smilo-blackbox/src/utils"
 )
 
 func TestMain(m *testing.M) {
@@ -86,7 +103,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 	payload := "1234567890abcdefghijklmnopqrs"
 	encPayload := base64.StdEncoding.EncodeToString([]byte(payload))
 	from := "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="
-	response := doUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{"c11n-from": []string{from}, "c11n-to": to})
+	response := doUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{utils.HeaderFrom: []string{from}, utils.HeaderTo: to})
 
 	key, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {

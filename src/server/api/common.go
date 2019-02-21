@@ -1,3 +1,19 @@
+// Copyright 2019 The Smilo-blackbox Authors
+// This file is part of the Smilo-blackbox library.
+//
+// The Smilo-blackbox library is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The Smilo-blackbox library is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
+
 package api
 
 import (
@@ -12,23 +28,17 @@ import (
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
+	"Smilo-blackbox/src/utils"
 )
-
-const BlackBoxVersion = "Smilo Black Box 0.1.0"
-const UpcheckMessage = "I'm up!"
-
-const HeaderFrom = "c11n-from"
-const HeaderTo = "c11n-to"
-const HeaderKey = "c11n-key"
 
 // Request path "/version", response plain text version ID
 func GetVersion(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(BlackBoxVersion))
+	w.Write([]byte(utils.BlackBoxVersion))
 }
 
 // Request path "/upcheck", response plain text upcheck message.
 func Upcheck(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(UpcheckMessage))
+	w.Write([]byte(utils.UpcheckMessage))
 }
 
 // Request path "/api", response json rest api spec.
