@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"Smilo-blackbox/src/server"
 	"time"
+	"Smilo-blackbox/src/server/syncpeer"
 )
 type TestServer struct {
 	Port int
@@ -22,7 +23,7 @@ var (
 	testServers = make([]TestServer,5)
 	TEST_PAYLOAD = base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs"))
 )
-func Init() {
+func init() {
 	testServers[0].Port = 9001
 	testServers[0].Client = server.GetSocketClient("./blackbox1.ipc")
 	testServers[0].PublicKey = "/TOE4TKtAqVsePRVR+5AA43HkAK5DSntkOCO7nYq5xU="
@@ -40,11 +41,13 @@ func Init() {
 	testServers[4].PublicKey = "PSe+1pnRmrR910zyTVL6ngJOFXLPu8CBW+hjFI0+dhw="
 }
 
-func TestIntegrationSendAll(t *testing.T) {
-	Init()
-
+func TestMain(m *testing.M) {
 	waitNodesUp([]int{int(9001),int(9002),int(9003),int(9004),int(9005)})
-	time.Sleep(1 * time.Minute)
+	time.Sleep(30 * time.Second)
+	m.Run()
+}
+
+func TestIntegrationSendAll(t *testing.T) {
 	to := make([]string, 4)
 	to[0] = testServers[1].PublicKey
 	to[1] = testServers[2].PublicKey
@@ -54,10 +57,41 @@ func TestIntegrationSendAll(t *testing.T) {
 
 	for i:=1; i<5; i++ {
 		receiveResponse := receiveTestPayload(t, testServers[i], sendResponse.Key)
-		if receiveResponse.Payload != TEST_PAYLOAD {
+		require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload,"Payload not received on Server "+fmt.Sprint(i))
+	}
+}
+
+func TestIntegrationSendFew(t *testing.T) {
+	to := make([]string, 2)
+	to[0] = testServers[1].PublicKey
+	to[1] = testServers[2].PublicKey
+	sendResponse := sendTestPayload(t, testServers[0], to)
+
+	for i:=1; i<5; i++ {
+		receiveResponse := receiveTestPayload(t, testServers[i], sendResponse.Key)
+		if i<3 {
 			require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload,"Payload not received on Server "+fmt.Sprint(i))
+		} else {
+			require.Equal(t, "", receiveResponse.Payload,"Payload received by mistake on Server "+fmt.Sprint(i))
 		}
 	}
+
+}
+
+func TestPeerUrlPropagation(t *testing.T) {
+	response := getPartyInfo(t, testServers[3])
+	require.NotEmpty(t, response.PeerURLs)
+	require.Equal(t, 5, len(response.PeerURLs))
+}
+
+func getPartyInfo(t *testing.T, targetServer TestServer) syncpeer.PartyInfoResponse {
+	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL:"", SenderNonce: base64.StdEncoding.EncodeToString(make([]byte,24)), SenderKey:targetServer.PublicKey}
+	req, err := json.Marshal(partyInfoRequest)
+	require.Empty(t,err)
+	response := DoPostJsonRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
+	var partyInfoResponse syncpeer.PartyInfoResponse
+	json.Unmarshal([]byte(response), &partyInfoResponse)
+	return partyInfoResponse
 }
 
 func receiveTestPayload(t *testing.T, targetServer TestServer, key string) api.ReceiveResponse {

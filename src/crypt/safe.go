@@ -4,11 +4,16 @@ import (
 	"crypto/rand"
 
 	"github.com/twystd/tweetnacl-go"
+	"sync"
 )
 
 var empty_return = []byte("")
 
 var empty_nounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000")
+
+var computedKeys = make(map[string][]byte)
+
+var mutex = sync.RWMutex{}
 
 type KeyPair struct {
 	PrivateKey []byte
@@ -49,9 +54,19 @@ func NewRandomNonce() ([]byte, error) {
 
 func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 	var ret []byte
-	ret, err := tweetnacl.CryptoBoxBeforeNM(publicKey, senderKey)
-	if err != nil {
-		ret = empty_return
+	mutex.RLock()
+    ret, ok := computedKeys[string(senderKey)+string(publicKey)]
+    mutex.RUnlock()
+    if !ok {
+    	var err error
+		ret, err = tweetnacl.CryptoBoxBeforeNM(publicKey, senderKey)
+		if err != nil {
+			ret = empty_return
+		} else {
+			mutex.Lock()
+			defer mutex.Unlock()
+			computedKeys[string(senderKey)+string(publicKey)] = ret
+		}
 	}
 	return ret
 }

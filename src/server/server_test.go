@@ -21,6 +21,7 @@ import (
 )
 
 var testEncryptedTransaction = createEncryptedTransaction()
+var nonce = make([]byte,24)
 
 func TestPublicAPI(t *testing.T) {
 
@@ -89,7 +90,7 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test party info",
 				endpoint:    "/partyinfo",
 				method:      "POST",
-				body:        "{ \"url\": \"http://localhost:9000\", \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\" }",
+				body:        "{ \"url\": \"http://localhost:9000\", \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\", \"nonce\": \""+base64.StdEncoding.EncodeToString(nonce)+"\" }",
 				contentType: "application/json",
 				response:    "",
 				statusCode:  200,
@@ -127,7 +128,7 @@ func TestPublicAPI(t *testing.T) {
 						require.Equal(t, respJson.PublicKeys[0].Key, "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 						pubKey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 						proof, _ := base64.StdEncoding.DecodeString(respJson.PublicKeys[0].Proof)
-						ret := crypt.DecryptPayload(crypt.ComputeSharedKey(crypt.GetPrivateKey(pubKey), pubKey), proof, nil)
+						ret := crypt.DecryptPayload(crypt.ComputeSharedKey(crypt.GetPrivateKey(pubKey), pubKey), proof, nonce)
 						require.NotEmpty(t, ret)
 						log.Debug("Unboxed Proof: %s", ret)
 					} else {

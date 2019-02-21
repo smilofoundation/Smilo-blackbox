@@ -57,28 +57,12 @@ func initLog() {
 func Init(app *cli.App) {
 	initLog()
 	setCommandList(app)
-	//mergeConfigValues()
 }
 
 func setCommandList(app *cli.App) {
 	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
 
 }
-
-//func mergeConfigValues() {
-//	setValueOnNotDefault("port", Port.Value)
-//	setValueOnNotDefault("socket", Socket.Value)
-//	setValueOnNotDefault("hostname", HostName.Value)
-//}
-
-//func setValueOnNotDefault(flagName string, flagValue string) {
-//	fg := pflag.Lookup(flagName)
-//	if fg != nil && fg.Value != nil && fg.Value.String() == fg.DefValue && flagValue != "" {
-//		fg.Value.Set(flagValue)
-//	} else {
-//		log.Warn("setValueOnNotDefault, ", "flagName, ", flagName, ", flagValue, ", flagValue)
-//	}
-//}
 
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
@@ -111,6 +95,7 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
+	syncpeer.SetHostUrl(HostName.Value+":"+Port.Value)
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)
 	}

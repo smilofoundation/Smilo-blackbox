@@ -21,6 +21,7 @@ var (
 	mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
+	hostUrl string
 )
 
 func StartSync() {
@@ -39,6 +40,9 @@ func SetTimeBetweenCycles(seconds int) {
 	timeBetweenCycles = time.Duration(seconds) * time.Second
 }
 
+func SetHostUrl(url string) {
+	hostUrl = url
+}
 func sync() {
 	keepRunning = true
 	for keepRunning {
@@ -95,6 +99,10 @@ func updateAllPeers() {
 				peer.tries++
 			}
 		} else {
+			if peer.skipcycles > 0 {
+				peer.skipcycles--
+				continue
+			}
 			time.Sleep(timeBetweenRequests)
 			updatePeer(i)
 		}
@@ -110,6 +118,7 @@ func updatePeer(i int) {
 		peerList[i].failures = 0
 		peerList[i].tries = 0
 		peerList[i].publicKeys = publicKeys
+		peerList[i].skipcycles = 10 * len(publicKeys)
 	}
 	for j := range publicKeys {
 		publicKeysHashMap.Store(string(publicKeys[j]), peerList[i])
@@ -136,7 +145,7 @@ func peerAddAll(urls ...string) {
 }
 
 func PeerAdd(url string) {
-	peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0}
+	peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
 }
 
 func GetPeers() []string {
@@ -158,7 +167,8 @@ func GetPeerURL(publicKey []byte) (string, error) {
 }
 
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
-	reqJson := PartyInfoRequest{SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
+	nonce,_ := crypt.NewRandomNonce()
+	reqJson := PartyInfoRequest{SenderURL: hostUrl, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
 	reqStr, err := json.Marshal(reqJson)
 	privateKey := crypt.GetPrivateKey(publicKey)
 	var retPubKeys = make([][]byte, 0, 128)
@@ -191,7 +201,7 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 		remotePublicKey, _ := base64.StdEncoding.DecodeString(provenKey.Key)
 		remoteProof, _ := base64.StdEncoding.DecodeString(provenKey.Proof)
 		sharedKey := crypt.ComputeSharedKey(privateKey, remotePublicKey)
-		if string(crypt.DecryptPayload(sharedKey, remoteProof, nil)) != "" {
+		if string(crypt.DecryptPayload(sharedKey, remoteProof, nonce)) != "" {
 			retPubKeys = append(retPubKeys, remotePublicKey)
 		}
 	}

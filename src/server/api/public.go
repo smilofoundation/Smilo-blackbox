@@ -33,12 +33,25 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	key, err := base64.StdEncoding.DecodeString(jsonReq.SenderKey)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding sender public key.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+	nonce, err := base64.StdEncoding.DecodeString(jsonReq.SenderNonce)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding sender nonce.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
 	publicKeys := crypt.GetPublicKeys()
 	responseJson := syncpeer.PartyInfoResponse{PublicKeys: make([]syncpeer.ProvenPublicKey, 0, len(publicKeys)), PeerURLs: syncpeer.GetPeers()}
 	for _, pubkey := range publicKeys {
 		sharedKey := crypt.ComputeSharedKey(crypt.GetPrivateKey(pubkey), key)
 		randomPayload, _ := crypt.NewRandomKey()
-		responseJson.PublicKeys = append(responseJson.PublicKeys, syncpeer.ProvenPublicKey{Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nil))})
+		responseJson.PublicKeys = append(responseJson.PublicKeys, syncpeer.ProvenPublicKey{Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nonce))})
 	}
 	json.NewEncoder(w).Encode(responseJson)
 	w.Header().Set("Content-Type", "application/json")

@@ -41,7 +41,7 @@ var (
 	})
 
 	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
-
+    serverUrl string
 )
 
 func initServer() {
@@ -93,6 +93,7 @@ func StartServer() {
 	initServer()
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
+
 	log.Info("Server starting --> " + port)
 	data.Start()
 

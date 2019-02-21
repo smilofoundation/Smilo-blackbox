@@ -6,13 +6,14 @@ import (
 )
 
 type PartyInfoRequest struct {
-	SenderURL string `json:url`
+	SenderURL string `json:"url"`
 	SenderKey string `json:"key"`
+	SenderNonce string `json:"nonce"`
 }
 
 type PartyInfoResponse struct {
 	PublicKeys []ProvenPublicKey `json:"publicKeys"`
-	PeerURLs   []string          `json:peers`
+	PeerURLs   []string          `json:"peers"`
 }
 
 type ProvenPublicKey struct {
@@ -23,6 +24,7 @@ type ProvenPublicKey struct {
 type Peer struct {
 	url         string
 	publicKeys  [][]byte
+	skipcycles  int
 	failures    int
 	lastFailure time.Time
 	tries       int
