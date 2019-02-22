@@ -63,6 +63,8 @@ var (
 	P2PPort = cli.StringFlag{Name: "p2p_port", Value: "", Usage: ""}
 
 	CpuProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "Cpu profiling data filename"}
+
+	P2PEnabled = cli.BoolFlag{Name:"p2p", Usage:"Enable p2p communication"}
 )
 
 func initLog() {
@@ -78,8 +80,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, CpuProfiling}
-
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, CpuProfiling, P2PEnabled}
 }
 
 func LoadConfig(configPath string) error {

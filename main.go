@@ -59,6 +59,7 @@ func main() {
 		generateKeys := c.String("generate-keys")
 		configFile := c.String("configfile")
 		cpuProfilingFile := c.String("cpuprofile")
+		p2pEnabled := c.Bool("p2p")
 		if generateKeys != "" {
 			crypt.GenerateKeys(generateKeys)
 			os.Exit(0)
@@ -73,7 +74,9 @@ func main() {
 			}
 			config.LoadConfig(configFile)
 			server.StartServer()
-			server.InitP2p()
+			if p2pEnabled {
+				server.InitP2p()
+			}
 			syncpeer.StartSync()
 		}
 		return nil

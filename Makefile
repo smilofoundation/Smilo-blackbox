@@ -104,9 +104,9 @@ integration-clean:
 
 integration-network-up:
 	rm ./test/*.prof | true
-	./blackbox --configfile ./test/test1.conf --cpuprofile ./test/cpu.prof &
+	./blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof &
 	sleep 1
-	./blackbox --configfile ./test/test2.conf &
+	./blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof &
 	sleep 1
 	./blackbox --configfile ./test/test3.conf &
 	sleep 1
