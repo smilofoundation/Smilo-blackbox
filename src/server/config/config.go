@@ -61,6 +61,8 @@ var (
 	P2PDestination = cli.StringFlag{Name: "p2p_dest", Value: "", Usage: ""}
 
 	P2PPort = cli.StringFlag{Name: "p2p_port", Value: "", Usage: ""}
+
+	CpuProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "Cpu profiling data filename"}
 )
 
 func initLog() {
@@ -76,7 +78,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, CpuProfiling}
 
 }
 

@@ -103,7 +103,8 @@ integration-clean:
 	rm ./test/*.ipc | true
 
 integration-network-up:
-	./blackbox --configfile ./test/test1.conf &
+	rm ./test/*.prof | true
+	./blackbox --configfile ./test/test1.conf --cpuprofile ./test/cpu.prof &
 	sleep 1
 	./blackbox --configfile ./test/test2.conf &
 	sleep 1
@@ -115,11 +116,9 @@ integration-network-up:
 	sleep 1
 
 integration-test: integration-clean build integration-network-up
-	go test ./test/... -timeout=10m || true
+	go test ./test/... -timeout=10m -count=1 || true
 	killall -1 blackbox
 	make integration-clean
 
 integration-network-down:
 	killall -1 blackbox
-
-

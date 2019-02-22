@@ -29,6 +29,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
+	"runtime/pprof"
 )
 
 var (
@@ -57,10 +58,19 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		generateKeys := c.String("generate-keys")
 		configFile := c.String("configfile")
+		cpuProfilingFile := c.String("cpuprofile")
 		if generateKeys != "" {
 			crypt.GenerateKeys(generateKeys)
 			os.Exit(0)
 		} else {
+			if cpuProfilingFile != "" {
+				f, err := os.Create(cpuProfilingFile)
+				if err != nil {
+					log.Fatal(err)
+				}
+				pprof.StartCPUProfile(f)
+				defer pprof.StopCPUProfile()
+			}
 			config.LoadConfig(configFile)
 			server.StartServer()
 			server.InitP2p()
