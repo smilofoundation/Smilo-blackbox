@@ -1,0 +1,4 @@
+#!/bin/bash
+openssl genrsa -out server.key 2048
+openssl req -new -sha256 -key server.key -subj "/C=IT/ST=PT/O=Smilo Platform/CN=localhost" -out server.csr
+openssl x509 -req -in server.csr -CA rootCA.crt -CAkey rootCA.key -CAcreateserial -out server.crt -days 1024 -sha256 -extfile server.ext

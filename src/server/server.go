@@ -105,7 +105,7 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 }
 
 func StartServer() {
-	port, isTLS, workDir := config.Port.Value, config.IsTLS.Value, config.WorkDir.Value
+	port, isTLS, workDir := config.Port.Value, config.IsTLS.Destination, config.WorkDir.Value
 	initServer()
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
@@ -113,7 +113,7 @@ func StartServer() {
 	log.Info("Server starting --> " + port)
 	data.Start()
 
-	if isTLS != "" {
+	if *isTLS {
 		log.Info("Will start TLS Mode")
 		servCert := config.ServCert.Value
 		servKey := config.ServKey.Value

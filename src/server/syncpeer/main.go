@@ -11,6 +11,9 @@ import (
 	"time"
 
 	"Smilo-blackbox/src/crypt"
+	"crypto/tls"
+	"crypto/x509"
+	"github.com/sirupsen/logrus"
 )
 
 var (
@@ -22,7 +25,35 @@ var (
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
 	hostUrl string
+	log          *logrus.Entry = logrus.WithFields(logrus.Fields{
+		"app":     "blackbox",
+		"package": "syncpeer",
+	})
+	tr = &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+		TLSClientConfig: &tls.Config{RootCAs: getOrCreateCertPool()},
+	}
+	client = &http.Client{Transport: tr}
 )
+func getOrCreateCertPool() *x509.CertPool {
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+	return rootCAs
+}
+
+func AppendCertificate(cert []byte) bool {
+	ok := tr.TLSClientConfig.RootCAs.AppendCertsFromPEM(cert)
+	if !ok {
+		log.Error("Unable to append additional Root CA certificate.")
+	} else {
+		client = &http.Client{Transport: tr}
+	}
+	return ok
+}
 
 func StartSync() {
 	go sync()
@@ -175,7 +206,7 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := new(http.Client).Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
+	response, err := GetHttpClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -206,4 +237,8 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 		}
 	}
 	return retPubKeys, responseJson.PeerURLs, nil
+}
+
+func GetHttpClient() *http.Client {
+	return client
 }
