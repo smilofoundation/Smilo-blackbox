@@ -168,7 +168,10 @@ func waitNodesUp(ports []int) {
 func getUpcheck(port int) bool {
      ret := DoRequest("http://localhost:"+fmt.Sprint(port)+"/upcheck")
      if ret == "" {
-     	return false
+     	ret = DoRequest("https://localhost:"+fmt.Sprint(port)+"/upcheck")
+        if ret == "" {
+			return false
+		}
 	 }
 	 return true
 }

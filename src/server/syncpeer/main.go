@@ -176,7 +176,9 @@ func peerAddAll(urls ...string) {
 }
 
 func PeerAdd(url string) {
-	peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
+	if url != hostUrl {
+		peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
+	}
 }
 
 func GetPeers() []string {

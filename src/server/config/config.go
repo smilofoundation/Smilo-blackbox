@@ -110,6 +110,9 @@ func parseConfigValues() {
 	if config.UnixSocket != "" {
 		Socket.Value = config.UnixSocket
 	}
+	if config.HostName != "" {
+		HostName.Value = config.HostName
+	}
 	if IsTLS.Destination == nil {
 		var local bool
 		IsTLS.Destination = &local
