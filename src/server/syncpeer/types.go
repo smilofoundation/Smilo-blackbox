@@ -6,8 +6,8 @@ import (
 )
 
 type PartyInfoRequest struct {
-	SenderURL string `json:"url"`
-	SenderKey string `json:"key"`
+	SenderURL   string `json:"url"`
+	SenderKey   string `json:"key"`
 	SenderNonce string `json:"nonce"`
 }
 

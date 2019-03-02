@@ -38,7 +38,7 @@ import (
 )
 
 var testEncryptedTransaction = createEncryptedTransaction()
-var nonce = make([]byte,24)
+var nonce = make([]byte, 24)
 
 func TestPublicAPI(t *testing.T) {
 
@@ -107,7 +107,7 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test party info",
 				endpoint:    "/partyinfo",
 				method:      "POST",
-				body:        "{ \"url\": \"http://localhost:9000\", \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\", \"nonce\": \""+base64.StdEncoding.EncodeToString(nonce)+"\" }",
+				body:        "{ \"url\": \"http://localhost:9000\", \"key\": \"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=\", \"nonce\": \"" + base64.StdEncoding.EncodeToString(nonce) + "\" }",
 				contentType: "application/json",
 				response:    "",
 				statusCode:  200,
@@ -254,7 +254,6 @@ func TestPrivateAPI(t *testing.T) {
 				followUpEndpoint: "/transaction",
 				followUpMethod:   "GET",
 			},
-
 		}
 
 		for _, test := range testCases {

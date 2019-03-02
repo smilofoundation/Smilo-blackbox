@@ -29,6 +29,7 @@ import (
 	"Smilo-blackbox/src/server"
 	"time"
 	"Smilo-blackbox/src/server/syncpeer"
+	"github.com/ethereum/go-ethereum/log"
 )
 type TestServer struct {
 	Port int
@@ -55,6 +56,8 @@ func init() {
 	testServers[4].Port = 9005
 	testServers[4].Client = server.GetSocketClient("./blackbox5.ipc")
 	testServers[4].PublicKey = "PSe+1pnRmrR910zyTVL6ngJOFXLPu8CBW+hjFI0+dhw="
+	certData, _ := ioutil.ReadFile("./rootCA.crt")
+	syncpeer.AppendCertificate(certData)
 }
 
 func TestMain(m *testing.M) {
@@ -152,6 +155,7 @@ func waitNodesUp(ports []int) {
 		for _, port := range ports {
 			if !getUpcheck(port) {
 				allUp = false
+				log.Info("Node %i still down.", port)
 				break
 			}
 		}
@@ -164,13 +168,16 @@ func waitNodesUp(ports []int) {
 func getUpcheck(port int) bool {
      ret := DoRequest("http://localhost:"+fmt.Sprint(port)+"/upcheck")
      if ret == "" {
-     	return false
+     	ret = DoRequest("https://localhost:"+fmt.Sprint(port)+"/upcheck")
+        if ret == "" {
+			return false
+		}
 	 }
 	 return true
 }
 
 func DoPostJsonRequest(t *testing.T, _url string, json string) string {
-	client := new(http.Client)
+	client := syncpeer.GetHttpClient()
 	response, err := client.Post(_url, "application/json", bytes.NewBuffer([]byte(json)))
 	if err != nil {
 		return ""
@@ -183,7 +190,7 @@ func DoPostJsonRequest(t *testing.T, _url string, json string) string {
 }
 
 func DoRequest(url string) string {
-	client := new(http.Client)
+	client := syncpeer.GetHttpClient()
 	response, err := client.Get(url)
 	if err != nil {
 		return ""

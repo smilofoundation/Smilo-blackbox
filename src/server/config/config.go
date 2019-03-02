@@ -29,6 +29,8 @@ import (
 
 	"strconv"
 
+	"strings"
+
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
@@ -52,7 +54,7 @@ var (
 	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
 
 	WorkDir  = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
-	IsTLS    = cli.StringFlag{Name: "tls", Value: "", Usage: ""}
+	IsTLS    = cli.BoolFlag{Name: "tls", Usage: "Enable Https communication"}
 	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
 	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
 
@@ -64,7 +66,9 @@ var (
 
 	CpuProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "Cpu profiling data filename"}
 
-	P2PEnabled = cli.BoolFlag{Name:"p2p", Usage:"Enable p2p communication"}
+	P2PEnabled = cli.BoolFlag{Name: "p2p", Usage: "Enable p2p communication"}
+
+	RootCert = cli.StringFlag{Name: "root_cert", Value: "", Usage: ""}
 )
 
 func initLog() {
@@ -80,7 +84,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, CpuProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CpuProfiling, P2PEnabled}
 }
 
 func LoadConfig(configPath string) error {
@@ -107,6 +111,40 @@ func parseConfigValues() {
 	if config.UnixSocket != "" {
 		Socket.Value = config.UnixSocket
 	}
+	if config.HostName != "" {
+		HostName.Value = config.HostName
+	}
+	if IsTLS.Destination == nil {
+		var local bool
+		IsTLS.Destination = &local
+	}
+	if config.Server.TLSCert != "" {
+		ServCert.Value = config.Server.TLSCert
+	}
+	if config.Server.TLSKey != "" {
+		ServKey.Value = config.Server.TLSKey
+	}
+	if ServKey.Value != "" || ServCert.Value != "" {
+		*IsTLS.Destination = true
+	}
+	RootCertArray := config.RootCA
+	if RootCertArray == nil {
+		RootCertArray = []string{}
+	}
+	if RootCert.Value != "" {
+		RootCertArray = append(RootCertArray, strings.Split(RootCert.Value, ",")...)
+	}
+	for _, cert := range RootCertArray {
+
+		certData, err := ioutil.ReadFile(utils.BuildFilename(cert))
+		if err != nil {
+			log.Errorf("Failed to read %q, %v", cert, err)
+		}
+		if !syncpeer.AppendCertificate(certData) {
+			log.Errorf("Failed to append %q to RootCAs", cert)
+		}
+
+	}
 	if config.DBFile != "" {
 		DBFile.Value = config.DBFile
 	}
@@ -114,7 +152,7 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
-	syncpeer.SetHostUrl(HostName.Value+":"+Port.Value)
+	syncpeer.SetHostUrl(HostName.Value + ":" + Port.Value)
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)
 	}

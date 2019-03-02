@@ -19,8 +19,9 @@ package crypt
 import (
 	"crypto/rand"
 
-	"github.com/twystd/tweetnacl-go"
 	"sync"
+
+	"github.com/twystd/tweetnacl-go"
 )
 
 var empty_return = []byte("")
@@ -71,10 +72,10 @@ func NewRandomNonce() ([]byte, error) {
 func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 	var ret []byte
 	mutex.RLock()
-    ret, ok := computedKeys[string(senderKey)+string(publicKey)]
-    mutex.RUnlock()
-    if !ok {
-    	var err error
+	ret, ok := computedKeys[string(senderKey)+string(publicKey)]
+	mutex.RUnlock()
+	if !ok {
+		var err error
 		ret, err = tweetnacl.CryptoBoxBeforeNM(publicKey, senderKey)
 		if err != nil {
 			ret = empty_return

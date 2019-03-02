@@ -10,6 +10,11 @@ import (
 	sync2 "sync"
 	"time"
 
+	"crypto/tls"
+	"crypto/x509"
+
+	"github.com/sirupsen/logrus"
+
 	"Smilo-blackbox/src/crypt"
 )
 
@@ -21,8 +26,37 @@ var (
 	mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
-	hostUrl string
+	hostUrl             string
+	log                 *logrus.Entry = logrus.WithFields(logrus.Fields{
+		"app":     "blackbox",
+		"package": "syncpeer",
+	})
+	tr = &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: true,
+		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
+	}
+	client = &http.Client{Transport: tr}
 )
+
+func getOrCreateCertPool() *x509.CertPool {
+	rootCAs, _ := x509.SystemCertPool()
+	if rootCAs == nil {
+		rootCAs = x509.NewCertPool()
+	}
+	return rootCAs
+}
+
+func AppendCertificate(cert []byte) bool {
+	ok := tr.TLSClientConfig.RootCAs.AppendCertsFromPEM(cert)
+	if !ok {
+		log.Error("Unable to append additional Root CA certificate.")
+	} else {
+		client = &http.Client{Transport: tr}
+	}
+	return ok
+}
 
 func StartSync() {
 	go sync()
@@ -114,6 +148,7 @@ func updatePeer(i int) {
 	if err != nil {
 		peerList[i].failures++
 		peerList[i].lastFailure = time.Now()
+		log.Error("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
 	} else {
 		peerList[i].failures = 0
 		peerList[i].tries = 0
@@ -145,7 +180,9 @@ func peerAddAll(urls ...string) {
 }
 
 func PeerAdd(url string) {
-	peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
+	if url != hostUrl {
+		peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
+	}
 }
 
 func GetPeers() []string {
@@ -167,7 +204,7 @@ func GetPeerURL(publicKey []byte) (string, error) {
 }
 
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
-	nonce,_ := crypt.NewRandomNonce()
+	nonce, _ := crypt.NewRandomNonce()
 	reqJson := PartyInfoRequest{SenderURL: hostUrl, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
 	reqStr, err := json.Marshal(reqJson)
 	privateKey := crypt.GetPrivateKey(publicKey)
@@ -175,7 +212,7 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := new(http.Client).Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
+	response, err := GetHttpClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -206,4 +243,8 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 		}
 	}
 	return retPubKeys, responseJson.PeerURLs, nil
+}
+
+func GetHttpClient() *http.Client {
+	return client
 }
