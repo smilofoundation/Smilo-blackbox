@@ -30,9 +30,9 @@ type PrivateKey struct {
 
 //Start of Config json file specification
 type Server struct {
-	Port int `json:"port"`
+	Port    int    `json:"port"`
 	TLSCert string `json:"tlscert,omitempty"`
-	TLSKey string `json:"tlskey,omitempty"`
+	TLSKey  string `json:"tlskey,omitempty"`
 }
 
 type Peer struct {
@@ -50,14 +50,14 @@ type Keys struct {
 }
 
 type Config struct {
-	Server      Server 		`json:"server"`
-	HostName    string 		`json:"hostName"`
-	RootCA      []string 	`json:"rootCA,omitempty"`
-	Peers       []Peer 		`json:"peer"`
-	Keys        Keys   		`json:"keys"`
-	UnixSocket  string 		`json:"socket"`
-	DBFile      string 		`json:"dbfile,omitempty"`
-	PeersDBFile string 		`json:"peersdbfile,omitempty"`
+	Server      Server   `json:"server"`
+	HostName    string   `json:"hostName"`
+	RootCA      []string `json:"rootCA,omitempty"`
+	Peers       []Peer   `json:"peer"`
+	Keys        Keys     `json:"keys"`
+	UnixSocket  string   `json:"socket"`
+	DBFile      string   `json:"dbfile,omitempty"`
+	PeersDBFile string   `json:"peersdbfile,omitempty"`
 }
 
 //End of Config json file specification

@@ -10,10 +10,12 @@ import (
 	sync2 "sync"
 	"time"
 
-	"Smilo-blackbox/src/crypt"
 	"crypto/tls"
 	"crypto/x509"
+
 	"github.com/sirupsen/logrus"
+
+	"Smilo-blackbox/src/crypt"
 )
 
 var (
@@ -24,8 +26,8 @@ var (
 	mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
-	hostUrl string
-	log          *logrus.Entry = logrus.WithFields(logrus.Fields{
+	hostUrl             string
+	log                 *logrus.Entry = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "syncpeer",
 	})
@@ -33,10 +35,11 @@ var (
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
-		TLSClientConfig: &tls.Config{RootCAs: getOrCreateCertPool()},
+		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
 	}
 	client = &http.Client{Transport: tr}
 )
+
 func getOrCreateCertPool() *x509.CertPool {
 	rootCAs, _ := x509.SystemCertPool()
 	if rootCAs == nil {
@@ -201,7 +204,7 @@ func GetPeerURL(publicKey []byte) (string, error) {
 }
 
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
-	nonce,_ := crypt.NewRandomNonce()
+	nonce, _ := crypt.NewRandomNonce()
 	reqJson := PartyInfoRequest{SenderURL: hostUrl, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
 	reqStr, err := json.Marshal(reqJson)
 	privateKey := crypt.GetPrivateKey(publicKey)

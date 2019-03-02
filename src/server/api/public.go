@@ -155,7 +155,7 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 		log.Info("Found transaction! ", base64.StdEncoding.EncodeToString(payload))
 		w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
 	} else {
-		log.WithField("key", key).WithField("hash",hash).WithField("public", public).
+		log.WithField("key", key).WithField("hash", hash).WithField("public", public).
 			Error("Could not find valid data for the request.")
 	}
 

@@ -57,7 +57,7 @@ var (
 	})
 
 	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
-    serverUrl string
+	serverUrl             string
 )
 
 func initServer() {

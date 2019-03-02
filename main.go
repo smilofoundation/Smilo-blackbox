@@ -27,9 +27,10 @@ import (
 
 	"Smilo-blackbox/src/server/syncpeer"
 
+	"runtime/pprof"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
-	"runtime/pprof"
 )
 
 var (

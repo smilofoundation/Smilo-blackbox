@@ -29,10 +29,11 @@ import (
 
 	"strconv"
 
+	"strings"
+
 	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
-	"strings"
 )
 
 var (
@@ -65,7 +66,7 @@ var (
 
 	CpuProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "Cpu profiling data filename"}
 
-	P2PEnabled = cli.BoolFlag{Name:"p2p", Usage:"Enable p2p communication"}
+	P2PEnabled = cli.BoolFlag{Name: "p2p", Usage: "Enable p2p communication"}
 
 	RootCert = cli.StringFlag{Name: "root_cert", Value: "", Usage: ""}
 )
@@ -123,7 +124,7 @@ func parseConfigValues() {
 	if config.Server.TLSKey != "" {
 		ServKey.Value = config.Server.TLSKey
 	}
-    if ServKey.Value != "" || ServCert.Value != "" {
+	if ServKey.Value != "" || ServCert.Value != "" {
 		*IsTLS.Destination = true
 	}
 	RootCertArray := config.RootCA
@@ -131,9 +132,9 @@ func parseConfigValues() {
 		RootCertArray = []string{}
 	}
 	if RootCert.Value != "" {
-		RootCertArray = append(RootCertArray, strings.Split(RootCert.Value,",")...)
+		RootCertArray = append(RootCertArray, strings.Split(RootCert.Value, ",")...)
 	}
-	for _,cert := range RootCertArray {
+	for _, cert := range RootCertArray {
 
 		certData, err := ioutil.ReadFile(utils.BuildFilename(cert))
 		if err != nil {
@@ -151,7 +152,7 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
-	syncpeer.SetHostUrl(HostName.Value+":"+Port.Value)
+	syncpeer.SetHostUrl(HostName.Value + ":" + Port.Value)
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)
 	}
