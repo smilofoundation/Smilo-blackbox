@@ -145,6 +145,7 @@ func updatePeer(i int) {
 	if err != nil {
 		peerList[i].failures++
 		peerList[i].lastFailure = time.Now()
+		log.Error("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
 	} else {
 		peerList[i].failures = 0
 		peerList[i].tries = 0

@@ -105,15 +105,15 @@ integration-clean:
 integration-network-up:
 	rm ./test/*.log | true
 	rm ./test/*.prof | true
-	./blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof &> 1.log &
+	./blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof &> ./test/1.log &
 	sleep 1
-	./blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof &> 2.log&
+	./blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof &> ./test/2.log&
 	sleep 1
-	./blackbox --configfile ./test/test3.conf  &> 3.log &
+	./blackbox --configfile ./test/test3.conf  &> ./test/3.log &
 	sleep 1
-	./blackbox --configfile ./test/test4.conf  &> 4.log &
+	./blackbox --configfile ./test/test4.conf  &> ./test/4.log &
 	sleep 1
-	./blackbox --configfile ./test/test5.conf  &> 5.log &
+	./blackbox --configfile ./test/test5.conf  &> ./test/5.log &
 	sleep 1
 
 integration-test: integration-clean build integration-network-up

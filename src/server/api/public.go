@@ -250,7 +250,6 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-//TODO
 // ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 	jsonReq := PeerUrl{}
@@ -266,7 +265,6 @@ func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-//TODO
 // ConfigPeersGet Receive a GET request with index on path and return Status Code 200 and Peer json containing url, Status Code 404 if not found.
 func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
