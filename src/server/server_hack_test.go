@@ -48,22 +48,6 @@ func TestMain(m *testing.M) {
 	os.Exit(retcode)
 }
 
-func TestSyncCycle(t *testing.T) {
-	_, err := syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
-	require.NotNil(t, err, err)
-	peerURL := "http://localhost:" + config.Port.Value
-	syncpeer.PeerAdd(peerURL)
-	_, err = syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
-	require.NotNil(t, err, err)
-	syncpeer.SetTimeBetweenCycles(1)
-	syncpeer.SetTimeBetweenRequests(0)
-	syncpeer.StartSync()
-	time.Sleep(5 * time.Second)
-	url, err := syncpeer.GetPeerURL(crypt.GetPublicKeys()[0])
-	require.Nil(t, err, err)
-	require.Equal(t, url, peerURL)
-}
-
 func TestGetPublicKeysFromOtherNode(t *testing.T) {
 	keys, _, err := syncpeer.GetPublicKeysFromOtherNode("http://localhost:"+config.Port.Value, crypt.GetPublicKeys()[0])
 	require.Nil(t, err, err)
