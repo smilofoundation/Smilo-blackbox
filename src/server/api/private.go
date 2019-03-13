@@ -30,7 +30,10 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"encoding/hex"
+
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
 )
 
@@ -70,16 +73,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	encodedRecipients := strings.Split(to, ",")
-	var errors []string
-	var recipients = make([][]byte, len(encodedRecipients))
-	for i := 0; i < len(encodedRecipients); i++ {
-		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
-		if err != nil {
-			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
-		}
-		recipients[i] = decodedValue
-	}
+	recipients, errors := splitToString(to)
 	if len(errors) > 0 {
 		message := fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", "))
 		log.Error(message)
@@ -119,34 +113,69 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json SendResponse with encoded key.
-func Send(w http.ResponseWriter, r *http.Request) {
-	var sendReq SendRequest
-	err := json.NewDecoder(r.Body).Decode(&sendReq)
-	r.Body.Close()
+// SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns Status Code 200 and encoded key plain text.
+func SendSignedTx(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	to := r.Header.Get(utils.HeaderTo)
+
+	if to == "" {
+		message := fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	recipients, errors := splitToString(to)
+	if len(errors) > 0 {
+		message := fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", "))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	encodedHash, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil || encodedHash == nil {
+		message := fmt.Sprintf("Invalid request: %s, missing transaction hash, err: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	key, err := base64.StdEncoding.DecodeString(string(encodedHash))
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
+		message := fmt.Sprintf("Invalid request: %s, hash value (%s) is not a valid key.", r.URL, encodedHash)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
-	payload, sender, recipients, msgs := sendReq.Parse()
-
-	if len(msgs) > 0 {
-		message := fmt.Sprintf("Invalid request: %s %s", r.URL, strings.Join(msgs, "\n"))
+	encTrans, err := data.FindEncryptedTransaction(key)
+	if err != nil || encTrans == nil {
+		message := fmt.Sprintf("Transaction key: %s not found", hex.EncodeToString(key))
 		log.Error(message)
-		requestError(w, http.StatusBadRequest, message)
+		requestError(w, http.StatusNotFound, message)
 		return
 	}
 
-	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
+	pushToAllRecipients(recipients, encTrans)
+	w.Header().Set("Content-Type", "text/plain")
 
-	if encTrans != nil {
-		sendResp := SendResponse{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
-		json.NewEncoder(w).Encode(sendResp)
-		w.Header().Set("Content-Type", "application/json")
+}
+
+func splitToString(to string) ([][]byte, []string) {
+	encodedRecipients := strings.Split(to, ",")
+	var errors []string
+	var recipients = make([][]byte, len(encodedRecipients))
+	for i := 0; i < len(encodedRecipients); i++ {
+		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
+		}
+		recipients[i] = decodedValue
 	}
+	return recipients, errors
 }
 
 func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.Encrypted_Transaction {
@@ -159,35 +188,58 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 	}
 	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
 	encTrans.Save()
-	for _, recipient := range recipients {
-		PushTransactionForOtherNodes(*encTrans, recipient)
-	}
+	pushToAllRecipients(recipients, encTrans)
 	return encTrans
 }
 
-// Receive is a Deprecated API
-// It receives a ReceiveRequest json with an encoded key (hash) and to values, returns decrypted payload
-func Receive(w http.ResponseWriter, r *http.Request) {
-	var receiveReq ReceiveRequest
-	err := json.NewDecoder(r.Body).Decode(&receiveReq)
-	r.Body.Close()
+func pushToAllRecipients(recipients [][]byte, encTrans *data.Encrypted_Transaction) {
+	for _, recipient := range recipients {
+		PushTransactionForOtherNodes(*encTrans, recipient)
+	}
+}
+
+// ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return unencrypted payload
+func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
+	key := r.Header.Get(utils.HeaderKey)
+	to := r.Header.Get(utils.HeaderTo)
+
+	if key == "" {
+		message := fmt.Sprintf("Invalid request: %s, invalid headers. key: %s", r.URL, key)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	if to == "" {
+		//use default
+		defaultPubKey := base64.StdEncoding.EncodeToString(crypt.GetPublicKeys()[0])
+		to = defaultPubKey
+		log.WithField("defaultPubKey", defaultPubKey).Info("Request to NOT filled, will use default PubKey")
+	}
+
+	hash, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
+		message := fmt.Sprintf("Invalid request: %s, bb0x-key header (%s) is not a valid key.", r.URL, key)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+	public, err := base64.StdEncoding.DecodeString(to)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, bb0x-to header (%s) is not a valid key.", r.URL, to)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 
-	key, to, msgs := receiveReq.Parse()
-
-	if len(msgs) > 0 {
-		message := fmt.Sprintf("Invalid request: %s %s", r.URL, strings.Join(msgs, "\n"))
-		log.Error(message)
-		requestError(w, http.StatusBadRequest, message)
-		return
+	payload := RetrieveAndDecryptPayload(w, r, hash, public)
+	if payload != nil {
+		log.Info("Found transaction! ", base64.StdEncoding.EncodeToString(payload))
+		w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
+	} else {
+		log.WithField("key", key).WithField("hash", hash).WithField("public", public).
+			Error("Could not find valid data for the request.")
 	}
-
-	RetrieveJsonPayload(w, r, key, to)
 
 }
 
@@ -221,5 +273,70 @@ func TransactionGet(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RetrieveJsonPayload(w, r, key, to)
+
+}
+
+// ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
+func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
+	jsonReq := PeerUrl{}
+	body, _ := ioutil.ReadAll(r.Body)
+	err := json.Unmarshal(body, &jsonReq)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+	syncpeer.PeerAdd(jsonReq.Url)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// ConfigPeersGet Receive a GET request with index on path and return Status Code 200 and Peer json containing url, Status Code 404 if not found.
+func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	publicKey, err := base64.URLEncoding.DecodeString(params["publickey"])
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, Public Key (%s) is not a valid BASE64 key.", r.URL, params["publickey"])
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+	url, err := syncpeer.GetPeerURL(publicKey)
+	if err != nil {
+		message := fmt.Sprintf("Public key: %s not found", params["publickey"])
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
+		return
+	}
+	jsonResponse := PeerUrl{Url: url}
+	out, _ := json.Marshal(jsonResponse)
+	w.WriteHeader(http.StatusOK)
+	w.Write(out)
+}
+
+// TransactionDelete It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
+func TransactionDelete(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	key, err := base64.URLEncoding.DecodeString(params["key"])
+	if err != nil || params["key"] == "" {
+		message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, params["key"])
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+	encTrans, err := data.FindEncryptedTransaction(key)
+	if encTrans == nil {
+		message := fmt.Sprintf("Transaction key: %s not found", params["key"])
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
+		return
+	}
+	encTrans.Delete()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+//TODO
+// Metrics Receive a GET request and return Status Code 200 and server internal status information in plain text.
+func Metrics(w http.ResponseWriter, r *http.Request) {
 
 }

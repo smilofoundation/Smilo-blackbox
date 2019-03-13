@@ -203,18 +203,16 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	// Restrict to IPC
 	privateAPI.HandleFunc("/upcheck", api.Upcheck).Methods("GET")
 	privateAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
-	privateAPI.HandleFunc("/send", api.Send).Methods("POST")
 	privateAPI.HandleFunc("/sendraw", api.SendRaw).Methods("POST")
-	privateAPI.HandleFunc("/receive", api.Receive).Methods("GET")
+	privateAPI.HandleFunc("/sendsignedtx", api.SendSignedTx).Methods("POST")
 	privateAPI.HandleFunc("/receiveraw", api.ReceiveRaw).Methods("GET")
-	privateAPI.HandleFunc("/delete", api.Delete).Methods("POST")
 
 	privateAPI.HandleFunc("/transaction/{hash:.*}", api.TransactionGet).Methods("GET")
 
-	publicAPI.HandleFunc("/transaction/{key:.*}", api.TransactionDelete).Methods("DELETE")
-	publicAPI.HandleFunc("/config/peers", api.ConfigPeersPut).Methods("PUT")
-	publicAPI.HandleFunc("/config/peers/{index:.*}", api.ConfigPeersGet).Methods("GET")
-	publicAPI.HandleFunc("/metrics", api.Metrics).Methods("GET")
+	privateAPI.HandleFunc("/transaction/{key:.*}", api.TransactionDelete).Methods("DELETE")
+	privateAPI.HandleFunc("/config/peers", api.ConfigPeersPut).Methods("PUT")
+	privateAPI.HandleFunc("/config/peers/{publickey:.*}", api.ConfigPeersGet).Methods("GET")
+	privateAPI.HandleFunc("/metrics", api.Metrics).Methods("GET")
 
 	return publicAPI, privateAPI
 }
