@@ -95,11 +95,15 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-			Addr:    ":" + Port,
-			Handler: publicAPI,
+			Addr:         ":" + Port,
+			Handler:      publicAPI,
+			ReadTimeout:  120 * time.Second,
+			WriteTimeout: 120 * time.Second,
 		},
 		&http.Server{
-			Handler: privateAPI,
+			Handler:      privateAPI,
+			ReadTimeout:  60 * time.Second,
+			WriteTimeout: 60 * time.Second,
 		}
 
 }
@@ -182,7 +186,7 @@ func StartServer() {
 
 		err = priv.Serve(sock)
 		if err != nil {
-			log.Error("Error: %v", err)
+			log.Errorf("Error: %v", err)
 			os.Exit(1)
 		}
 	}()

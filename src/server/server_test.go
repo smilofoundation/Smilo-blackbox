@@ -125,6 +125,7 @@ func TestPublicAPI(t *testing.T) {
 				} else if test.method == "POST" {
 					response = r.Post(test.endpoint, test.contentType, test.body)
 				} else if test.method == "DELETE" {
+					//fmt.Println(test.endpoint, string(createEncryptedTransactionForDeletion().Hash))
 					response = r.Delete(test.endpoint, test.contentType, test.body)
 				}
 
@@ -141,15 +142,15 @@ func TestPublicAPI(t *testing.T) {
 					var respJson syncpeer.PartyInfoResponse
 					err := json.Unmarshal([]byte(response.Body), &respJson)
 					if err == nil {
-						log.Debug("Public Key: %s Proof: %s", respJson.PublicKeys[0].Key, respJson.PublicKeys[0].Proof)
+						log.Debugf("Public Key: %s Proof: %s", respJson.PublicKeys[0].Key, respJson.PublicKeys[0].Proof)
 						require.Equal(t, respJson.PublicKeys[0].Key, "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 						pubKey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 						proof, _ := base64.StdEncoding.DecodeString(respJson.PublicKeys[0].Proof)
 						ret := crypt.DecryptPayload(crypt.ComputeSharedKey(crypt.GetPrivateKey(pubKey), pubKey), proof, nonce)
 						require.NotEmpty(t, ret)
-						log.Debug("Unboxed Proof: %s", ret)
+						log.Debugf("Unboxed Proof: %s", ret)
 					} else {
-						log.Debug("Invalid json response. %s", response)
+						log.Debugf("Invalid json response. %v", response)
 						t.Fail()
 					}
 				}
