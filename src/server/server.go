@@ -58,9 +58,38 @@ var (
 
 	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
 	serverUrl             string
+
+	PUBLIC_SERVER_READ_TIMEOUT_STR   = os.Getenv("PUBLIC_SERVER_READ_TIMEOUT")
+	PUBLIC_SERVER_WRITE_TIMEOUT_STR  = os.Getenv("PUBLIC_SERVER_WRITE_TIMEOUT")
+	PRIVATE_SERVER_READ_TIMEOUT_STR  = os.Getenv("PRIVATE_SERVER_READ_TIMEOUT")
+	PRIVATE_SERVER_WRITE_TIMEOUT_STR = os.Getenv("PRIVATE_SERVER_WRITE_TIMEOUT")
+
+	PUBLIC_SERVER_READ_TIMEOUT   = 120
+	PUBLIC_SERVER_WRITE_TIMEOUT  = 120
+	PRIVATE_SERVER_READ_TIMEOUT  = 60
+	PRIVATE_SERVER_WRITE_TIMEOUT = 60
 )
 
+func init(){
+
+}
+
+func setOSEnvInt(v field, string) (r int) {
+	var err error
+	r, err = strconv.Atoi(v)
+	if err != nil {
+		log.WithError(err).Warnf("Going to use default field %s", field)
+	} else {
+		r = reql
+	}
+}
+
 func initServer() {
+	PUBLIC_SERVER_READ_TIMEOUT = setOSEnvInt(PUBLIC_SERVER_READ_TIMEOUT_STR, "PUBLIC_SERVER_READ_TIMEOUT")
+	PUBLIC_SERVER_WRITE_TIMEOUT = setOSEnvInt(PUBLIC_SERVER_WRITE_TIMEOUT_STR, "PUBLIC_SERVER_WRITE_TIMEOUT")
+	PRIVATE_SERVER_READ_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_READ_TIMEOUT_STR, "PRIVATE_SERVER_READ_TIMEOUT")
+	PRIVATE_SERVER_WRITE_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_WRITE_TIMEOUT_STR, "PRIVATE_SERVER_WRITE_TIMEOUT")
+
 	finalPath := utils.BuildFilename(config.PeersDBFile.Value)
 	_, err := os.Create(finalPath)
 	if err != nil {
@@ -95,15 +124,15 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-			Addr:         ":" + Port,
-			Handler:      publicAPI,
-			ReadTimeout:  120 * time.Second,
-			WriteTimeout: 120 * time.Second,
-		},
+		Addr:         ":" + Port,
+		Handler:      publicAPI,
+		ReadTimeout:  PUBLIC_SERVER_READ_TIMEOUT * time.Second,
+		WriteTimeout: PUBLIC_SERVER_WRITE_TIMEOUT * time.Second,
+	},
 		&http.Server{
 			Handler:      privateAPI,
-			ReadTimeout:  60 * time.Second,
-			WriteTimeout: 60 * time.Second,
+			ReadTimeout:  PRIVATE_SERVER_READ_TIMEOUT * time.Second,
+			WriteTimeout: PRIVATE_SERVER_WRITE_TIMEOUT * time.Second,
 		}
 
 }
