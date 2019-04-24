@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -70,18 +71,17 @@ var (
 	PRIVATE_SERVER_WRITE_TIMEOUT = 60
 )
 
-func init(){
+func init() {
 
 }
 
-func setOSEnvInt(v field, string) (r int) {
+func setOSEnvInt(v, field string) (r int) {
 	var err error
 	r, err = strconv.Atoi(v)
 	if err != nil {
 		log.WithError(err).Warnf("Going to use default field %s", field)
-	} else {
-		r = reql
 	}
+	return r
 }
 
 func initServer() {
@@ -126,13 +126,13 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 	return &http.Server{
 		Addr:         ":" + Port,
 		Handler:      publicAPI,
-		ReadTimeout:  PUBLIC_SERVER_READ_TIMEOUT * time.Second,
-		WriteTimeout: PUBLIC_SERVER_WRITE_TIMEOUT * time.Second,
+		ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
+		WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
 	},
 		&http.Server{
 			Handler:      privateAPI,
-			ReadTimeout:  PRIVATE_SERVER_READ_TIMEOUT * time.Second,
-			WriteTimeout: PRIVATE_SERVER_WRITE_TIMEOUT * time.Second,
+			ReadTimeout:  time.Duration(PRIVATE_SERVER_READ_TIMEOUT) * time.Second,
+			WriteTimeout: time.Duration(PRIVATE_SERVER_WRITE_TIMEOUT) * time.Second,
 		}
 
 }
