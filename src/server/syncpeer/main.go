@@ -7,6 +7,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 	sync2 "sync"
 	"time"
 
@@ -37,9 +39,21 @@ var (
 		DisableCompression: true,
 		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
 	}
-	client = &http.Client{Transport: tr}
+	client = &http.Client{
+		Transport: tr,
+		Timeout: getRequestTimeout(),
+	}
 )
-
+func getRequestTimeout() (t time.Duration) {
+	value := os.Getenv("REQUEST_TIMEOUT")
+	vint, err := strconv.Atoi(value)
+	if err != nil {
+		t = 30*time.Second
+	} else {
+		t = time.Duration(vint) * time.Second
+	}
+	return
+}
 func getOrCreateCertPool() *x509.CertPool {
 	rootCAs, _ := x509.SystemCertPool()
 	if rootCAs == nil {
@@ -148,7 +162,7 @@ func updatePeer(i int) {
 	if err != nil {
 		peerList[i].failures++
 		peerList[i].lastFailure = time.Now()
-		log.Error("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
+		log.Errorf("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
 	} else {
 		peerList[i].failures = 0
 		peerList[i].tries = 0
