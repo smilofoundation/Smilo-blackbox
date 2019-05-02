@@ -56,7 +56,6 @@ lint: clean ## Run linters. Use make install-linters first.
 	gometalinter --deadline=3m -j 2 --disable-all --tests --vendor \
 		-E deadcode \
 		-E errcheck \
-		-E gas \
 		-E goconst \
 		-E gofmt \
 		-E goimports \
@@ -64,7 +63,6 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E ineffassign \
 		-E interfacer \
 		-E maligned \
-		-E megacheck \
 		-E misspell \
 		-E nakedret \
 		-E structcheck \
@@ -96,8 +94,8 @@ doc:
 
 install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
-	go get -u github.com/alecthomas/gometalinter
-	go get -u github.com/davecheney/godoc2md
+	go get -u gopkg.in/alecthomas/gometalinter.v2
+	go get -u golang.org/x/tools/cmd/goimports
 	gometalinter --vendored-linters --install
 
 

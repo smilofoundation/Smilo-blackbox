@@ -126,11 +126,11 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-		Addr:         ":" + Port,
-		Handler:      publicAPI,
-		ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
-		WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
-	},
+			Addr:         ":" + Port,
+			Handler:      publicAPI,
+			ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
+			WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
+		},
 		&http.Server{
 			Handler:      privateAPI,
 			ReadTimeout:  time.Duration(PRIVATE_SERVER_READ_TIMEOUT) * time.Second,

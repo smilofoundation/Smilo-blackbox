@@ -41,14 +41,15 @@ var (
 	}
 	client = &http.Client{
 		Transport: tr,
-		Timeout: getRequestTimeout(),
+		Timeout:   getRequestTimeout(),
 	}
 )
+
 func getRequestTimeout() (t time.Duration) {
 	value := os.Getenv("REQUEST_TIMEOUT")
 	vint, err := strconv.Atoi(value)
 	if err != nil {
-		t = 30*time.Second
+		t = 30 * time.Second
 	} else {
 		t = time.Duration(vint) * time.Second
 	}
