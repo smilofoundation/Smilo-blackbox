@@ -114,7 +114,9 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	encTrans := createNewEncodedTransaction(w, r, payload, fromEncoded, recipients)
 
 	if encTrans != nil {
-		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
+		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)
+		log.WithField("txEncoded", txEncoded).Info("Created transaction, ")
+		w.Write([]byte(txEncoded))
 		w.Header().Set("Content-Type", "text/plain")
 	}
 }

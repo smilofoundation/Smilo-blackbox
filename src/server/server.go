@@ -20,6 +20,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -58,9 +59,39 @@ var (
 
 	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
 	serverUrl             string
+
+	PUBLIC_SERVER_READ_TIMEOUT_STR   = os.Getenv("PUBLIC_SERVER_READ_TIMEOUT")
+	PUBLIC_SERVER_WRITE_TIMEOUT_STR  = os.Getenv("PUBLIC_SERVER_WRITE_TIMEOUT")
+	PRIVATE_SERVER_READ_TIMEOUT_STR  = os.Getenv("PRIVATE_SERVER_READ_TIMEOUT")
+	PRIVATE_SERVER_WRITE_TIMEOUT_STR = os.Getenv("PRIVATE_SERVER_WRITE_TIMEOUT")
+
+	PUBLIC_SERVER_READ_TIMEOUT   = 120
+	PUBLIC_SERVER_WRITE_TIMEOUT  = 120
+	PRIVATE_SERVER_READ_TIMEOUT  = 60
+	PRIVATE_SERVER_WRITE_TIMEOUT = 60
 )
 
+func init() {
+
+}
+
+func setOSEnvInt(v, field string, defaultVal int) (r int) {
+	var err error
+	r, err = strconv.Atoi(v)
+	if err != nil {
+		log.WithError(err).Warnf("Going to use default field %s, defaultVal: %d", field, defaultVal)
+	} else {
+		return defaultVal
+	}
+	return r
+}
+
 func initServer() {
+	PUBLIC_SERVER_READ_TIMEOUT = setOSEnvInt(PUBLIC_SERVER_READ_TIMEOUT_STR, "PUBLIC_SERVER_READ_TIMEOUT", PUBLIC_SERVER_READ_TIMEOUT)
+	PUBLIC_SERVER_WRITE_TIMEOUT = setOSEnvInt(PUBLIC_SERVER_WRITE_TIMEOUT_STR, "PUBLIC_SERVER_WRITE_TIMEOUT", PUBLIC_SERVER_WRITE_TIMEOUT)
+	PRIVATE_SERVER_READ_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_READ_TIMEOUT_STR, "PRIVATE_SERVER_READ_TIMEOUT", PRIVATE_SERVER_READ_TIMEOUT)
+	PRIVATE_SERVER_WRITE_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_WRITE_TIMEOUT_STR, "PRIVATE_SERVER_WRITE_TIMEOUT", PRIVATE_SERVER_WRITE_TIMEOUT)
+
 	finalPath := utils.BuildFilename(config.PeersDBFile.Value)
 	_, err := os.Create(finalPath)
 	if err != nil {
@@ -95,11 +126,15 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-			Addr:    ":" + Port,
-			Handler: publicAPI,
-		},
+		Addr:         ":" + Port,
+		Handler:      publicAPI,
+		ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
+		WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
+	},
 		&http.Server{
-			Handler: privateAPI,
+			Handler:      privateAPI,
+			ReadTimeout:  time.Duration(PRIVATE_SERVER_READ_TIMEOUT) * time.Second,
+			WriteTimeout: time.Duration(PRIVATE_SERVER_WRITE_TIMEOUT) * time.Second,
 		}
 
 }
@@ -182,7 +217,7 @@ func StartServer() {
 
 		err = priv.Serve(sock)
 		if err != nil {
-			log.Error("Error: %v", err)
+			log.Errorf("Error: %v", err)
 			os.Exit(1)
 		}
 	}()
