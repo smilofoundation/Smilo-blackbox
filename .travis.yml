@@ -50,4 +50,5 @@ matrix:
       git:
         submodules: false
       script:
+        - make install-linters
         - make lint
