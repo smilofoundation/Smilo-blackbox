@@ -1,0 +1,53 @@
+language: go
+go_import_path: Smilo-blackbox
+sudo: false
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      sudo: required
+      go: 1.10.x
+      script:
+      - sudo modprobe fuse
+      - sudo chmod 666 /dev/fuse
+      - sudo chown root:$USER /etc/fuse.conf
+      - go build -o blackbox main.go
+      - go test ./src/... -timeout=20m -cover
+
+    # Build and test latest go version
+    - os: linux
+      dist: trusty
+      sudo: required
+      go: 1.11.x
+      script:
+        - sudo modprobe fuse
+        - sudo chmod 666 /dev/fuse
+        - sudo chown root:$USER /etc/fuse.conf
+        - go build -o blackbox main.go
+        - go test ./src/... -timeout=20m -cover
+
+    - os: osx
+      go: 1.11.x
+      script:
+        - echo "Increase the maximum number of open file descriptors on macOS"
+        - NOFILE=20480
+        - sudo sysctl -w kern.maxfiles=$NOFILE
+        - sudo sysctl -w kern.maxfilesperproc=$NOFILE
+        - sudo launchctl limit maxfiles $NOFILE $NOFILE
+        - sudo launchctl limit maxfiles
+        - ulimit -S -n $NOFILE
+        - ulimit -n
+        - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
+        - go build -o blackbox main.go
+        - go test ./src/... -timeout=20m cover
+
+    # Run lint on latest go version
+    - os: linux
+      dist: trusty
+      go: 1.11.x
+      env:
+        - lint
+      git:
+        submodules: false
+      script:
+        - make lint
