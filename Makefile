@@ -10,6 +10,14 @@ GIT_REV=$$(git rev-parse --short HEAD)
 
 VERSION='v0-1'
 
+DOCKERVERSION=latest
+
+COMPANY=smilo
+AUTHOR=Smilo-blackbox
+NAME=smilo-blackbox
+
+FULLDOCKERNAME=$(COMPANY)/$(NAME):$(DOCKERVERSION)
+
 version:
 	echo $(VERSION)
 
@@ -18,6 +26,9 @@ clean:
 
 build: clean
 	go build -o blackbox main.go
+
+docker: clean
+	docker build --no-cache -t $(FULLDOCKERNAME) .
 
 build-mv: clean
 	go build -o blackbox main.go
