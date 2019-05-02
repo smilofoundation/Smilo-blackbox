@@ -53,7 +53,7 @@ test-race: clean ## Run tests with -race. Note: expected to fail, but look for "
 
 lint: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter --deadline=3m -j 2 --disable-all --tests --vendor \
+	gometalinter.v2 --deadline=3m -j 2 --disable-all --tests --vendor \
 		-E deadcode \
 		-E errcheck \
 		-E goconst \
@@ -63,6 +63,7 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E ineffassign \
 		-E interfacer \
 		-E maligned \
+		-E megacheck \
 		-E misspell \
 		-E nakedret \
 		-E structcheck \
@@ -96,7 +97,7 @@ install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
 	go get -u gopkg.in/alecthomas/gometalinter.v2
 	go get -u golang.org/x/tools/cmd/goimports
-	gometalinter --vendored-linters --install
+	gometalinter.v2 --vendored-linters --install
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).
