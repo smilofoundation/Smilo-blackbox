@@ -52,8 +52,14 @@ func GenerateKeys(generateKeys string) {
 	files := strings.Split(generateKeys, ",")
 	for i := range files {
 		keyPair, _ := tweetnacl.CryptoBoxKeyPair()
-		WritePrivateKeyFile(base64.StdEncoding.EncodeToString(keyPair.SecretKey), files[i]+".key")
-		WritePublicKeyFile(base64.StdEncoding.EncodeToString(keyPair.PublicKey), files[i]+".pub")
+		err := WritePrivateKeyFile(base64.StdEncoding.EncodeToString(keyPair.SecretKey), files[i]+".key")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePrivateKeyFile")
+		}
+		err = WritePublicKeyFile(base64.StdEncoding.EncodeToString(keyPair.PublicKey), files[i]+".pub")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePublicKeyFile")
+		}
 	}
 }
 

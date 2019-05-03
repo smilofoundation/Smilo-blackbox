@@ -87,7 +87,12 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	encPayload, err := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close()")
+		}
+	}()
 	if err != nil || encPayload == nil {
 		message := fmt.Sprintf("Invalid request: %s, missing payload, err: %s", r.URL, err)
 		log.Error(message)
@@ -116,7 +121,10 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	if encTrans != nil {
 		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)
 		log.WithField("txEncoded", txEncoded).Info("Created transaction, ")
-		w.Write([]byte(txEncoded))
+		_, err := w.Write([]byte(txEncoded))
+		if err != nil {
+			log.WithError(err).Error("Could not w.Write")
+		}
 		w.Header().Set("Content-Type", "text/plain")
 	}
 }
@@ -146,7 +154,10 @@ func Send(w http.ResponseWriter, r *http.Request) {
 
 	if encTrans != nil {
 		sendResp := SendResponse{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
-		json.NewEncoder(w).Encode(sendResp)
+		err := json.NewEncoder(w).Encode(sendResp)
+		if err != nil {
+			log.WithError(err).Error("Could not json.NewEncoder")
+		}
 		w.Header().Set("Content-Type", "application/json")
 	}
 }
@@ -160,7 +171,10 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 		return nil
 	}
 	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
-	encTrans.Save()
+	err = encTrans.Save()
+	if err != nil {
+		log.WithError(err).Error("Could not encTrans.Save()")
+	}
 	for _, recipient := range recipients {
 		PushTransactionForOtherNodes(*encTrans, recipient)
 	}
@@ -172,7 +186,12 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 func Receive(w http.ResponseWriter, r *http.Request) {
 	var receiveReq ReceiveRequest
 	err := json.NewDecoder(r.Body).Decode(&receiveReq)
-	r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close()")
+		}
+	}()
 	if err != nil {
 		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
 		log.Error(message)
@@ -196,7 +215,11 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 // TransactionGet it receives a GET request with a hash on path and query var "to" with encoded hash and to, returns decrypted payload
 func TransactionGet(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		log.WithError(err).Error("Could not ParseForm")
+		return
+	}
 	encodedTo := r.Form.Get("to")
 	hash := params["hash"]
 	if hash == "" || encodedTo == "" {

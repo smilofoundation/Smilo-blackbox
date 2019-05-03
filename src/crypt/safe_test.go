@@ -81,7 +81,13 @@ func TestGenerateTestKeys(t *testing.T) {
 		privateKey := make([]byte, 32)
 		privateKey[31] = i
 		publicKey, _ := ComputePublicKey(privateKey)
-		WritePrivateKeyFile(base64.StdEncoding.EncodeToString(privateKey), "../../../keys/testkey"+fmt.Sprint(i)+".key")
-		WritePublicKeyFile(base64.StdEncoding.EncodeToString(publicKey), "../../../keys/testkey"+fmt.Sprint(i)+".pub")
+		err := WritePrivateKeyFile(base64.StdEncoding.EncodeToString(privateKey), "../../../keys/testkey"+fmt.Sprint(i)+".key")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePrivateKeyFile")
+		}
+		err = WritePublicKeyFile(base64.StdEncoding.EncodeToString(publicKey), "../../../keys/testkey"+fmt.Sprint(i)+".pub")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePublicKeyFile")
+		}
 	}
 }

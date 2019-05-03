@@ -32,7 +32,10 @@ func Update(pKey []byte, nodeURL string) *Peer {
 	} else {
 		p.url = nodeURL
 	}
-	p.Save()
+	err = p.Save()
+	if err != nil {
+		log.WithError(err).Error("Could not Update, failed to execute Save method")
+	}
 	return p
 }
 

@@ -33,12 +33,18 @@ import (
 
 // Request path "/version", response plain text version ID
 func GetVersion(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(utils.BlackBoxVersion))
+	_, err := w.Write([]byte(utils.BlackBoxVersion))
+	if err != nil {
+		log.WithError(err).Error("Could not GetVersion")
+	}
 }
 
 // Request path "/upcheck", response plain text upcheck message.
 func Upcheck(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(utils.UpcheckMessage))
+	_, err := w.Write([]byte(utils.UpcheckMessage))
+	if err != nil {
+		log.WithError(err).Error("Could not Upcheck")
+	}
 }
 
 // Request path "/api", response json rest api spec.
@@ -54,7 +60,10 @@ func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to 
 	payload := RetrieveAndDecryptPayload(w, r, key, to)
 	if payload != nil {
 		receiveResp := ReceiveResponse{Payload: base64.StdEncoding.EncodeToString(payload)}
-		json.NewEncoder(w).Encode(receiveResp)
+		err := json.NewEncoder(w).Encode(receiveResp)
+		if err != nil {
+			log.WithError(err).Error("Could not RetrieveJsonPayload, Encode")
+		}
 		w.Header().Set("Content-Type", "application/json")
 	}
 }
@@ -91,5 +100,8 @@ func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transactio
 
 func requestError(w http.ResponseWriter, returnCode int, message string) {
 	w.WriteHeader(returnCode)
-	fmt.Fprintf(w, message)
+	_, err := fmt.Fprintf(w, message)
+	if err != nil {
+		log.WithError(err).Error("Failed to fmt.Fprintf(w, message)")
+	}
 }

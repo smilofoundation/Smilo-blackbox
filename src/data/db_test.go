@@ -44,7 +44,8 @@ func TestNewEncryptedTransaction(t *testing.T) {
 func TestEncrypted_Transaction_Save_Retrieve(t *testing.T) {
 	now := time.Now()
 	trans := CreateEncryptedTransaction([]byte("1"), []byte("AA"), now)
-	trans.Save()
+	err := trans.Save()
+	require.NoError(t, err)
 
 	trans2, err := FindEncryptedTransaction([]byte("1"))
 	require.Empty(t, err)
@@ -55,12 +56,14 @@ func TestEncrypted_Transaction_Save_Retrieve(t *testing.T) {
 
 func TestEncrypted_Transaction_Delete(t *testing.T) {
 	trans := CreateEncryptedTransaction([]byte("2"), []byte("BB"), time.Now())
-	trans.Save()
+	err := trans.Save()
+	require.NoError(t, err)
 
 	trans2, err := FindEncryptedTransaction([]byte("2"))
 	require.Empty(t, err)
 
-	trans2.Delete()
+	err = trans2.Delete()
+	require.NoError(t, err)
 
 	trans3, err := FindEncryptedTransaction([]byte("2"))
 	require.NotEmpty(t, err)
