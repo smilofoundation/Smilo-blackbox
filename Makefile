@@ -106,7 +106,7 @@ install-linters: ## Install linters
 	go get -u gopkg.in/alecthomas/gometalinter.v3
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/staticcheck
-#	curl -L https://git.io/vp6lP | sh
+	curl -L https://git.io/vp6lP | sh
 	gometalinter.v3 --install
 
 
