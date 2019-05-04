@@ -51,5 +51,4 @@ matrix:
         submodules: false
       script:
         - make install-linters
-        - cd $GOPATH/bin && ls -l
         - make lint
