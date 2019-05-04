@@ -24,14 +24,15 @@ import (
 	"github.com/twystd/tweetnacl-go"
 )
 
-var empty_return = []byte("")
+var emptyReturn = []byte("")
 
-var empty_nounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000")
+var emptyNounce = []byte("\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000\000")
 
 var computedKeys = make(map[string][]byte)
 
 var mutex = sync.RWMutex{}
 
+// KeyPair holds PrivateKey and PublicKey
 type KeyPair struct {
 	PrivateKey []byte
 	PublicKey  []byte
@@ -40,11 +41,13 @@ type KeyPair struct {
 var keys = make(map[string]KeyPair)
 var pairs = make([]KeyPair, 0, 128)
 
+// PutKeyPair will put a pair into pairs var
 func PutKeyPair(pair KeyPair) {
 	keys[string(pair.PublicKey)] = pair
 	pairs = append(pairs, pair)
 }
 
+// GetPublicKeys will get all pubs in memory
 func GetPublicKeys() [][]byte {
 	publicKeys := make([][]byte, 0, len(pairs))
 	for _, pair := range pairs {
@@ -53,22 +56,26 @@ func GetPublicKeys() [][]byte {
 	return publicKeys
 }
 
+// GetPrivateKey will get the pk for a pub
 func GetPrivateKey(publicKey []byte) []byte {
 	return keys[string(publicKey)].PrivateKey
 }
 
+// NewRandomKey generate new key
 func NewRandomKey() ([]byte, error) {
 	b := make([]byte, 32)
 	_, err := rand.Read(b)
 	return b, err
 }
 
+// NewRandomNonce generate new nonce
 func NewRandomNonce() ([]byte, error) {
 	b := make([]byte, 24)
 	_, err := rand.Read(b)
 	return b, err
 }
 
+// ComputeSharedKey compute a shareKey based on two keys
 func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 	var ret []byte
 	mutex.RLock()
@@ -78,7 +85,7 @@ func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 		var err error
 		ret, err = tweetnacl.CryptoBoxBeforeNM(publicKey, senderKey)
 		if err != nil {
-			ret = empty_return
+			ret = emptyReturn
 		} else {
 			mutex.Lock()
 			defer mutex.Unlock()
@@ -88,26 +95,28 @@ func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte {
 	return ret
 }
 
-func EncryptPayload(sharedKey []byte, payload []byte, nounce []byte) []byte {
+// EncryptPayload will encrypt payload based on a key and nonce
+func EncryptPayload(sharedKey []byte, payload []byte, nonce []byte) []byte {
 	var ret []byte
-	if nounce == nil {
-		nounce = empty_nounce
+	if nonce == nil {
+		nonce = emptyNounce
 	}
-	ret, err := tweetnacl.CryptoSecretBox(payload, nounce, sharedKey)
+	ret, err := tweetnacl.CryptoSecretBox(payload, nonce, sharedKey)
 	if err != nil {
-		ret = empty_return
+		ret = emptyReturn
 	}
 	return ret
 }
 
-func DecryptPayload(sharedKey []byte, encrypted_payload []byte, nounce []byte) []byte {
+// DecryptPayload will decrypt a payload based on a key and nonce
+func DecryptPayload(sharedKey []byte, encryptedPayload []byte, nonce []byte) []byte {
 	var ret []byte
-	if nounce == nil {
-		nounce = empty_nounce
+	if nonce == nil {
+		nonce = emptyNounce
 	}
-	ret, err := tweetnacl.CryptoSecretBoxOpen(encrypted_payload, nounce, sharedKey)
+	ret, err := tweetnacl.CryptoSecretBoxOpen(encryptedPayload, nonce, sharedKey)
 	if err != nil {
-		ret = empty_return
+		ret = emptyReturn
 	}
 	return ret
 }

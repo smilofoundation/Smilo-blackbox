@@ -31,7 +31,7 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-// Request path "/version", response plain text version ID
+//GetVersion Request path "/version", response plain text version ID
 func GetVersion(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte(utils.BlackBoxVersion))
 	if err != nil {
@@ -39,7 +39,7 @@ func GetVersion(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Request path "/upcheck", response plain text upcheck message.
+//Upcheck Request path "/upcheck", response plain text upcheck message.
 func Upcheck(w http.ResponseWriter, r *http.Request) {
 	_, err := w.Write([]byte(utils.UpcheckMessage))
 	if err != nil {
@@ -47,27 +47,30 @@ func Upcheck(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Request path "/api", response json rest api spec.
-func Api(w http.ResponseWriter, r *http.Request) {
+//API Request path "/api", response json rest api spec.
+func API(w http.ResponseWriter, r *http.Request) {
 
 }
 
+//UnknownRequest will debug unknown reqs
 func UnknownRequest(w http.ResponseWriter, r *http.Request) {
 	log.Debug("UnknownEndPoint")
 }
 
-func RetrieveJsonPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
+//RetrieveJSONPayload will retrieve payload based on request
+func RetrieveJSONPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) {
 	payload := RetrieveAndDecryptPayload(w, r, key, to)
 	if payload != nil {
 		receiveResp := ReceiveResponse{Payload: base64.StdEncoding.EncodeToString(payload)}
 		err := json.NewEncoder(w).Encode(receiveResp)
 		if err != nil {
-			log.WithError(err).Error("Could not RetrieveJsonPayload, Encode")
+			log.WithError(err).Error("Could not RetrieveJSONPayload, Encode")
 		}
 		w.Header().Set("Content-Type", "application/json")
 	}
 }
 
+//RetrieveAndDecryptPayload will retrieve and decrypt the payload
 func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) []byte {
 	encTrans, err := data.FindEncryptedTransaction(key)
 	if err != nil || encTrans == nil {
@@ -77,7 +80,7 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 		return nil
 	}
 
-	encodedPayloadData := encoding.Deserialize([]byte(encTrans.Encoded_Payload))
+	encodedPayloadData := encoding.Deserialize(encTrans.EncodedPayload)
 	payload := encodedPayloadData.Decode(to)
 
 	if payload == nil {
@@ -88,19 +91,21 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 	return payload
 }
 
-func PushTransactionForOtherNodes(encryptedTransaction data.Encrypted_Transaction, recipient []byte) {
+//PushTransactionForOtherNodes will push encrypted transaction to other nodes
+func PushTransactionForOtherNodes(encryptedTransaction data.EncryptedTransaction, recipient []byte) {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
-		_, err := syncpeer.GetHttpClient().Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.Encoded_Payload))))
+		_, err := syncpeer.GetHTTPClient().Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload))))
 		if err != nil {
 			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
 		}
 	}
 }
 
+// will write status into header and log error if any
 func requestError(w http.ResponseWriter, returnCode int, message string) {
 	w.WriteHeader(returnCode)
-	_, err := fmt.Fprintf(w, message)
+	_, err := fmt.Fprint(w, message)
 	if err != nil {
 		log.WithError(err).Error("Failed to fmt.Fprintf(w, message)")
 	}

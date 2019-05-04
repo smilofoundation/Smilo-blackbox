@@ -58,7 +58,7 @@ func TestEncryptDecryptPayload(t *testing.T) {
 	require.Equal(t, payload, payload2, "Return (Nounce Zero): "+string(payload2))
 
 	t.Log("Encrypted Message (Nounce Zero): " + string(encryptedMessage))
-	var nounce = make([]byte, 24, 24)
+	var nounce = make([]byte, 24)
 	for i := 0; i < 24; i++ {
 		nounce[i] = byte(i)
 	}

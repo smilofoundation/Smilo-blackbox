@@ -16,11 +16,12 @@
 
 package config
 
-//Start of Private Key json file specification
+//PrivateKeyBytes Start of Private Key json file specification
 type PrivateKeyBytes struct {
 	Bytes string `json:"bytes"`
 }
 
+//PrivateKey holds data and type
 type PrivateKey struct {
 	Data PrivateKeyBytes `json:"data"`
 	Type string          `json:"type"`
@@ -28,27 +29,31 @@ type PrivateKey struct {
 
 //End of Private Key json file specification
 
-//Start of Config json file specification
+//Server Start of Config json file specification
 type Server struct {
 	Port    int    `json:"port"`
 	TLSCert string `json:"tlscert,omitempty"`
 	TLSKey  string `json:"tlskey,omitempty"`
 }
 
+//Peer json file specification
 type Peer struct {
 	URL string `json:"url"`
 }
 
+//Key json file specification
 type Key struct {
 	PrivateKeyFile string `json:"config"`
 	PublicKeyFile  string `json:"publicKey"`
 }
 
+//Keys json file specification
 type Keys struct {
 	Passwords []string `json:"passwords"`
 	KeyData   []Key    `json:"keyData"`
 }
 
+//Config json file specification
 type Config struct {
 	Server      Server   `json:"server"`
 	HostName    string   `json:"hostName"`

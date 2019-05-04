@@ -41,7 +41,7 @@ func TestNewEncryptedTransaction(t *testing.T) {
 	require.True(t, trans.Timestamp.Before(time.Now().Add(-10000000000)) || tmp == "51e51636d1fcac073578a2529fce94c3b6e64ac0e14bbf57b17f0fb69e2d68da5adfee406ca13216ee49afc0f99145222a136033682319e9d3554dbb067afe3a")
 }
 
-func TestEncrypted_Transaction_Save_Retrieve(t *testing.T) {
+func TestEncryptedTransaction_Save_Retrieve(t *testing.T) {
 	now := time.Now()
 	trans := CreateEncryptedTransaction([]byte("1"), []byte("AA"), now)
 	err := trans.Save()
@@ -50,11 +50,11 @@ func TestEncrypted_Transaction_Save_Retrieve(t *testing.T) {
 	trans2, err := FindEncryptedTransaction([]byte("1"))
 	require.Empty(t, err)
 
-	require.Equal(t, string(trans2.Encoded_Payload), "AA")
+	require.Equal(t, string(trans2.EncodedPayload), "AA")
 	require.Equal(t, trans2.Timestamp.Unix(), now.Unix())
 }
 
-func TestEncrypted_Transaction_Delete(t *testing.T) {
+func TestEncryptedTransaction_Delete(t *testing.T) {
 	trans := CreateEncryptedTransaction([]byte("2"), []byte("BB"), time.Now())
 	err := trans.Save()
 	require.NoError(t, err)

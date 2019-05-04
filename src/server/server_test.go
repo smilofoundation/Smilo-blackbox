@@ -14,11 +14,14 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server
+package server_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
+
+	"Smilo-blackbox/src/server"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -42,7 +45,7 @@ var nonce = make([]byte, 24)
 
 func TestPublicAPI(t *testing.T) {
 
-	public, _ := InitRouting()
+	public, _ := server.InitRouting()
 
 	testflight.WithServer(public, func(r *testflight.Requester) {
 
@@ -78,7 +81,7 @@ func TestPublicAPI(t *testing.T) {
 				name:        "test push",
 				endpoint:    "/push",
 				method:      "POST",
-				body:        base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				body:        base64.StdEncoding.EncodeToString(testEncryptedTransaction.EncodedPayload),
 				contentType: "application/octet-stream",
 				response:    base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash),
 				statusCode:  201,
@@ -90,7 +93,7 @@ func TestPublicAPI(t *testing.T) {
 				method:      "POST",
 				body:        "{ \"type\": \"Individual\", \"publicKey\": \"" + base64.StdEncoding.EncodeToString([]byte("12345678901234567890123456789012")) + "\", \"key\": \"" + base64.StdEncoding.EncodeToString(testEncryptedTransaction.Hash) + "\" }",
 				contentType: "application/json",
-				response:    base64.StdEncoding.EncodeToString(testEncryptedTransaction.Encoded_Payload),
+				response:    base64.StdEncoding.EncodeToString(testEncryptedTransaction.EncodedPayload),
 				statusCode:  200,
 				expectedErr: nil,
 			},
@@ -139,18 +142,18 @@ func TestPublicAPI(t *testing.T) {
 				require.Equal(t, test.statusCode, response.StatusCode)
 
 				if test.endpoint == "/partyinfo" {
-					var respJson syncpeer.PartyInfoResponse
-					err := json.Unmarshal([]byte(response.Body), &respJson)
+					var respJSON syncpeer.PartyInfoResponse
+					err := json.Unmarshal([]byte(response.Body), &respJSON)
 					if err == nil {
-						log.Debugf("Public Key: %s Proof: %s", respJson.PublicKeys[0].Key, respJson.PublicKeys[0].Proof)
-						require.Equal(t, respJson.PublicKeys[0].Key, "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
+						t.Logf("Public Key: %s Proof: %s", respJSON.PublicKeys[0].Key, respJSON.PublicKeys[0].Proof)
+						require.Equal(t, respJSON.PublicKeys[0].Key, "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 						pubKey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
-						proof, _ := base64.StdEncoding.DecodeString(respJson.PublicKeys[0].Proof)
+						proof, _ := base64.StdEncoding.DecodeString(respJSON.PublicKeys[0].Proof)
 						ret := crypt.DecryptPayload(crypt.ComputeSharedKey(crypt.GetPrivateKey(pubKey), pubKey), proof, nonce)
 						require.NotEmpty(t, ret)
-						log.Debugf("Unboxed Proof: %s", ret)
+						t.Logf("Unboxed Proof: %s", ret)
 					} else {
-						log.Debugf("Invalid json response. %v", response)
+						t.Logf("Invalid json response. %v", response)
 						t.Fail()
 					}
 				}
@@ -163,7 +166,7 @@ func TestPublicAPI(t *testing.T) {
 
 func TestPrivateAPI(t *testing.T) {
 
-	_, private := InitRouting()
+	_, private := server.InitRouting()
 
 	testflight.WithServer(private, func(r *testflight.Requester) {
 
@@ -298,6 +301,8 @@ func TestPrivateAPI(t *testing.T) {
 					require.Empty(t, err)
 
 					err = json.Unmarshal(response.RawBody, &sendResponse)
+					require.NoError(t, err)
+
 					require.Empty(t, err)
 
 					receiveRequest := api.ReceiveRequest{Key: sendResponse.Key, To: sendRequest.To[0]}
@@ -308,15 +313,18 @@ func TestPrivateAPI(t *testing.T) {
 					targetBody := string(targetObject)
 
 					newrequest, err := http.NewRequest("GET", test.followUpEndpoint, bytes.NewBuffer([]byte(targetBody)))
+					require.NoError(t, err)
 					newrequest.Header.Set("Content-Type", "application/json")
 
 					require.Empty(t, err)
 					require.NotEmpty(t, newrequest)
 
 					followUpResponse = r.Do(newrequest)
-					var responseJson api.ReceiveResponse
-					json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJson)
-					require.Equal(t, sendRequest.Payload, responseJson.Payload)
+					var responseJSON api.ReceiveResponse
+					err = json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJSON)
+					require.NoError(t, err)
+
+					require.Equal(t, sendRequest.Payload, responseJSON.Payload)
 
 				} else if test.followUpEndpoint == "/transaction" {
 
@@ -325,7 +333,7 @@ func TestPrivateAPI(t *testing.T) {
 						t.Fail()
 					}
 					urlEncodedKey := base64.URLEncoding.EncodeToString(key)
-					log.Debug("Send Response: ", response)
+					t.Log("Send Response: ", response)
 					toBytes, err := base64.StdEncoding.DecodeString("OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w=")
 					if err != nil {
 						t.Fail()
@@ -334,9 +342,11 @@ func TestPrivateAPI(t *testing.T) {
 
 					targetURL := "/transaction/" + urlEncodedKey + "?to=" + urlEncodedTo
 					followUpResponse = r.Get(targetURL)
-					var responseJson api.ReceiveResponse
-					json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJson)
-					require.Equal(t, test.body, responseJson.Payload)
+					var responseJSON api.ReceiveResponse
+					err = json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJSON)
+					require.NoError(t, err)
+
+					require.Equal(t, test.body, responseJSON.Payload)
 
 				} else {
 					return
@@ -351,13 +361,16 @@ func TestPrivateAPI(t *testing.T) {
 
 }
 
-func createEncryptedTransactionForDeletion() *data.Encrypted_Transaction {
+func createEncryptedTransactionForDeletion() *data.EncryptedTransaction {
 	encTrans := createEncryptedTransaction()
-	encTrans.Save()
+	err := encTrans.Save()
+	if err != nil {
+		fmt.Println("Could not createEncryptedTransactionForDeletion")
+	}
 	return encTrans
 }
 
-func createEncryptedTransaction() *data.Encrypted_Transaction {
+func createEncryptedTransaction() *data.EncryptedTransaction {
 	toValues := make([][]byte, 1)
 	toValues[0] = []byte("09876543210987654321098765432109")
 	fromValue := []byte("12345678901234567890123456789012")

@@ -7,22 +7,6 @@
 * [Index](#pkg-index)
 
 ## <a name="pkg-overview">Overview</a>
-Copyright 2019 The Smilo-blackbox Authors
-This file is part of the Smilo-blackbox library.
-
-The Smilo-blackbox library is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-The Smilo-blackbox library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with the Smilo-blackbox library. If not, see <<a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>>.
-
 
 
 
@@ -30,12 +14,12 @@ along with the Smilo-blackbox library. If not, see <<a href="http://www.gnu.org/
 * [func SetFilename(filename string)](#SetFilename)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
 * [func Start()](#Start)
-* [type Encrypted_Transaction](#Encrypted_Transaction)
-  * [func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction](#CreateEncryptedTransaction)
-  * [func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error)](#FindEncryptedTransaction)
-  * [func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction](#NewEncryptedTransaction)
-  * [func (et *Encrypted_Transaction) Delete() error](#Encrypted_Transaction.Delete)
-  * [func (et *Encrypted_Transaction) Save() error](#Encrypted_Transaction.Save)
+* [type EncryptedTransaction](#EncryptedTransaction)
+  * [func CreateEncryptedTransaction(hash []byte, encodedPayload []byte, timestamp time.Time) *EncryptedTransaction](#CreateEncryptedTransaction)
+  * [func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error)](#FindEncryptedTransaction)
+  * [func NewEncryptedTransaction(encodedPayload []byte) *EncryptedTransaction](#NewEncryptedTransaction)
+  * [func (et *EncryptedTransaction) Delete() error](#EncryptedTransaction.Delete)
+  * [func (et *EncryptedTransaction) Save() error](#EncryptedTransaction.Save)
 * [type Peer](#Peer)
   * [func FindPeer(publicKey []byte) (*Peer, error)](#FindPeer)
   * [func NewPeer(pKey []byte, nodeURL string) *Peer](#NewPeer)
@@ -51,10 +35,12 @@ along with the Smilo-blackbox library. If not, see <<a href="http://www.gnu.org/
 
 
 
-## <a name="SetFilename">func</a> [SetFilename](/src/target/db.go?s=905:938#L29)
+## <a name="SetFilename">func</a> [SetFilename](/src/target/db.go?s=933:966#L30)
 ``` go
 func SetFilename(filename string)
 ```
+SetFilename set filename
+
 
 
 ## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=1033:1070#L30)
@@ -65,100 +51,126 @@ SetLogger set the logger
 
 
 
-## <a name="Start">func</a> [Start](/src/target/db.go?s=963:975#L33)
+## <a name="Start">func</a> [Start](/src/target/db.go?s=1018:1030#L35)
 ``` go
 func Start()
 ```
+Start will start the db
 
 
 
-## <a name="Encrypted_Transaction">type</a> [Encrypted_Transaction](/src/target/encrypted_transaction.go?s=871:1012#L25)
+
+## <a name="EncryptedTransaction">type</a> [EncryptedTransaction](/src/target/encrypted_transaction.go?s=918:1055#L26)
 ``` go
-type Encrypted_Transaction struct {
-    Hash            []byte `storm:"id"`
-    Encoded_Payload []byte
-    Timestamp       time.Time `storm:"index"`
+type EncryptedTransaction struct {
+    Hash           []byte `storm:"id"`
+    EncodedPayload []byte
+    Timestamp      time.Time `storm:"index"`
 }
 ```
+EncryptedTransaction holds hash and payload
 
 
 
 
 
 
-### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=1371:1483#L45)
+
+### <a name="CreateEncryptedTransaction">func</a> [CreateEncryptedTransaction](/src/target/encrypted_transaction.go?s=1560:1670#L48)
 ``` go
-func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction
+func CreateEncryptedTransaction(hash []byte, encodedPayload []byte, timestamp time.Time) *EncryptedTransaction
 ```
+CreateEncryptedTransaction will encrypt the transaction
 
-### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=1631:1705#L54)
+
+### <a name="FindEncryptedTransaction">func</a> [FindEncryptedTransaction](/src/target/encrypted_transaction.go?s=1886:1959#L58)
 ``` go
-func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error)
+func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error)
 ```
+FindEncryptedTransaction will find a encrypted transaction for a hash
 
-### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=1014:1089#L31)
+
+### <a name="NewEncryptedTransaction">func</a> [NewEncryptedTransaction](/src/target/encrypted_transaction.go?s=1154:1227#L33)
 ``` go
-func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction
+func NewEncryptedTransaction(encodedPayload []byte) *EncryptedTransaction
 ```
+NewEncryptedTransaction will create a new encrypted transaction based on the provided payload
 
 
 
 
-### <a name="Encrypted_Transaction.Delete">func</a> (\*Encrypted\_Transaction) [Delete](/src/target/encrypted_transaction.go?s=1941:1988#L68)
+
+### <a name="EncryptedTransaction.Delete">func</a> (\*EncryptedTransaction) [Delete](/src/target/encrypted_transaction.go?s=2243:2289#L74)
 ``` go
-func (et *Encrypted_Transaction) Delete() error
+func (et *EncryptedTransaction) Delete() error
 ```
+Delete delete it on the db
 
 
 
-### <a name="Encrypted_Transaction.Save">func</a> (\*Encrypted\_Transaction) [Save](/src/target/encrypted_transaction.go?s=1870:1915#L64)
+
+### <a name="EncryptedTransaction.Save">func</a> (\*EncryptedTransaction) [Save](/src/target/encrypted_transaction.go?s=2144:2188#L69)
 ``` go
-func (et *Encrypted_Transaction) Save() error
+func (et *EncryptedTransaction) Save() error
 ```
+Save saves into db
 
 
 
-## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=821:890#L18)
+
+## <a name="Peer">type</a> [Peer](/src/target/peer.go?s=858:927#L20)
 ``` go
 type Peer struct {
     // contains filtered or unexported fields
 }
 ```
+Peer holds url and pub for a peer
 
 
 
 
 
 
-### <a name="FindPeer">func</a> [FindPeer](/src/target/peer.go?s=1173:1219#L39)
+
+### <a name="FindPeer">func</a> [FindPeer](/src/target/peer.go?s=1416:1462#L47)
 ``` go
 func FindPeer(publicKey []byte) (*Peer, error)
 ```
+FindPeer will find a peer
 
-### <a name="NewPeer">func</a> [NewPeer](/src/target/peer.go?s=892:939#L23)
+
+### <a name="NewPeer">func</a> [NewPeer](/src/target/peer.go?s=975:1022#L26)
 ``` go
 func NewPeer(pKey []byte, nodeURL string) *Peer
 ```
+NewPeer create new peer based on pk and url
 
-### <a name="Update">func</a> [Update](/src/target/peer.go?s=998:1044#L28)
+
+### <a name="Update">func</a> [Update](/src/target/peer.go?s=1109:1155#L32)
 ``` go
 func Update(pKey []byte, nodeURL string) *Peer
 ```
+Update will update a peer
 
 
 
 
-### <a name="Peer.Delete">func</a> (\*Peer) [Delete](/src/target/peer.go?s=1422:1451#L53)
+
+### <a name="Peer.Delete">func</a> (\*Peer) [Delete](/src/target/peer.go?s=1721:1750#L63)
 ``` go
 func (p *Peer) Delete() error
 ```
+Delete delete a peer on db
 
 
 
-### <a name="Peer.Save">func</a> (\*Peer) [Save](/src/target/peer.go?s=1370:1397#L49)
+
+### <a name="Peer.Save">func</a> (\*Peer) [Save](/src/target/peer.go?s=1640:1667#L58)
 ``` go
 func (p *Peer) Save() error
 ```
+Save save a peer into db
+
 
 
 

@@ -36,12 +36,14 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-//TODO
 // GetPartyInfo It receives a POST request with a json containing url and key, returns local publicKeys and a proof that private key is known.
 func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 	var jsonReq syncpeer.PartyInfoRequest
 	body, _ := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		log.WithError(err).Error("Could not r.Body.Close")
+	}()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
 		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
@@ -64,13 +66,16 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	publicKeys := crypt.GetPublicKeys()
-	responseJson := syncpeer.PartyInfoResponse{PublicKeys: make([]syncpeer.ProvenPublicKey, 0, len(publicKeys)), PeerURLs: syncpeer.GetPeers()}
+	responseJSON := syncpeer.PartyInfoResponse{PublicKeys: make([]syncpeer.ProvenPublicKey, 0, len(publicKeys)), PeerURLs: syncpeer.GetPeers()}
 	for _, pubkey := range publicKeys {
 		sharedKey := crypt.ComputeSharedKey(crypt.GetPrivateKey(pubkey), key)
 		randomPayload, _ := crypt.NewRandomKey()
-		responseJson.PublicKeys = append(responseJson.PublicKeys, syncpeer.ProvenPublicKey{Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nonce))})
+		responseJSON.PublicKeys = append(responseJSON.PublicKeys, syncpeer.ProvenPublicKey{Key: base64.StdEncoding.EncodeToString(pubkey), Proof: base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, randomPayload, nonce))})
 	}
-	json.NewEncoder(w).Encode(responseJson)
+	err = json.NewEncoder(w).Encode(responseJSON)
+	if err != nil {
+		log.WithError(err).Error("Could not json.NewEncoder(w).Encode")
+	}
 	w.Header().Set("Content-Type", "application/json")
 	syncpeer.PeerAdd(jsonReq.SenderURL)
 }
@@ -85,7 +90,12 @@ func Push(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	encPayload, _ := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
+	}()
 	if encPayload == nil {
 		message := fmt.Sprintf("Invalid request: %s, missing payload.", r.URL)
 		log.Error(message)
@@ -111,9 +121,15 @@ func Push(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encTrans.Save()
+	err = encTrans.Save()
+	if err != nil {
+		log.WithError(err).Error("Could not encTrans.Save")
+	}
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
+	_, err = w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Hash)))
+	if err != nil {
+		log.WithError(err).Error("Could not w.Write encTrans")
+	}
 }
 
 // ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return unencrypted payload
@@ -153,7 +169,10 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 	payload := RetrieveAndDecryptPayload(w, r, hash, public)
 	if payload != nil {
 		log.Info("Found transaction! ", base64.StdEncoding.EncodeToString(payload))
-		w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
+		_, err = w.Write([]byte(base64.StdEncoding.EncodeToString(payload)))
+		if err != nil {
+			log.WithError(err).Error("Could not w.Write payload")
+		}
 	} else {
 		log.WithField("key", key).WithField("hash", hash).WithField("public", public).
 			Error("Could not find valid data for the request.")
@@ -166,7 +185,12 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 func Resend(w http.ResponseWriter, r *http.Request) {
 	var jsonReq ResendRequest
 	body, _ := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
+	}()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
 		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
@@ -178,13 +202,21 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 		key, err := base64.StdEncoding.DecodeString(jsonReq.Key)
 		if err != nil {
 			message := fmt.Sprintf("Invalid request: %s, Key (%s) is not a valid BASE64 key.", r.URL, jsonReq.Key)
-			log.Error(message)
+			log.WithError(err).Error(message)
 			requestError(w, http.StatusBadRequest, message)
 			return
 		}
 		encTrans, err := data.FindEncryptedTransaction(key)
+		if err != nil {
+			message := fmt.Sprintf("Invalid request: %s, error (%s) Finding Encrypted Transaction.", r.URL, err)
+			log.WithError(err).Error(message)
+			requestError(w, http.StatusBadRequest, message)
+		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.Encoded_Payload)))
+		_, err = w.Write([]byte(base64.StdEncoding.EncodeToString(encTrans.EncodedPayload)))
+		if err != nil {
+			log.WithError(err).Error("Could not w.Write EncodedPayload")
+		}
 	} else {
 		if strings.ToUpper(jsonReq.Type) == "ALL" {
 			//TODO Implement loop of push requests
@@ -202,7 +234,12 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 func Delete(w http.ResponseWriter, r *http.Request) {
 	var jsonReq DeleteRequest
 	body, _ := ioutil.ReadAll(r.Body)
-	defer r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
+	}()
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
 		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
@@ -218,15 +255,26 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	encTrans, err := data.FindEncryptedTransaction(key)
-	if encTrans == nil {
+	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", jsonReq.Key)
-		log.Error(message)
+		log.WithError(err).Error(message)
 		requestError(w, http.StatusNotFound, message)
 		return
 	}
-	encTrans.Delete()
+	err = encTrans.Delete()
+	if err != nil {
+		message := "Could not encTrans.Delete"
+		log.WithError(err).Error(message)
+		requestError(w, http.StatusNotFound, message)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Delete successful"))
+	_, err = w.Write([]byte("Delete successful"))
+	if err != nil {
+		message := "Could not w.Write"
+		log.WithError(err).Error(message)
+		return
+	}
 }
 
 // TransactionDelete It receives a DELETE request with a key on path string and returns 204 if succeed, 404 otherwise.
@@ -240,19 +288,22 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	encTrans, err := data.FindEncryptedTransaction(key)
-	if encTrans == nil {
+	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", params["key"])
-		log.Error(message)
+		log.WithError(err).Error(message)
 		requestError(w, http.StatusNotFound, message)
 		return
 	}
-	encTrans.Delete()
+	err = encTrans.Delete()
+	if err != nil {
+		log.WithError(err).Error("Could not encTrans.Delete")
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 
 // ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
-	jsonReq := PeerUrl{}
+	jsonReq := PeerURL{}
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &jsonReq)
 	if err != nil {
@@ -261,7 +312,7 @@ func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
-	syncpeer.PeerAdd(jsonReq.Url)
+	syncpeer.PeerAdd(jsonReq.URL)
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -282,14 +333,16 @@ func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusNotFound, message)
 		return
 	}
-	jsonResponse := PeerUrl{Url: url}
+	jsonResponse := PeerURL{URL: url}
 	out, _ := json.Marshal(jsonResponse)
 	w.WriteHeader(http.StatusOK)
-	w.Write(out)
+	_, err = w.Write(out)
+	if err != nil {
+		log.WithError(err).Error("Could not w.Write")
+	}
 }
 
-//TODO
 // Metrics Receive a GET request and return Status Code 200 and server internal status information in plain text.
 func Metrics(w http.ResponseWriter, r *http.Request) {
-
+	//TODO:
 }

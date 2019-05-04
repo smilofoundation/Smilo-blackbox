@@ -11,14 +11,14 @@
 
 
 ## <a name="pkg-index">Index</a>
+* [func AppendCertificate(cert []byte) bool](#AppendCertificate)
+* [func GetHTTPClient() *http.Client](#GetHTTPClient)
 * [func GetPeerURL(publicKey []byte) (string, error)](#GetPeerURL)
 * [func GetPeers() []string](#GetPeers)
 * [func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error)](#GetPublicKeysFromOtherNode)
 * [func PeerAdd(url string)](#PeerAdd)
-* [func SetTimeBetweenCycles(seconds int)](#SetTimeBetweenCycles)
-* [func SetTimeBetweenRequests(seconds int)](#SetTimeBetweenRequests)
+* [func SetHostURL(url string)](#SetHostURL)
 * [func StartSync()](#StartSync)
-* [func StopSync()](#StopSync)
 * [type PartyInfoRequest](#PartyInfoRequest)
 * [type PartyInfoResponse](#PartyInfoResponse)
 * [type Peer](#Peer)
@@ -37,62 +37,80 @@
 
 
 
-## <a name="GetPeerURL">func</a> [GetPeerURL](/src/target/main.go?s=3001:3050#L152)
+## <a name="AppendCertificate">func</a> [AppendCertificate](/src/target/main.go?s=1337:1377#L67)
+``` go
+func AppendCertificate(cert []byte) bool
+```
+AppendCertificate append cert
+
+
+
+## <a name="GetHTTPClient">func</a> [GetHTTPClient](/src/target/main.go?s=6380:6413#L275)
+``` go
+func GetHTTPClient() *http.Client
+```
+GetHTTPClient get http client
+
+
+
+## <a name="GetPeerURL">func</a> [GetPeerURL](/src/target/main.go?s=4562:4611#L220)
 ``` go
 func GetPeerURL(publicKey []byte) (string, error)
 ```
+GetPeerURL get url
 
 
-## <a name="GetPeers">func</a> [GetPeers](/src/target/main.go?s=2810:2834#L142)
+
+## <a name="GetPeers">func</a> [GetPeers](/src/target/main.go?s=4350:4374#L209)
 ``` go
 func GetPeers() []string
 ```
+GetPeers get peers
 
 
-## <a name="GetPublicKeysFromOtherNode">func</a> [GetPublicKeysFromOtherNode](/src/target/main.go?s=3200:3289#L160)
+
+## <a name="GetPublicKeysFromOtherNode">func</a> [GetPublicKeysFromOtherNode](/src/target/main.go?s=4815:4904#L229)
 ``` go
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error)
 ```
+GetPublicKeysFromOtherNode get pub from other nodes
 
 
-## <a name="PeerAdd">func</a> [PeerAdd](/src/target/main.go?s=2689:2713#L138)
+
+## <a name="PeerAdd">func</a> [PeerAdd](/src/target/main.go?s=4168:4192#L202)
 ``` go
 func PeerAdd(url string)
 ```
+PeerAdd add peer url
 
 
-## <a name="SetTimeBetweenCycles">func</a> [SetTimeBetweenCycles](/src/target/main.go?s=613:651#L38)
+
+## <a name="SetHostURL">func</a> [SetHostURL](/src/target/main.go?s=1929:1956#L95)
 ``` go
-func SetTimeBetweenCycles(seconds int)
+func SetHostURL(url string)
 ```
+SetHostURL set host
 
 
-## <a name="SetTimeBetweenRequests">func</a> [SetTimeBetweenRequests](/src/target/main.go?s=507:547#L34)
-``` go
-func SetTimeBetweenRequests(seconds int)
-```
 
-
-## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=432:448#L26)
+## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=1602:1618#L78)
 ``` go
 func StartSync()
 ```
-
-
-## <a name="StopSync">func</a> [StopSync](/src/target/main.go?s=465:480#L30)
-``` go
-func StopSync()
-```
+StartSync start sync
 
 
 
-## <a name="PartyInfoRequest">type</a> [PartyInfoRequest](/src/target/types.go?s=52:144#L8)
+
+## <a name="PartyInfoRequest">type</a> [PartyInfoRequest](/src/target/types.go?s=102:235#L9)
 ``` go
 type PartyInfoRequest struct {
-    SenderURL string `json:url`
-    SenderKey string `json:"key"`
+    SenderURL   string `json:"url"`
+    SenderKey   string `json:"key"`
+    SenderNonce string `json:"nonce"`
 }
 ```
+PartyInfoRequest used to marshal/unmarshal json
 
 
 
@@ -102,13 +120,15 @@ type PartyInfoRequest struct {
 
 
 
-## <a name="PartyInfoResponse">type</a> [PartyInfoResponse](/src/target/types.go?s=146:272#L13)
+
+## <a name="PartyInfoResponse">type</a> [PartyInfoResponse](/src/target/types.go?s=288:416#L16)
 ``` go
 type PartyInfoResponse struct {
     PublicKeys []ProvenPublicKey `json:"publicKeys"`
-    PeerURLs   []string          `json:peers`
+    PeerURLs   []string          `json:"peers"`
 }
 ```
+PartyInfoResponse used to marshal/unmarshal json
 
 
 
@@ -118,12 +138,14 @@ type PartyInfoResponse struct {
 
 
 
-## <a name="Peer">type</a> [Peer](/src/target/types.go?s=363:482#L23)
+
+## <a name="Peer">type</a> [Peer](/src/target/types.go?s=594:730#L28)
 ``` go
 type Peer struct {
     // contains filtered or unexported fields
 }
 ```
+Peer used to marshal/unmarshal json
 
 
 
@@ -133,13 +155,15 @@ type Peer struct {
 
 
 
-## <a name="ProvenPublicKey">type</a> [ProvenPublicKey](/src/target/types.go?s=274:361#L18)
+
+## <a name="ProvenPublicKey">type</a> [ProvenPublicKey](/src/target/types.go?s=467:554#L22)
 ``` go
 type ProvenPublicKey struct {
     Key   string `json:"key"`
     Proof string `json:"proof"`
 }
 ```
+ProvenPublicKey used to marshal/unmarshal json
 
 
 
@@ -149,45 +173,56 @@ type ProvenPublicKey struct {
 
 
 
-## <a name="SafePublicKeyMap">type</a> [SafePublicKeyMap](/src/target/types.go?s=484:558#L31)
+
+## <a name="SafePublicKeyMap">type</a> [SafePublicKeyMap](/src/target/types.go?s=782:856#L38)
 ``` go
 type SafePublicKeyMap struct {
     sync2.RWMutex
     // contains filtered or unexported fields
 }
 ```
+SafePublicKeyMap used to marshal/unmarshal json
 
 
 
 
 
 
-### <a name="NewSafePublicKeyMap">func</a> [NewSafePublicKeyMap](/src/target/types.go?s=560:604#L36)
+
+### <a name="NewSafePublicKeyMap">func</a> [NewSafePublicKeyMap](/src/target/types.go?s=895:939#L44)
 ``` go
 func NewSafePublicKeyMap() *SafePublicKeyMap
 ```
+NewSafePublicKeyMap create new key
 
 
 
 
-### <a name="SafePublicKeyMap.Delete">func</a> (\*SafePublicKeyMap) [Delete](/src/target/types.go?s=821:868#L49)
+
+### <a name="SafePublicKeyMap.Delete">func</a> (\*SafePublicKeyMap) [Delete](/src/target/types.go?s=1218:1265#L59)
 ``` go
 func (spm *SafePublicKeyMap) Delete(key string)
 ```
+Delete will delete internal key
 
 
 
-### <a name="SafePublicKeyMap.Get">func</a> (\*SafePublicKeyMap) [Get](/src/target/types.go?s=676:734#L42)
+
+### <a name="SafePublicKeyMap.Get">func</a> (\*SafePublicKeyMap) [Get](/src/target/types.go?s=1039:1097#L51)
 ``` go
 func (spm *SafePublicKeyMap) Get(key string) (value *Peer)
 ```
+Get will get internal key
 
 
 
-### <a name="SafePublicKeyMap.Store">func</a> (\*SafePublicKeyMap) [Store](/src/target/types.go?s=933:992#L55)
+
+### <a name="SafePublicKeyMap.Store">func</a> (\*SafePublicKeyMap) [Store](/src/target/types.go?s=1353:1412#L66)
 ``` go
 func (spm *SafePublicKeyMap) Store(key string, value *Peer)
 ```
+Store will store key
+
 
 
 

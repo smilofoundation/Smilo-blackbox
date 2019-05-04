@@ -133,7 +133,12 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 func Send(w http.ResponseWriter, r *http.Request) {
 	var sendReq SendRequest
 	err := json.NewDecoder(r.Body).Decode(&sendReq)
-	r.Body.Close()
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
+	}()
 	if err != nil {
 		message := fmt.Sprintf("Invalid request: %s, error: %s", r.URL, err)
 		log.Error(message)
@@ -162,7 +167,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.Encrypted_Transaction {
+func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.EncryptedTransaction {
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
 		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
@@ -208,7 +213,7 @@ func Receive(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RetrieveJsonPayload(w, r, key, to)
+	RetrieveJSONPayload(w, r, key, to)
 
 }
 
@@ -245,6 +250,6 @@ func TransactionGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RetrieveJsonPayload(w, r, key, to)
+	RetrieveJSONPayload(w, r, key, to)
 
 }

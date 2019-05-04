@@ -14,11 +14,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server
+package server_test
 
 import (
 	"net/http"
 	"testing"
+
+	"gopkg.in/urfave/cli.v1"
+
+	"Smilo-blackbox/src/server"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -37,9 +41,14 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	config.LoadConfig("./server_test.conf")
+	app := cli.NewApp()
+	config.Init(app)
+	err := config.LoadConfig("./server_test.conf")
+	if err != nil {
+		panic("Could not open config for server_hack_test")
+	}
 
-	go StartServer()
+	go server.StartServer()
 
 	config.WorkDir.Value = ""
 
@@ -63,21 +72,23 @@ func TestUnixSend(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	response := doUnixPostJsonRequest(t, "/send", string(req))
+	response := doUnixPostJSONRequest(t, "/send", string(req))
 	var sendResponse api.SendResponse
-	json.Unmarshal([]byte(response), &sendResponse)
+	err = json.Unmarshal([]byte(response), &sendResponse)
+	require.NoError(t, err)
 
 	receiveRequest := api.ReceiveRequest{Key: sendResponse.Key, To: sendRequest.To[0]}
 	req2, err2 := json.Marshal(receiveRequest)
 	require.Empty(t, err2)
 
-	log.Debug("Send Response: " + sendResponse.Key)
+	t.Log("Send Response: " + sendResponse.Key)
 
-	response = doUnixGetJsonRequest(t, "/receive", string(req2))
+	response = doUnixGetJSONRequest(t, "/receive", string(req2))
 	var receiveResponse api.ReceiveResponse
-	json.Unmarshal([]byte(response), &receiveResponse)
+	err = json.Unmarshal([]byte(response), &receiveResponse)
+	require.NoError(t, err)
 
-	log.Debug("Receive Response: " + receiveResponse.Payload)
+	t.Log("Receive Response: " + receiveResponse.Payload)
 	require.Equal(t, sendRequest.Payload, receiveResponse.Payload)
 }
 
@@ -94,7 +105,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 		t.Fail()
 	}
 	urlEncodedKey := base64.URLEncoding.EncodeToString(key)
-	log.Debug("Send Response: " + response)
+	t.Log("Send Response: " + response)
 	toBytes, err := base64.StdEncoding.DecodeString(to[0])
 	if err != nil {
 		t.Fail()
@@ -102,9 +113,11 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 	urlEncodedTo := base64.URLEncoding.EncodeToString(toBytes)
 	response = doUnixRequest(t, "/transaction/"+urlEncodedKey+"?to="+urlEncodedTo)
 	var receiveResponse api.ReceiveResponse
-	json.Unmarshal([]byte(response), &receiveResponse)
+	err = json.Unmarshal([]byte(response), &receiveResponse)
+	require.NoError(t, err)
+
 	retorno, _ := base64.StdEncoding.DecodeString(receiveResponse.Payload)
-	log.Debug("Receive Response: " + receiveResponse.Payload)
+	t.Log("Receive Response: " + receiveResponse.Payload)
 	if string(payload) != string(retorno) {
 		t.Fail()
 	}

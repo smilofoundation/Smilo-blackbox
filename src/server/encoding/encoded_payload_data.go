@@ -20,12 +20,15 @@ import (
 	"bytes"
 	"encoding/binary"
 
+	"github.com/sirupsen/logrus"
+
 	"io/ioutil"
 
 	"Smilo-blackbox/src/crypt"
 )
 
-type Encoded_Payload_Data struct {
+//EncodedPayloadData holds the encoded payload data (sender,nonce,cipher,recipientNonce and list)
+type EncodedPayloadData struct {
 	Sender         []byte
 	Nonce          []byte
 	Cipher         []byte
@@ -33,7 +36,8 @@ type Encoded_Payload_Data struct {
 	RecipientList  [][]byte
 }
 
-func (e *Encoded_Payload_Data) Serialize() *[]byte {
+//Serialize obj
+func (e *EncodedPayloadData) Serialize() *[]byte {
 	var buffer = bytes.NewBuffer([]byte{})
 	serializeBytes(e.Sender, buffer)
 	serializeBytes(e.Cipher, buffer)
@@ -44,8 +48,9 @@ func (e *Encoded_Payload_Data) Serialize() *[]byte {
 	return &ret
 }
 
-func Deserialize(encodedPayload []byte) *Encoded_Payload_Data {
-	e := Encoded_Payload_Data{}
+//Deserialize obj
+func Deserialize(encodedPayload []byte) *EncodedPayloadData {
+	e := EncodedPayloadData{}
 	buffer := bytes.NewBuffer(encodedPayload)
 	e.Sender = deserializeBytes(buffer)
 	e.Cipher = deserializeBytes(buffer)
@@ -55,7 +60,8 @@ func Deserialize(encodedPayload []byte) *Encoded_Payload_Data {
 	return &e
 }
 
-func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Encoded_Payload_Data, error) {
+//EncodePayloadData encode payload data
+func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*EncodedPayloadData, error) {
 	masterkey, err := crypt.NewRandomKey()
 	if err != nil {
 		return nil, err
@@ -75,7 +81,7 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 		sharedKey := crypt.ComputeSharedKey(senderPrivate, recipients[i])
 		recipientsEncryptedKey[i] = crypt.EncryptPayload(sharedKey, masterkey, recipientsNonce)
 	}
-	e := Encoded_Payload_Data{
+	e := EncodedPayloadData{
 		Sender:         sender,
 		Cipher:         cipher,
 		Nonce:          nonce,
@@ -85,7 +91,8 @@ func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*Enc
 	return &e, nil
 }
 
-func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
+//Decode will decode
+func (e *EncodedPayloadData) Decode(to []byte) []byte {
 	var publicKey = to
 	privateKey := crypt.GetPrivateKey(e.Sender)
 	if privateKey == nil {
@@ -103,9 +110,8 @@ func (e *Encoded_Payload_Data) Decode(to []byte) []byte {
 	}
 	if len(masterKey) > 0 {
 		return crypt.DecryptPayload(masterKey, e.Cipher, e.Nonce)
-	} else {
-		return nil
 	}
+	return nil
 }
 
 func serializeBytes(data []byte, buffer *bytes.Buffer) {
@@ -129,7 +135,10 @@ func serializeArray(data [][]byte, buffer *bytes.Buffer) {
 
 func deserializeBytes(buffer *bytes.Buffer) []byte {
 	var sizeB = make([]byte, 8)
-	buffer.Read(sizeB)
+	_, err := buffer.Read(sizeB)
+	if err != nil {
+		logrus.WithError(err).Error("Could not buffer.Read")
+	}
 	size := binary.BigEndian.Uint64(sizeB)
 	data := buffer.Next(int(size))
 	return data

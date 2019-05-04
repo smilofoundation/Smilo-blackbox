@@ -37,6 +37,7 @@ import (
 	"Smilo-blackbox/src/server/model"
 )
 
+//InitP2PServer will init p2p peers
 func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error) {
 
 	host := config.P2PDestination.Value
@@ -94,6 +95,7 @@ func InitP2PServer(bootstrapNodes []*discover.Node) (*p2p.Server, error) {
 
 }
 
+//InitP2p will init p2p
 func InitP2p() {
 	maxPeersNetwork = 20
 	var err error
@@ -139,12 +141,12 @@ func InitP2p() {
 		log.WithError(err).Fatal("InitP2p Could not start P2P Server")
 	}
 
-	srv_node := srv.Self()
+	srvNode := srv.Self()
 
 	//save to db
 
 	myPeerNode := model.PeerNode{
-		ID:       srv_node.String(),
+		ID:       srvNode.String(),
 		LastSeen: time.Now(),
 	}
 
@@ -165,9 +167,10 @@ func InitP2p() {
 
 }
 
+//SubscribeP2P will subscribe p2p
 func SubscribeP2P() {
 	eventOneC := make(chan *p2p.PeerEvent)
-	sub_one := srv.SubscribeEvents(eventOneC)
+	subOne := srv.SubscribeEvents(eventOneC)
 	go func() {
 
 		for {
@@ -200,10 +203,10 @@ func SubscribeP2P() {
 					//	Debug("Received message")
 					continue
 				}
-			case err := <-sub_one.Err():
+			case err := <-subOne.Err():
 				log.
 					WithError(err).
-					Error("**********************  Received sub_one.Err(): message")
+					Error("**********************  Received subOne.Err(): message")
 				break
 			}
 		}
@@ -213,6 +216,7 @@ func SubscribeP2P() {
 	time.Sleep(time.Millisecond * 1000)
 }
 
+//AddPeer will add a peer
 func AddPeer(node *discover.Node) error {
 	log.
 		WithField("node.ID.String()", node.ID.TerminalString()).
@@ -230,6 +234,7 @@ func AddPeer(node *discover.Node) error {
 	return nil
 }
 
+//InitP2PPeers will init peers
 func InitP2PPeers(peers []model.PeerNode) {
 	//log.Infof("InitP2PPeers, total peers %d", len(peers))
 	for _, peer := range peers {
@@ -267,8 +272,11 @@ func InitP2PPeers(peers []model.PeerNode) {
 					WithField("parsedPeer", thispeer.ID.TerminalString()).
 					Warn("Peer not found on the srv.Peers() and database, will run AddPeer. ")
 				err = AddPeer(thispeer)
+				if err != nil {
+					log.WithError(err).Error("Could not AddPeer")
+				}
 
-				StormDBPeers.Update(func(tx *buntdb.Tx) error {
+				err = StormDBPeers.Update(func(tx *buntdb.Tx) error {
 					targetObjectArr, err := json.Marshal(&targetObject)
 					if err != nil {
 						log.
@@ -281,6 +289,9 @@ func InitP2PPeers(peers []model.PeerNode) {
 
 					return err
 				})
+				if err != nil {
+					log.WithError(err).Error("Could not StormDBPeers.Update")
+				}
 
 			} else {
 				log.WithField("method", "InitP2PPeers").
@@ -338,8 +349,9 @@ func InitP2PPeers(peers []model.PeerNode) {
 
 }
 
-//TODO: process a list of peers into our database / try to connect
+//PeerList will init all peers provided on the p2p message
 func PeerList(p2pMessage Message) {
+	//TODO: process a list of peers into our database / try to connect
 	var peerList []model.PeerNode
 	err := json.Unmarshal([]byte(p2pMessage.Body), &peerList)
 	if err != nil {
@@ -355,8 +367,9 @@ func PeerList(p2pMessage Message) {
 
 }
 
-//TODO: return 10 peers from our database order by last seen, make sure I'm not in it
+//GetPeerListSend will get peers
 func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter) {
+	//TODO: return 10 peers from our database order by last seen, make sure I'm not in it
 	var peerNodes []model.PeerNode
 
 	msgCmutex.Lock()
@@ -391,27 +404,29 @@ func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter) {
 	return
 }
 
+//GetPeerNodeID will get peer node
 func GetPeerNodeID(id string) string {
 	newStr := strings.Split(id, "@")[0]
 	return newStr
 }
 
-func IsPeerAlreadyConnected(parsedPeer *discover.Node) bool {
-	msgCmutex.Lock()
-	var found bool
-	for _, thispeer := range srv.Peers() {
+//func IsPeerAlreadyConnected(parsedPeer *discover.Node) bool {
+//	msgCmutex.Lock()
+//	var found bool
+//	for _, thispeer := range srv.Peers() {
+//
+//		p, err := discover.ParseNode(thispeer.String())
+//		if err == nil && parsedPeer.String() == p.String() {
+//			found = true
+//		}
+//	}
+//
+//	msgCmutex.Unlock()
+//
+//	return found
+//}
 
-		p, err := discover.ParseNode(thispeer.String())
-		if err == nil && parsedPeer.String() == p.String() {
-			found = true
-		}
-	}
-
-	msgCmutex.Unlock()
-
-	return found
-}
-
+//IsPeerAlreadyAdded check if peer already connected
 func IsPeerAlreadyAdded(parsedPeer *discover.Node) bool {
 	var found bool
 	msgCmutex.Lock()
@@ -439,6 +454,7 @@ func IsPeerAlreadyAdded(parsedPeer *discover.Node) bool {
 	return found
 }
 
+//GetExternalIP Get the external IP
 func GetExternalIP() (string, error) {
 	ifaces, err := net.Interfaces()
 	if err != nil {
