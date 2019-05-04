@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-// Peers contains the peer info
+//PeerNode Peers contains the peer info
 type PeerNode struct {
 	ID            string    `json:"id" storm:"id"`
 	LastSeen      time.Time `json:"last_seen"`

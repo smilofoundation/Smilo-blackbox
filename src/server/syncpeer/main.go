@@ -28,7 +28,7 @@ var (
 	mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
-	hostUrl             string
+	hostURL             string
 	log                 *logrus.Entry = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "syncpeer",
@@ -41,18 +41,19 @@ var (
 	}
 	client = &http.Client{
 		Transport: tr,
-		Timeout: getRequestTimeout(),
+		Timeout:   getRequestTimeout(),
 	}
 )
+
 func getRequestTimeout() (t time.Duration) {
 	value := os.Getenv("REQUEST_TIMEOUT")
 	vint, err := strconv.Atoi(value)
 	if err != nil {
-		t = 30*time.Second
+		t = 30 * time.Second
 	} else {
 		t = time.Duration(vint) * time.Second
 	}
-	return
+	return t
 }
 func getOrCreateCertPool() *x509.CertPool {
 	rootCAs, _ := x509.SystemCertPool()
@@ -62,6 +63,7 @@ func getOrCreateCertPool() *x509.CertPool {
 	return rootCAs
 }
 
+//AppendCertificate append cert
 func AppendCertificate(cert []byte) bool {
 	ok := tr.TLSClientConfig.RootCAs.AppendCertsFromPEM(cert)
 	if !ok {
@@ -72,25 +74,28 @@ func AppendCertificate(cert []byte) bool {
 	return ok
 }
 
+//StartSync start sync
 func StartSync() {
 	go sync()
 }
 
-func StopSync() {
-	keepRunning = false
+//func StopSync() {
+//	keepRunning = false
+//}
+//
+//func SetTimeBetweenRequests(seconds int) {
+//	timeBetweenRequests = time.Duration(seconds) * time.Second
+//}
+//
+//func SetTimeBetweenCycles(seconds int) {
+//	timeBetweenCycles = time.Duration(seconds) * time.Second
+//}
+
+//SetHostURL set host
+func SetHostURL(url string) {
+	hostURL = url
 }
 
-func SetTimeBetweenRequests(seconds int) {
-	timeBetweenRequests = time.Duration(seconds) * time.Second
-}
-
-func SetTimeBetweenCycles(seconds int) {
-	timeBetweenCycles = time.Duration(seconds) * time.Second
-}
-
-func SetHostUrl(url string) {
-	hostUrl = url
-}
 func sync() {
 	keepRunning = true
 	for keepRunning {
@@ -193,12 +198,14 @@ func peerAddAll(urls ...string) {
 	}
 }
 
+//PeerAdd add peer url
 func PeerAdd(url string) {
-	if url != hostUrl {
+	if url != hostURL {
 		peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
 	}
 }
 
+//GetPeers get peers
 func GetPeers() []string {
 	mutex.RLock()
 	defer mutex.RUnlock()
@@ -209,6 +216,7 @@ func GetPeers() []string {
 	return urls
 }
 
+//GetPeerURL get url
 func GetPeerURL(publicKey []byte) (string, error) {
 	peer := publicKeysHashMap.Get(string(publicKey))
 	if peer != nil {
@@ -217,16 +225,17 @@ func GetPeerURL(publicKey []byte) (string, error) {
 	return "", errors.New("unknown Public Key Peer")
 }
 
+//GetPublicKeysFromOtherNode get pub from other nodes
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
 	nonce, _ := crypt.NewRandomNonce()
-	reqJson := PartyInfoRequest{SenderURL: hostUrl, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
-	reqStr, err := json.Marshal(reqJson)
+	reqJSON := PartyInfoRequest{SenderURL: hostURL, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
+	reqStr, err := json.Marshal(reqJSON)
 	privateKey := crypt.GetPrivateKey(publicKey)
 	var retPubKeys = make([][]byte, 0, 128)
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := GetHttpClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
+	response, err := GetHTTPClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -235,20 +244,23 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	}
 	defer func() {
 		if response != nil && response.Body != nil {
-			response.Body.Close()
+			err := response.Body.Close()
+			if err != nil {
+				log.WithError(err).Error("Could not response.Body.Close()")
+			}
 		}
 	}()
 
-	var responseJson PartyInfoResponse
+	var responseJSON PartyInfoResponse
 	p, err := ioutil.ReadAll(response.Body)
 	if err != nil {
 		return nil, nil, err
 	}
-	err = json.Unmarshal(p, &responseJson)
+	err = json.Unmarshal(p, &responseJSON)
 	if err != nil {
 		return nil, nil, err
 	}
-	for _, provenKey := range responseJson.PublicKeys {
+	for _, provenKey := range responseJSON.PublicKeys {
 		remotePublicKey, _ := base64.StdEncoding.DecodeString(provenKey.Key)
 		remoteProof, _ := base64.StdEncoding.DecodeString(provenKey.Proof)
 		sharedKey := crypt.ComputeSharedKey(privateKey, remotePublicKey)
@@ -256,9 +268,10 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 			retPubKeys = append(retPubKeys, remotePublicKey)
 		}
 	}
-	return retPubKeys, responseJson.PeerURLs, nil
+	return retPubKeys, responseJSON.PeerURLs, nil
 }
 
-func GetHttpClient() *http.Client {
+//GetHTTPClient get http client
+func GetHTTPClient() *http.Client {
 	return client
 }

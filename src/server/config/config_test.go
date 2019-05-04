@@ -19,6 +19,8 @@ package config
 import (
 	"testing"
 
+	"gopkg.in/urfave/cli.v1"
+
 	"encoding/base64"
 
 	"github.com/stretchr/testify/require"
@@ -29,6 +31,8 @@ import (
 const configFile = "./config_test.conf"
 
 func TestLoadConfig(t *testing.T) {
+	app := cli.NewApp()
+	Init(app)
 	err := LoadConfig(configFile)
 	require.Empty(t, err, "could not open config file")
 }

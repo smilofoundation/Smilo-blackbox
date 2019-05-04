@@ -22,21 +22,28 @@
 ## <a name="pkg-constants">Constants</a>
 ``` go
 const (
+    //BlackBoxVersion holds bb version
     BlackBoxVersion = "Smilo Black Box 0.1.0"
-    UpcheckMessage  = "I'm up!"
+    //UpcheckMessage http up check msg
+    UpcheckMessage = "I'm up!"
 
+    //HeaderFrom header default
     HeaderFrom = "bb0x-from"
-    HeaderTo   = "bb0x-to"
-    HeaderKey  = "bb0x-key"
+    //HeaderTo header default
+    HeaderTo = "bb0x-to"
+    //HeaderKey header default
+    HeaderKey = "bb0x-key"
 )
 ```
 
 
 
-## <a name="BuildFilename">func</a> [BuildFilename](/src/target/utils.go?s=1027:1069#L35)
+## <a name="BuildFilename">func</a> [BuildFilename](/src/target/utils.go?s=1248:1290#L41)
 ``` go
 func BuildFilename(filename string) string
 ```
+BuildFilename will build a filename with correct path based on pwd
+
 
 
 

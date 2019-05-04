@@ -49,25 +49,38 @@ var (
 	privateAPI *mux.Router
 	publicAPI  *mux.Router
 
+	//StormDBPeers is the main object for peers db
 	StormDBPeers *storm.DB
 
-	serverStatus               = status{false, false}
-	log          *logrus.Entry = logrus.WithFields(logrus.Fields{
+	//serverStatus               = status{false, false}
+	log *logrus.Entry = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "server",
 	})
 
+	//DefaultExpirationTime is the default expiration time used on the database
 	DefaultExpirationTime = &buntdb.SetOptions{Expires: false} // never expire
-	serverUrl             string
 
-	PUBLIC_SERVER_READ_TIMEOUT_STR   = os.Getenv("PUBLIC_SERVER_READ_TIMEOUT")
-	PUBLIC_SERVER_WRITE_TIMEOUT_STR  = os.Getenv("PUBLIC_SERVER_WRITE_TIMEOUT")
-	PRIVATE_SERVER_READ_TIMEOUT_STR  = os.Getenv("PRIVATE_SERVER_READ_TIMEOUT")
+	//serverURL             string
+
+	//PUBLIC_SERVER_READ_TIMEOUT_STR will be used to hold env var
+	PUBLIC_SERVER_READ_TIMEOUT_STR = os.Getenv("PUBLIC_SERVER_READ_TIMEOUT")
+
+	//PUBLIC_SERVER_WRITE_TIMEOUT_STR will be used to hold env var
+	PUBLIC_SERVER_WRITE_TIMEOUT_STR = os.Getenv("PUBLIC_SERVER_WRITE_TIMEOUT")
+
+	//PRIVATE_SERVER_READ_TIMEOUT_STR will be used to hold env var
+	PRIVATE_SERVER_READ_TIMEOUT_STR = os.Getenv("PRIVATE_SERVER_READ_TIMEOUT")
+
+	//PRIVATE_SERVER_WRITE_TIMEOUT_STR will be used to hold env var
 	PRIVATE_SERVER_WRITE_TIMEOUT_STR = os.Getenv("PRIVATE_SERVER_WRITE_TIMEOUT")
-
-	PUBLIC_SERVER_READ_TIMEOUT   = 120
-	PUBLIC_SERVER_WRITE_TIMEOUT  = 120
-	PRIVATE_SERVER_READ_TIMEOUT  = 60
+	//PUBLIC_SERVER_READ_TIMEOUT will be used to hold env var
+	PUBLIC_SERVER_READ_TIMEOUT = 120
+	//PUBLIC_SERVER_WRITE_TIMEOUT will be used to hold env var
+	PUBLIC_SERVER_WRITE_TIMEOUT = 120
+	//PRIVATE_SERVER_READ_TIMEOUT   will be used to hold env var
+	PRIVATE_SERVER_READ_TIMEOUT = 60
+	//PRIVATE_SERVER_WRITE_TIMEOUT  will be used to hold env var
 	PRIVATE_SERVER_WRITE_TIMEOUT = 60
 )
 
@@ -100,16 +113,16 @@ func initServer() {
 
 	StormDBPeers, err = storm.Open(finalPath)
 	if err != nil {
-		defer StormDBPeers.Close()
+		defer func() {
+			err := StormDBPeers.Close()
+			if err != nil {
+				log.WithError(err).Error("Could not StormDBPeers.Close")
+			}
+		}()
 		log.WithError(err).Error("Could not open StormDBPeers")
 		os.Exit(1)
 	}
 
-}
-
-type status struct {
-	httpServer bool
-	unixServer bool
 }
 
 // SetLogger set the logger
@@ -122,15 +135,16 @@ func SetLogger(loggers *logrus.Entry) {
 
 }
 
+//NewServer will create a new http server instance -- pub and private
 func NewServer(Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
 
 	return &http.Server{
-		Addr:         ":" + Port,
-		Handler:      publicAPI,
-		ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
-		WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
-	},
+			Addr:         ":" + Port,
+			Handler:      publicAPI,
+			ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
+			WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
+		},
 		&http.Server{
 			Handler:      privateAPI,
 			ReadTimeout:  time.Duration(PRIVATE_SERVER_READ_TIMEOUT) * time.Second,
@@ -139,6 +153,7 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 
 }
 
+//StartServer will start the server
 func StartServer() {
 	port, isTLS, workDir := config.Port.Value, config.IsTLS.Destination, config.WorkDir.Value
 	initServer()
@@ -193,18 +208,27 @@ func StartServer() {
 	}
 
 	finalPath := utils.BuildFilename(config.Socket.Value)
-	os.Remove(finalPath)
+	err := os.Remove(finalPath)
+	if err != nil {
+		log.WithError(err).Error("Could not os.Remove(finalPath), 1")
+	}
 
 	time.Sleep(1 * time.Second)
-	err := os.MkdirAll(finalPath, os.FileMode(0755))
+	err = os.MkdirAll(finalPath, os.FileMode(0755))
 	if err != nil {
 		log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
 	}
 
-	os.Remove(finalPath)
+	err = os.Remove(finalPath)
+	if err != nil {
+		log.WithError(err).Error("Could not os.Remove(finalPath), 2")
+	}
 
 	defer func() {
-		os.Remove(finalPath)
+		err = os.Remove(finalPath)
+		if err != nil {
+			log.WithError(err).Error("Could not os.Remove(finalPath), 3")
+		}
 	}()
 
 	log.Info("Starting IPC Server at, ", config.Socket.Value)
@@ -213,7 +237,10 @@ func StartServer() {
 		if err != nil {
 			log.Fatalf("Failed to start IPC Server at %s", config.Socket.Value)
 		}
-		os.Chmod(finalPath, 0600)
+		err = os.Chmod(finalPath, 0600)
+		if err != nil {
+			log.WithError(err).Error("Could not os.Chmod(finalPath, 0600)")
+		}
 
 		err = priv.Serve(sock)
 		if err != nil {
@@ -223,6 +250,7 @@ func StartServer() {
 	}()
 }
 
+//InitRouting will init routing
 func InitRouting() (*mux.Router, *mux.Router) {
 
 	publicAPI := mux.NewRouter()

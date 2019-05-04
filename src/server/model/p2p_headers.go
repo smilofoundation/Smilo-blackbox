@@ -17,24 +17,35 @@
 package model
 
 var (
-
-	//P2P
-	NETWORK_LIST      = "NETWORK_LIST"
-	NETWORK_STATE     = "NETWORK_STATE"
+	//NETWORK_LIST p2p message type
+	NETWORK_LIST = "NETWORK_LIST"
+	//NETWORK_STATE p2p message type
+	NETWORK_STATE = "NETWORK_STATE"
+	//REQUEST_NET_STATE p2p message type
 	REQUEST_NET_STATE = "REQUEST_NET_STATE"
-	PEER              = "PEER"
-	GET_PEER          = "GET_PEER"
-
-	PEER_LIST     = "PEER_LIST"
+	//PEER p2p message type
+	PEER = "PEER"
+	//GET_PEER p2p message type
+	GET_PEER = "GET_PEER"
+	//PEER_LIST p2p message type
+	PEER_LIST = "PEER_LIST"
+	//GET_PEER_LIST p2p message type
 	GET_PEER_LIST = "GET_PEER_LIST"
-
+	//MESSAGE p2p message type
 	MESSAGE = "MESSAGE"
 
 	//P2P BLOCK
-	COMMIT      = "COMMIT"
-	APPROVE     = "APPROVE"
-	DECLINE     = "DECLINE"
-	BLOCK       = "BLOCK"
-	GET_BLOCK   = "GET_BLOCK"
+
+	//COMMIT p2p message type
+	COMMIT = "COMMIT"
+	//APPROVE p2p message type
+	APPROVE = "APPROVE"
+	//DECLINE p2p message type
+	DECLINE = "DECLINE"
+	//BLOCK p2p message type
+	BLOCK = "BLOCK"
+	//GET_BLOCK p2p message type
+	GET_BLOCK = "GET_BLOCK"
+	//TRANSACTION p2p message type
 	TRANSACTION = "TRANSACTION"
 )

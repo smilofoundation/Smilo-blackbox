@@ -97,7 +97,7 @@ func TestIntegrationSendFew(t *testing.T) {
 
 }
 
-func TestPeerUrlPropagation(t *testing.T) {
+func TestPeerURLPropagation(t *testing.T) {
 	response := getPartyInfo(t, testServers[3])
 	require.NotEmpty(t, response.PeerURLs)
 	require.Equal(t, 5, len(response.PeerURLs))
@@ -107,7 +107,7 @@ func getPartyInfo(t *testing.T, targetServer TestServer) syncpeer.PartyInfoRespo
 	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL:"", SenderNonce: base64.StdEncoding.EncodeToString(make([]byte,24)), SenderKey:targetServer.PublicKey}
 	req, err := json.Marshal(partyInfoRequest)
 	require.Empty(t,err)
-	response := DoPostJsonRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
+	response := DoPostJSONRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
 	var partyInfoResponse syncpeer.PartyInfoResponse
 	json.Unmarshal([]byte(response), &partyInfoResponse)
 	return partyInfoResponse
@@ -176,8 +176,8 @@ func getUpcheck(port int) bool {
 	 return true
 }
 
-func DoPostJsonRequest(t *testing.T, _url string, json string) string {
-	client := syncpeer.GetHttpClient()
+func DoPostJSONRequest(t *testing.T, _url string, json string) string {
+	client := syncpeer.GetHTTPClient()
 	response, err := client.Post(_url, "application/json", bytes.NewBuffer([]byte(json)))
 	if err != nil {
 		return ""
@@ -190,7 +190,7 @@ func DoPostJsonRequest(t *testing.T, _url string, json string) string {
 }
 
 func DoRequest(url string) string {
-	client := syncpeer.GetHttpClient()
+	client := syncpeer.GetHTTPClient()
 	response, err := client.Get(url)
 	if err != nil {
 		return ""

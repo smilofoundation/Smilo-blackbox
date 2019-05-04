@@ -14,15 +14,18 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server
+package server_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/log"
 
 	"github.com/tv42/httpunix"
 
@@ -32,7 +35,7 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
+func doUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 
 	response, err := client.Post("http+unix://myservice"+endpoint, "application/json", bytes.NewBuffer([]byte(json)))
@@ -40,7 +43,7 @@ func doUnixPostJsonRequest(t *testing.T, endpoint string, json string) string {
 	return ret
 }
 
-func doUnixGetJsonRequest(t *testing.T, endpoint string, json string) string {
+func doUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 	req, _ := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
 	req.Header.Set("Content-Type", "application/json")
@@ -99,14 +102,17 @@ func getResponseData(t *testing.T, err error, response *http.Response) string {
 	ret := ""
 	defer func() {
 		if response != nil && response.Body != nil {
-			response.Body.Close()
+			err = response.Body.Close()
+			if err != nil {
+				fmt.Println("Could not response.Body.Close()")
+			}
 		}
 	}()
 	if err != nil {
 		t.Fail()
 	} else {
-		p, error := ioutil.ReadAll(response.Body)
-		if error != nil {
+		p, err := ioutil.ReadAll(response.Body)
+		if err != nil {
 			t.Fail()
 		} else {
 			ret = string(p)

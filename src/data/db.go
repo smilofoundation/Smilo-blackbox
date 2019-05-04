@@ -26,10 +26,12 @@ var db *storm.DB
 
 var dbFile string
 
+// SetFilename set filename
 func SetFilename(filename string) {
 	dbFile = filename
 }
 
+// Start will start the db
 func Start() {
 	_, err := os.Create(dbFile)
 	if err != nil {
@@ -40,8 +42,10 @@ func Start() {
 	db, err = storm.Open(dbFile)
 
 	if err != nil {
-		defer db.Close()
-		log.Fatal("Could not open DBFile: ", dbFile, ", error: ", err)
-		os.Exit(1)
+		defer func() {
+			err = db.Close()
+			log.WithError(err).Fatal("Could not open DBFile: ", dbFile, ", error: ", err)
+			os.Exit(1)
+		}()
 	}
 }

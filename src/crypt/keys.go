@@ -43,17 +43,29 @@ func init() {
 	initLog()
 }
 
+// ComputePublicKey will compute a key based on the secret
 func ComputePublicKey(secret []byte) ([]byte, error) {
 	return tweetnacl.ScalarMultBase(secret)
 }
 
+// GenerateKeys will generate key/pub and save into file
 func GenerateKeys(generateKeys string) {
 	log.WithField("generateKeys", generateKeys).Info("Going to generate encryption keys")
 	files := strings.Split(generateKeys, ",")
 	for i := range files {
-		keyPair, _ := tweetnacl.CryptoBoxKeyPair()
-		WritePrivateKeyFile(base64.StdEncoding.EncodeToString(keyPair.SecretKey), files[i]+".key")
-		WritePublicKeyFile(base64.StdEncoding.EncodeToString(keyPair.PublicKey), files[i]+".pub")
+		keyPair, err := tweetnacl.CryptoBoxKeyPair()
+		if err != nil {
+			log.WithError(err).Error("Could not tweetnacl.CryptoBoxKeyPair")
+			return
+		}
+		err = WritePrivateKeyFile(base64.StdEncoding.EncodeToString(keyPair.SecretKey), files[i]+".key")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePrivateKeyFile")
+		}
+		err = WritePublicKeyFile(base64.StdEncoding.EncodeToString(keyPair.PublicKey), files[i]+".pub")
+		if err != nil {
+			log.WithError(err).Error("Could not WritePublicKeyFile")
+		}
 	}
 }
 
@@ -65,9 +77,18 @@ func WritePrivateKeyFile(key string, filename string) error {
 			"bytes": key,
 		},
 	}
-	jsonBytes, _ := json.Marshal(targetObject)
+	jsonBytes, err := json.Marshal(targetObject)
+	if err != nil {
+		log.WithError(err).Error("Could not json.Marshal")
+		return err
+	}
 
-	dir, _ := os.Getwd() // gives us the source path
+	dir, err := os.Getwd() // gives us the source path
+	if err != nil {
+		log.WithError(err).Error("Could not os.Getwd()")
+		return err
+	}
+
 	path := filepath.Join(dir, "keys/"+filename)
 
 	log.WithField("path", path).Info("Going to Write Private Key File")

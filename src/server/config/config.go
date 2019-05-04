@@ -40,34 +40,49 @@ var (
 	log    *logrus.Entry
 	config Config
 
+	//GenerateKeys (cli) uses it for key pair
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
-	ConfigFile   = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
-	DBFile       = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
-	PeersDBFile  = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
-	Port         = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
-	Socket       = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
-	OtherNodes   = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
-	PublicKeys   = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
-	PrivateKeys  = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
-	Storage      = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
-
+	//ConfigFile (cli) uses it for config file name
+	ConfigFile = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	//DBFile (cli) uses it for db file name
+	DBFile = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	//PeersDBFile (cli) uses it for peer db file
+	PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
+	//Port (cli) uses it for local api public port
+	Port = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+	//Socket (cli) uses it for socket
+	Socket = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
+	//OtherNodes (cli) uses it for other nodes
+	OtherNodes = cli.StringFlag{Name: "othernodes", Value: "", Usage: "\"Boot nodes\" to connect"}
+	//PublicKeys (cli) uses it for  pub
+	PublicKeys = cli.StringFlag{Name: "publickeys", Value: "", Usage: "Public keys"}
+	//PrivateKeys (cli) uses it for pk
+	PrivateKeys = cli.StringFlag{Name: "privatekeys", Value: "", Usage: "Private keys"}
+	//Storage (cli) uses it for  db name
+	Storage = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
+	//HostName (cli) uses it for hostname
 	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
 
-	WorkDir  = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
-	IsTLS    = cli.BoolFlag{Name: "tls", Usage: "Enable Https communication"}
+	//WorkDir (cli) uses it for work dir
+	WorkDir = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
+	//IsTLS (cli) uses it for enable/disable https
+	IsTLS = cli.BoolFlag{Name: "tls", Usage: "Enable HTTPs communication"}
+	//ServCert (cli) uses it for cert
 	ServCert = cli.StringFlag{Name: "serv_cert", Value: "", Usage: ""}
-	ServKey  = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
+	//ServKey (cli) uses it for key
+	ServKey = cli.StringFlag{Name: "serv_key", Value: "", Usage: ""}
 
-	MaxPeersNetwork = cli.StringFlag{Name: "maxpeersnetwork", Value: "", Usage: ""}
+	//MaxPeersNetwork = cli.StringFlag{Name: "maxpeersnetwork", Value: "", Usage: ""}
 
+	//P2PDestination (cli) uses it for p2p dest
 	P2PDestination = cli.StringFlag{Name: "p2p_dest", Value: "", Usage: ""}
-
+	//P2PPort (cli) uses it for p2p port
 	P2PPort = cli.StringFlag{Name: "p2p_port", Value: "", Usage: ""}
-
-	CpuProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "Cpu profiling data filename"}
-
+	//CPUProfiling (cli) uses it for CPU profiling data filename
+	CPUProfiling = cli.StringFlag{Name: "cpuprofile", Value: "", Usage: "CPU profiling data filename"}
+	//P2PEnabled (cli) uses it for enable / disable p2p
 	P2PEnabled = cli.BoolFlag{Name: "p2p", Usage: "Enable p2p communication"}
-
+	//RootCert  (cli) uses it for certs
 	RootCert = cli.StringFlag{Name: "root_cert", Value: "", Usage: ""}
 )
 
@@ -78,22 +93,28 @@ func initLog() {
 	})
 }
 
+//Init will init cli and logs
 func Init(app *cli.App) {
 	initLog()
 	setCommandList(app)
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CpuProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
 }
 
+//LoadConfig will load cfg
 func LoadConfig(configPath string) error {
 	byteValue, err := readAllFile(configPath)
 	if err != nil {
 		return err
 	}
 
-	json.Unmarshal(byteValue, &config)
+	err = json.Unmarshal(byteValue, &config)
+	if err != nil {
+		log.WithError(err).Error("Could not json.Unmarshal config")
+		return err
+	}
 	parseConfigValues()
 	return nil
 }
@@ -152,12 +173,13 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
-	syncpeer.SetHostUrl(HostName.Value + ":" + Port.Value)
+	syncpeer.SetHostURL(HostName.Value + ":" + Port.Value)
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)
 	}
 }
 
+//ReadPrimaryKey will read pk
 func ReadPrimaryKey(pkFile string) ([]byte, error) {
 	byteValue, err := readAllFile(pkFile)
 	if err != nil {
@@ -165,7 +187,11 @@ func ReadPrimaryKey(pkFile string) ([]byte, error) {
 	}
 
 	var privateKey PrivateKey
-	json.Unmarshal(byteValue, &privateKey)
+	err = json.Unmarshal(byteValue, &privateKey)
+	if err != nil {
+		log.WithError(err).Error("Could not json.Unmarshal privateKey")
+		return nil, err
+	}
 
 	var decodedPrivateKey = make([]byte, 33)
 
@@ -174,6 +200,7 @@ func ReadPrimaryKey(pkFile string) ([]byte, error) {
 	return decodedPrivateKey[0:32], err
 }
 
+//ReadPublicKey will read pub
 func ReadPublicKey(pubFile string) ([]byte, error) {
 	byteValue, err := readAllFile(pubFile)
 	if err != nil {
@@ -188,7 +215,10 @@ func ReadPublicKey(pubFile string) ([]byte, error) {
 
 func readAllFile(file string) ([]byte, error) {
 	plainFile, err := os.Open(file)
-	defer plainFile.Close()
+	defer func() {
+		err := plainFile.Close()
+		log.WithError(err).Error("Could not plainFile.Close")
+	}()
 	if err != nil {
 		return nil, err
 	}

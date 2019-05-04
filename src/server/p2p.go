@@ -24,11 +24,13 @@ import (
 	"Smilo-blackbox/src/server/model"
 )
 
+//Message holds header and body
 type Message struct {
 	Header string `json:"content"`
 	Body   string `json:"body"`
 }
 
+//Peer is the main peer struct
 type Peer struct {
 	ID         string
 	Dest       string
@@ -36,7 +38,7 @@ type Peer struct {
 }
 
 var (
-	protocols       []p2p.Protocol
+	//protocols       []p2p.Protocol
 	srv             *p2p.Server
 	maxPeersNetwork int
 )
@@ -91,7 +93,10 @@ var (
 					continue
 				}
 				// make sure that the payload has been fully consumed
-				msg.Discard()
+				err = msg.Discard()
+				if err != nil {
+					log.WithError(err).Error("Could not msg.Discard")
+				}
 
 				switch p2pMessage.Header {
 
@@ -165,6 +170,7 @@ var (
 	}
 )
 
+// SendMsg will send a message
 func SendMsg(peer *p2p.Peer, rw p2p.MsgReadWriter, err error, outmsg Message) {
 
 	if outmsg.Header != "" {
@@ -184,5 +190,4 @@ func SendMsg(peer *p2p.Peer, rw p2p.MsgReadWriter, err error, outmsg Message) {
 			WithField("peerCount", srv.PeerCount()).
 			Debug("p2p.Send, sent second network")
 	}
-	return
 }

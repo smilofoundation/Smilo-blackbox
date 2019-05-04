@@ -21,6 +21,7 @@ import (
 	"fmt"
 )
 
+//SendRequest will marshal/unmarshal payload from and to
 type SendRequest struct {
 	// Payload is the transaction payload data we wish to store.
 	Payload string `json:"payload"`
@@ -30,24 +31,29 @@ type SendRequest struct {
 	To []string `json:"to"`
 }
 
+//SendResponse marshal/unmarshal a key
 type SendResponse struct {
 	// Key is the key that can be used to retrieve the submitted transaction.
 	Key string `json:"key"`
 }
 
+//ReceiveRequest marshal/unmarshal key and to
 type ReceiveRequest struct {
 	Key string `json:"key"`
 	To  string `json:"to"`
 }
 
+//ReceiveResponse will marshal/unmarshal payload
 type ReceiveResponse struct {
 	Payload string `json:"payload"`
 }
 
+//DeleteRequest marshal/unmarshal key
 type DeleteRequest struct {
 	Key string `json:"key"`
 }
 
+//ResendRequest will marshal/unmarshal type, pub and pk
 type ResendRequest struct {
 	// Type is the resend request type. It should be either "all" or "individual" depending on if
 	// you want to request an individual transaction, or all transactions associated with a node.
@@ -56,10 +62,12 @@ type ResendRequest struct {
 	Key       string `json:"key,omitempty"`
 }
 
-type PeerUrl struct {
-	Url string `json:"url"`
+//PeerURL will marshal/unmarshal url
+type PeerURL struct {
+	URL string `json:"url"`
 }
 
+//Parse will process send parsing
 func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {
 	msgs := make([]string, 0, len(e.To)+2)
 	payload, err := base64.StdEncoding.DecodeString(e.Payload)
@@ -82,6 +90,7 @@ func (e *SendRequest) Parse() ([]byte, []byte, [][]byte, []string) {
 	return payload, sender, recipients, msgs
 }
 
+//Parse will process receiving parsing
 func (e *ReceiveRequest) Parse() ([]byte, []byte, []string) {
 	msgs := make([]string, 0, len(e.To)+2)
 	key, err := base64.StdEncoding.DecodeString(e.Key)

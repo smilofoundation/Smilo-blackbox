@@ -24,14 +24,20 @@ import (
 )
 
 const (
+	//BlackBoxVersion holds bb version
 	BlackBoxVersion = "Smilo Black Box 0.1.0"
-	UpcheckMessage  = "I'm up!"
+	//UpcheckMessage http up check msg
+	UpcheckMessage = "I'm up!"
 
+	//HeaderFrom header default
 	HeaderFrom = "bb0x-from"
-	HeaderTo   = "bb0x-to"
-	HeaderKey  = "bb0x-key"
+	//HeaderTo header default
+	HeaderTo = "bb0x-to"
+	//HeaderKey header default
+	HeaderKey = "bb0x-key"
 )
 
+//BuildFilename will build a filename with correct path based on pwd
 func BuildFilename(filename string) string {
 	currentDir, _ := os.Getwd()
 	var workDir string

@@ -22,37 +22,41 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-type Encrypted_Transaction struct {
-	Hash            []byte `storm:"id"`
-	Encoded_Payload []byte
-	Timestamp       time.Time `storm:"index"`
+// EncryptedTransaction holds hash and payload
+type EncryptedTransaction struct {
+	Hash           []byte `storm:"id"`
+	EncodedPayload []byte
+	Timestamp      time.Time `storm:"index"`
 }
 
-func NewEncryptedTransaction(encoded_payload []byte) *Encrypted_Transaction {
-	trans := Encrypted_Transaction{
-		Hash:            calculateHash(encoded_payload),
-		Encoded_Payload: encoded_payload,
-		Timestamp:       time.Now(),
+// NewEncryptedTransaction will create a new encrypted transaction based on the provided payload
+func NewEncryptedTransaction(encodedPayload []byte) *EncryptedTransaction {
+	trans := EncryptedTransaction{
+		Hash:           calculateHash(encodedPayload),
+		EncodedPayload: encodedPayload,
+		Timestamp:      time.Now(),
 	}
 	return &trans
 }
 
-func calculateHash(encoded_payload []byte) []byte {
-	tmp := sha3.Sum512(encoded_payload)
+func calculateHash(encodedPayload []byte) []byte {
+	tmp := sha3.Sum512(encodedPayload)
 	return tmp[:]
 }
 
-func CreateEncryptedTransaction(hash []byte, encoded_payload []byte, timestamp time.Time) *Encrypted_Transaction {
-	trans := Encrypted_Transaction{
-		Hash:            hash,
-		Encoded_Payload: encoded_payload,
-		Timestamp:       timestamp,
+// CreateEncryptedTransaction will encrypt the transaction
+func CreateEncryptedTransaction(hash []byte, encodedPayload []byte, timestamp time.Time) *EncryptedTransaction {
+	trans := EncryptedTransaction{
+		Hash:           hash,
+		EncodedPayload: encodedPayload,
+		Timestamp:      timestamp,
 	}
 	return &trans
 }
 
-func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error) {
-	var t Encrypted_Transaction
+// FindEncryptedTransaction will find a encrypted transaction for a hash
+func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error) {
+	var t EncryptedTransaction
 	err := db.One("Hash", hash, &t)
 	if err != nil {
 		log.Error("Unable to find transaction.")
@@ -61,10 +65,12 @@ func FindEncryptedTransaction(hash []byte) (*Encrypted_Transaction, error) {
 	return &t, nil
 }
 
-func (et *Encrypted_Transaction) Save() error {
+//Save saves into db
+func (et *EncryptedTransaction) Save() error {
 	return db.Save(et)
 }
 
-func (et *Encrypted_Transaction) Delete() error {
+//Delete delete it on the db
+func (et *EncryptedTransaction) Delete() error {
 	return db.DeleteStruct(et)
 }
