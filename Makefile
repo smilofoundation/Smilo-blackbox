@@ -106,6 +106,7 @@ install-linters: ## Install linters
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/staticcheck
 	curl -L https://git.io/vp6lP | sh
+	cd $GOPATH/bin && ls -l
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).
