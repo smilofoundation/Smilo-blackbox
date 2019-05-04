@@ -106,7 +106,8 @@ install-linters: ## Install linters
 	go get -u gopkg.in/alecthomas/gometalinter.v3
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/staticcheck
-	gometalinter.v3 --vendored-linters --install
+#	curl -L https://git.io/vp6lP | sh
+	gometalinter.v3 --install
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).
