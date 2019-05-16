@@ -17,6 +17,9 @@
 package test
 
 import (
+	"Smilo-blackbox/src/utils"
+	"github.com/tv42/httpunix"
+	"os"
 	"testing"
 	"net/http"
 	"bytes"
@@ -26,7 +29,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"github.com/stretchr/testify/require"
-	"Smilo-blackbox/src/server"
 	"time"
 	"Smilo-blackbox/src/server/syncpeer"
 	"github.com/ethereum/go-ethereum/log"
@@ -42,19 +44,19 @@ var (
 )
 func init() {
 	testServers[0].Port = 9001
-	testServers[0].Client = server.GetSocketClient("./blackbox1.ipc")
+	testServers[0].Client = getSocketClient("./blackbox1.ipc")
 	testServers[0].PublicKey = "/TOE4TKtAqVsePRVR+5AA43HkAK5DSntkOCO7nYq5xU="
 	testServers[1].Port = 9002
-	testServers[1].Client = server.GetSocketClient("./blackbox2.ipc")
+	testServers[1].Client = getSocketClient("./blackbox2.ipc")
 	testServers[1].PublicKey = "rYxIwmdlrqetxTYolgXBq+qVBQCT29IYyWq9JIGgNWU="
 	testServers[2].Port = 9003
-	testServers[2].Client = server.GetSocketClient("./blackbox3.ipc")
+	testServers[2].Client = getSocketClient("./blackbox3.ipc")
 	testServers[2].PublicKey = "mVL7flODxSLJVN6U8uRiDT4IzZ5ySK0jIH+e9VyQQUQ="
 	testServers[3].Port = 9004
-	testServers[3].Client = server.GetSocketClient("./blackbox4.ipc")
+	testServers[3].Client = getSocketClient("./blackbox4.ipc")
 	testServers[3].PublicKey = "7BPSOhfa8XR1DfetZ6hqHU6r7I9RdjZgUoHB2xjGZkk="
 	testServers[4].Port = 9005
-	testServers[4].Client = server.GetSocketClient("./blackbox5.ipc")
+	testServers[4].Client = getSocketClient("./blackbox5.ipc")
 	testServers[4].PublicKey = "PSe+1pnRmrR910zyTVL6ngJOFXLPu8CBW+hjFI0+dhw="
 	certData, _ := ioutil.ReadFile("./rootCA.crt")
 	syncpeer.AppendCertificate(certData)
@@ -209,11 +211,29 @@ func getResponseData(response *http.Response) (string, error) {
 			response.Body.Close()
 		}
 	}()
-	p, error := ioutil.ReadAll(response.Body)
-	if error != nil {
-		return "", error
+	p, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return "", err
 	}
 	ret = string(p)
 
 	return ret, nil
+}
+
+func getSocketClient(socketFile string) http.Client {
+	finalPath := utils.BuildFilename(socketFile)
+	u := &httpunix.Transport{
+		DialTimeout:           100 * time.Millisecond,
+		RequestTimeout:        1 * time.Second,
+		ResponseHeaderTimeout: 1 * time.Second,
+	}
+	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
+		log.Error("ERROR: Could not open IPC file, ", " socketFile: ", socketFile, ", ERROR: ", err)
+		os.Exit(1)
+	}
+	u.RegisterLocation("myservice", finalPath)
+	var client = http.Client{
+		Transport: u,
+	}
+	return client
 }
