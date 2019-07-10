@@ -17,12 +17,11 @@
 package api
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-
-	"Smilo-blackbox/src/data"
 
 	"encoding/base64"
 	"strings"
@@ -112,7 +111,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoding.Deserialize(payload)
-	encTrans := data.NewEncryptedTransaction(payload)
+	encTrans := types.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
 		message := fmt.Sprintf("Cannot save transaction.")
@@ -206,7 +205,7 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 			requestError(w, http.StatusBadRequest, message)
 			return
 		}
-		encTrans, err := data.FindEncryptedTransaction(key)
+		encTrans, err := types.FindEncryptedTransaction(key)
 		if err != nil {
 			message := fmt.Sprintf("Invalid request: %s, error (%s) Finding Encrypted Transaction.", r.URL, err)
 			log.WithError(err).Error(message)
@@ -254,7 +253,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", jsonReq.Key)
 		log.WithError(err).Error(message)
@@ -287,7 +286,7 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", params["key"])
 		log.WithError(err).Error(message)

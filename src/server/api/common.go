@@ -17,6 +17,7 @@
 package api
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -25,7 +26,6 @@ import (
 
 	"bytes"
 
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
@@ -72,7 +72,7 @@ func RetrieveJSONPayload(w http.ResponseWriter, r *http.Request, key []byte, to 
 
 //RetrieveAndDecryptPayload will retrieve and decrypt the payload
 func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) []byte {
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if err != nil || encTrans == nil {
 		message := fmt.Sprintf("Transaction key: %s not found", hex.EncodeToString(key))
 		log.Error(message)
@@ -92,7 +92,7 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 }
 
 //PushTransactionForOtherNodes will push encrypted transaction to other nodes
-func PushTransactionForOtherNodes(encryptedTransaction data.EncryptedTransaction, recipient []byte) {
+func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransaction, recipient []byte) {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
 		_, err := syncpeer.GetHTTPClient().Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload))))

@@ -17,6 +17,7 @@
 package data
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"encoding/hex"
 	"os"
 	"testing"
@@ -29,6 +30,7 @@ import (
 
 func TestMain(m *testing.M) {
 	SetFilename(utils.BuildFilename("blackbox.db"))
+	SetEngine("boltdb")
 	Start()
 	time.Sleep(100000000)
 	retcode := m.Run()
@@ -36,18 +38,18 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewEncryptedTransaction(t *testing.T) {
-	trans := NewEncryptedTransaction([]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
+	trans := types.NewEncryptedTransaction([]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
 	tmp := hex.EncodeToString(trans.Hash)
 	require.True(t, trans.Timestamp.Before(time.Now().Add(-10000000000)) || tmp == "51e51636d1fcac073578a2529fce94c3b6e64ac0e14bbf57b17f0fb69e2d68da5adfee406ca13216ee49afc0f99145222a136033682319e9d3554dbb067afe3a")
 }
 
 func TestEncryptedTransaction_Save_Retrieve(t *testing.T) {
 	now := time.Now()
-	trans := CreateEncryptedTransaction([]byte("1"), []byte("AA"), now)
+	trans := types.CreateEncryptedTransaction([]byte("1"), []byte("AA"), now)
 	err := trans.Save()
 	require.NoError(t, err)
 
-	trans2, err := FindEncryptedTransaction([]byte("1"))
+	trans2, err := types.FindEncryptedTransaction([]byte("1"))
 	require.Empty(t, err)
 
 	require.Equal(t, string(trans2.EncodedPayload), "AA")
@@ -55,17 +57,17 @@ func TestEncryptedTransaction_Save_Retrieve(t *testing.T) {
 }
 
 func TestEncryptedTransaction_Delete(t *testing.T) {
-	trans := CreateEncryptedTransaction([]byte("2"), []byte("BB"), time.Now())
+	trans := types.CreateEncryptedTransaction([]byte("2"), []byte("BB"), time.Now())
 	err := trans.Save()
 	require.NoError(t, err)
 
-	trans2, err := FindEncryptedTransaction([]byte("2"))
+	trans2, err := types.FindEncryptedTransaction([]byte("2"))
 	require.Empty(t, err)
 
 	err = trans2.Delete()
 	require.NoError(t, err)
 
-	trans3, err := FindEncryptedTransaction([]byte("2"))
+	trans3, err := types.FindEncryptedTransaction([]byte("2"))
 	require.NotEmpty(t, err)
 
 	require.Empty(t, trans3)

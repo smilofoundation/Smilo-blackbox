@@ -44,6 +44,8 @@ var (
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
 	//ConfigFile (cli) uses it for config file name
 	ConfigFile = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	//DBEngine (cli) uses it for db engine
+	DBEngine = cli.StringFlag{Name: "dbengine", Value: "boltdb", Usage: "DB engine name"}
 	//DBFile (cli) uses it for db file name
 	DBFile = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
 	//PeersDBFile (cli) uses it for peer db file
@@ -100,7 +102,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBEngine, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
 }
 
 //LoadConfig will load cfg
@@ -166,6 +168,9 @@ func parseConfigValues() {
 		}
 
 	}
+	if config.DBEngine != "" {
+		DBEngine.Value = config.DBEngine
+	}
 	if config.DBFile != "" {
 		DBFile.Value = config.DBFile
 	}
@@ -173,6 +178,7 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
+	data.SetEngine(DBEngine.Value)
 	syncpeer.SetHostURL(HostName.Value + ":" + Port.Value)
 	for _, peerdata := range config.Peers {
 		syncpeer.PeerAdd(peerdata.URL)

@@ -17,35 +17,35 @@
 package data
 
 import (
-	"os"
-
-	"github.com/asdine/storm"
+	"Smilo-blackbox/src/data/boltdb"
+	"Smilo-blackbox/src/data/types"
 )
 
-var db *storm.DB
+//var db *storm.DB
 
 var dbFile string
+var dbEngine = ""
+
 
 // SetFilename set filename
 func SetFilename(filename string) {
 	dbFile = filename
 }
 
+func SetEngine(engine string) {
+	dbEngine = engine
+}
 // Start will start the db
 func Start() {
-	_, err := os.Create(dbFile)
+	var err error
+	switch dbEngine {
+		case "boltdb":
+			types.DBI, err = boltdb.BoltDBOpen(dbFile, log)
+		default:
+		    panic("Unknown Database Engine")
+	}
 	if err != nil {
-		log.Fatalf("Failed to start DB file at %s", dbFile)
+        log.Fatal("Unable to connect to database.")
 	}
 
-	log.Info("Opening DB: ", dbFile)
-	db, err = storm.Open(dbFile)
-
-	if err != nil {
-		defer func() {
-			err = db.Close()
-			log.WithError(err).Fatal("Could not open DBFile: ", dbFile, ", error: ", err)
-			os.Exit(1)
-		}()
-	}
 }

@@ -17,13 +17,13 @@
 package api
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
 
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 
 	"io/ioutil"
@@ -167,7 +167,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.EncryptedTransaction {
+func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *types.EncryptedTransaction {
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
 		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
@@ -175,7 +175,7 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 		requestError(w, http.StatusInternalServerError, message)
 		return nil
 	}
-	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
+	encTrans := types.NewEncryptedTransaction(*encPayload.Serialize())
 	err = encTrans.Save()
 	if err != nil {
 		log.WithError(err).Error("Could not encTrans.Save()")

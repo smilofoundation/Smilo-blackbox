@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package data
+package types
 
 import (
 	"time"
@@ -22,11 +22,20 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+var DBI DatabaseInstance
+
+type DatabaseInstance interface {
+	Close() error
+	Delete(data interface{}) error
+	Find(fieldname string, value interface{}, to interface{}) error
+	Save(data interface{}) error
+}
+
 // EncryptedTransaction holds hash and payload
 type EncryptedTransaction struct {
-	Hash           []byte `storm:"id"`
+	Hash           []byte
 	EncodedPayload []byte
-	Timestamp      time.Time `storm:"index"`
+	Timestamp      time.Time
 }
 
 // NewEncryptedTransaction will create a new encrypted transaction based on the provided payload
@@ -57,9 +66,9 @@ func CreateEncryptedTransaction(hash []byte, encodedPayload []byte, timestamp ti
 // FindEncryptedTransaction will find a encrypted transaction for a hash
 func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error) {
 	var t EncryptedTransaction
-	err := db.One("Hash", hash, &t)
+	err := DBI.Find("Hash", hash, &t)
 	if err != nil {
-		log.Error("Unable to find transaction.")
+//		log.Error("Unable to find transaction.")
 		return nil, err
 	}
 	return &t, nil
@@ -67,10 +76,10 @@ func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error) {
 
 //Save saves into db
 func (et *EncryptedTransaction) Save() error {
-	return db.Save(et)
+	return DBI.Save(et)
 }
 
 //Delete delete it on the db
 func (et *EncryptedTransaction) Delete() error {
-	return db.DeleteStruct(et)
+	return DBI.Delete(et)
 }

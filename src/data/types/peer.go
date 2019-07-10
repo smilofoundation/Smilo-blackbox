@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package data
+package types
 
 //Peer holds url and pub for a peer
 type Peer struct {
@@ -38,7 +38,7 @@ func Update(pKey []byte, nodeURL string) *Peer {
 	}
 	err = p.Save()
 	if err != nil {
-		log.WithError(err).Error("Could not Update, failed to execute Save method")
+		//data.log.WithError(err).Error("Could not Update, failed to execute Save method")
 	}
 	return p
 }
@@ -46,9 +46,9 @@ func Update(pKey []byte, nodeURL string) *Peer {
 //FindPeer will find a peer
 func FindPeer(publicKey []byte) (*Peer, error) {
 	var p Peer
-	err := db.One("publicKey", publicKey, &p)
+	err := DBI.Find("publicKey", publicKey, &p)
 	if err != nil {
-		log.Error("Unable to find Peer.")
+		//data.log.Error("Unable to find Peer.")
 		return nil, err
 	}
 	return &p, nil
@@ -56,10 +56,10 @@ func FindPeer(publicKey []byte) (*Peer, error) {
 
 //Save save a peer into db
 func (p *Peer) Save() error {
-	return db.Save(p)
+	return DBI.Save(p)
 }
 
 //Delete delete a peer on db
 func (p *Peer) Delete() error {
-	return db.DeleteStruct(p)
+	return DBI.Delete(p)
 }

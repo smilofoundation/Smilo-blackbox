@@ -17,6 +17,7 @@
 package server_test
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"fmt"
 	"net/http"
 	"testing"
@@ -34,7 +35,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"Smilo-blackbox/src/crypt"
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
@@ -361,7 +361,7 @@ func TestPrivateAPI(t *testing.T) {
 
 }
 
-func createEncryptedTransactionForDeletion() *data.EncryptedTransaction {
+func createEncryptedTransactionForDeletion() *types.EncryptedTransaction {
 	encTrans := createEncryptedTransaction()
 	err := encTrans.Save()
 	if err != nil {
@@ -370,11 +370,11 @@ func createEncryptedTransactionForDeletion() *data.EncryptedTransaction {
 	return encTrans
 }
 
-func createEncryptedTransaction() *data.EncryptedTransaction {
+func createEncryptedTransaction() *types.EncryptedTransaction {
 	toValues := make([][]byte, 1)
 	toValues[0] = []byte("09876543210987654321098765432109")
 	fromValue := []byte("12345678901234567890123456789012")
 	encPayloadData, _ := encoding.EncodePayloadData([]byte("123456"), fromValue, toValues)
-	encTrans := data.NewEncryptedTransaction(*encPayloadData.Serialize())
+	encTrans := types.NewEncryptedTransaction(*encPayloadData.Serialize())
 	return encTrans
 }
