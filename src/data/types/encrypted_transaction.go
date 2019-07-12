@@ -33,7 +33,7 @@ type DatabaseInstance interface {
 
 // EncryptedTransaction holds hash and payload
 type EncryptedTransaction struct {
-	Hash           []byte
+	Hash           []byte	`key:"true"`
 	EncodedPayload []byte
 	Timestamp      time.Time
 }

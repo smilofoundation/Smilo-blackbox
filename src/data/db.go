@@ -18,6 +18,7 @@ package data
 
 import (
 	"Smilo-blackbox/src/data/boltdb"
+	"Smilo-blackbox/src/data/dynamodb"
 	"Smilo-blackbox/src/data/types"
 )
 
@@ -41,6 +42,8 @@ func Start() {
 	switch dbEngine {
 		case "boltdb":
 			types.DBI, err = boltdb.BoltDBOpen(dbFile, log)
+		case "dynamodb":
+			types.DBI, err = dynamodb.DynamoDBOpen(dbFile, log)
 		default:
 		    panic("Unknown Database Engine")
 	}

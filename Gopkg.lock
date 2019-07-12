@@ -25,6 +25,49 @@
   version = "v2.1.2"
 
 [[projects]]
+  digest = "1:e099b71dfd94940ca3fbcda0910e2fc5713cf76d925f7ee1c478c15743ffd360"
+  name = "github.com/aws/aws-sdk-go"
+  packages = [
+    "aws",
+    "aws/awserr",
+    "aws/awsutil",
+    "aws/client",
+    "aws/client/metadata",
+    "aws/corehandlers",
+    "aws/credentials",
+    "aws/credentials/ec2rolecreds",
+    "aws/credentials/endpointcreds",
+    "aws/credentials/processcreds",
+    "aws/credentials/stscreds",
+    "aws/crr",
+    "aws/csm",
+    "aws/defaults",
+    "aws/ec2metadata",
+    "aws/endpoints",
+    "aws/request",
+    "aws/session",
+    "aws/signer/v4",
+    "internal/ini",
+    "internal/sdkio",
+    "internal/sdkrand",
+    "internal/sdkuri",
+    "internal/shareddefaults",
+    "private/protocol",
+    "private/protocol/json/jsonutil",
+    "private/protocol/jsonrpc",
+    "private/protocol/query",
+    "private/protocol/query/queryutil",
+    "private/protocol/rest",
+    "private/protocol/xml/xmlutil",
+    "service/dynamodb",
+    "service/dynamodb/dynamodbattribute",
+    "service/sts",
+  ]
+  pruneopts = "UT"
+  revision = "5995f581282b82398d39fa11a1f059fd6a3ee737"
+  version = "v1.20.18"
+
+[[projects]]
   digest = "1:477f6df8a1915abb180d730179a4a45212328effdf98cc6ca5b0e5741db00125"
   name = "github.com/btcsuite/btcd"
   packages = ["btcec"]
@@ -48,7 +91,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:372e01643e616e3715415bc9fc6c4e390685b8f815a6df0ffa19e36cac04e6be"
+  digest = "1:b4c486e8bde2655636f1afd1d542634872f53d974f61b7e3c449c0280a21f9ee"
   name = "github.com/ethereum/go-ethereum"
   packages = [
     "common",
@@ -56,13 +99,9 @@
     "common/math",
     "common/mclock",
     "crypto",
-    "crypto/sha3",
     "crypto/ecies",
     "crypto/secp256k1",
-    "crypto/secp256k1/libsecp256k1/include",
-    "crypto/secp256k1/libsecp256k1/src",
-    "crypto/secp256k1/libsecp256k1/src/modules",
-    "crypto/secp256k1/libsecp256k1/src/modules/recovery",
+    "crypto/sha3",
     "event",
     "log",
     "metrics",
@@ -167,6 +206,13 @@
   pruneopts = "UT"
   revision = "c9cfead9f2a36ddf3daa40ba269aa7f4bbba6b62"
   version = "v1.0.1"
+
+[[projects]]
+  digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
+  name = "github.com/jmespath/go-jmespath"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c2b33e84"
 
 [[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
@@ -389,9 +435,14 @@
   input-imports = [
     "github.com/asdine/storm",
     "github.com/asdine/storm/q",
+    "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/dynamodb",
+    "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
     "github.com/drewolson/testflight",
     "github.com/ethereum/go-ethereum/common",
     "github.com/ethereum/go-ethereum/crypto",
+    "github.com/ethereum/go-ethereum/log",
     "github.com/ethereum/go-ethereum/p2p",
     "github.com/ethereum/go-ethereum/p2p/discover",
     "github.com/facebookgo/grace/gracehttp",
