@@ -19,10 +19,10 @@ package data
 import (
 	"Smilo-blackbox/src/data/boltdb"
 	"Smilo-blackbox/src/data/dynamodb"
+	"Smilo-blackbox/src/data/redis"
 	"Smilo-blackbox/src/data/types"
 )
 
-//var db *storm.DB
 
 var dbFile string
 var dbEngine = ""
@@ -44,6 +44,8 @@ func Start() {
 			types.DBI, err = boltdb.BoltDBOpen(dbFile, log)
 		case "dynamodb":
 			types.DBI, err = dynamodb.DynamoDBOpen(dbFile, log)
+		case "redis":
+		    types.DBI, err = redis.RedisOpen(dbFile, log)
 		default:
 		    panic("Unknown Database Engine")
 	}

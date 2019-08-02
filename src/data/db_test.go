@@ -18,7 +18,6 @@ package data
 
 import (
 	"Smilo-blackbox/src/data/types"
-	"encoding/hex"
 	"os"
 	"testing"
 	"time"
@@ -28,19 +27,30 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-func TestMain(m *testing.M) {
-	SetFilename(utils.BuildFilename("blackbox.db"))
-	SetEngine("boltdb")
-	Start()
-	time.Sleep(100000000)
-	retcode := m.Run()
-	os.Exit(retcode)
+type testEngine struct {
+	Filename string
+	Engine string
 }
 
-func TestNewEncryptedTransaction(t *testing.T) {
-	trans := types.NewEncryptedTransaction([]byte("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"))
-	tmp := hex.EncodeToString(trans.Hash)
-	require.True(t, trans.Timestamp.Before(time.Now().Add(-10000000000)) || tmp == "51e51636d1fcac073578a2529fce94c3b6e64ac0e14bbf57b17f0fb69e2d68da5adfee406ca13216ee49afc0f99145222a136033682319e9d3554dbb067afe3a")
+func TestMain(m *testing.M) {
+	// TODO: Tests to dynamodb and redis rely on services running to accept requests, for now they are just commented out.
+	//       To run all tests we need to start services using docker instances and configure environment for aws.
+	engines := []testEngine{
+		{Filename:utils.BuildFilename("blackbox.db"), Engine:"boltdb"},
+		//{Filename:"", Engine:"dynamodb"},
+		//{Filename:"redis/test.conf", Engine:"redis"},
+	}
+    for _, eng := range engines {
+		SetFilename(eng.Filename)
+		SetEngine(eng.Engine)
+		Start()
+		time.Sleep(100000000)
+		retcode := m.Run()
+		if retcode != 0 {
+			os.Exit(retcode)
+		}
+	}
+    os.Exit(0)
 }
 
 func TestEncryptedTransaction_Save_Retrieve(t *testing.T) {

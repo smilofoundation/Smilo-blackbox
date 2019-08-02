@@ -19,11 +19,9 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
-	"io/ioutil"
-	"os"
-
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
+	"io/ioutil"
 
 	"Smilo-blackbox/src/crypt"
 
@@ -107,7 +105,7 @@ func setCommandList(app *cli.App) {
 
 //LoadConfig will load cfg
 func LoadConfig(configPath string) error {
-	byteValue, err := readAllFile(configPath)
+	byteValue, err := utils.ReadAllFile(configPath, log)
 	if err != nil {
 		return err
 	}
@@ -187,7 +185,7 @@ func parseConfigValues() {
 
 //ReadPrimaryKey will read pk
 func ReadPrimaryKey(pkFile string) ([]byte, error) {
-	byteValue, err := readAllFile(pkFile)
+	byteValue, err := utils.ReadAllFile(pkFile, log)
 	if err != nil {
 		return nil, err
 	}
@@ -208,7 +206,7 @@ func ReadPrimaryKey(pkFile string) ([]byte, error) {
 
 //ReadPublicKey will read pub
 func ReadPublicKey(pubFile string) ([]byte, error) {
-	byteValue, err := readAllFile(pubFile)
+	byteValue, err := utils.ReadAllFile(pubFile, log)
 	if err != nil {
 		return nil, err
 	}
@@ -219,15 +217,3 @@ func ReadPublicKey(pubFile string) ([]byte, error) {
 	return publicKey[0:32], err
 }
 
-func readAllFile(file string) ([]byte, error) {
-	plainFile, err := os.Open(file)
-	defer func() {
-		err := plainFile.Close()
-		log.WithError(err).Error("Could not plainFile.Close")
-	}()
-	if err != nil {
-		return nil, err
-	}
-	byteValue, _ := ioutil.ReadAll(plainFile)
-	return byteValue, nil
-}

@@ -1,6 +1,7 @@
 package dynamodb
 
 import (
+	utils2 "Smilo-blackbox/src/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
 	dynDBAttr "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -13,7 +14,7 @@ func GetDeleteItemInput(data interface{}) (*dynDB.DeleteItemInput,error) {
 	if err != nil {
 		return nil, err
 	}
-	t := getType(data)
+	t := utils2.GetType(data)
 	for key := range keys {
 
         field, ok := t.FieldByName(key)
@@ -62,7 +63,3 @@ func getTablename(obj interface{}) *string {
 	return aws.String(strings.TrimPrefix(s, "*types."))
 }
 
-func getType(data interface{}) reflect.Type {
-	t:=reflect.TypeOf(data).Elem()
-	return t
-}
