@@ -336,10 +336,10 @@ func StoreRaw(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(from) <= 0 {
-		from = crypt.GetPublicKeys()[0];
+		from = crypt.GetPublicKeys()[0]
 	}
 
-	encRawTrans := createNewEncodedRawTransaction(w,r,payload,from)
+	encRawTrans := createNewEncodedRawTransaction(w, r, payload, from)
 
 	if encRawTrans == nil {
 		message := fmt.Sprintf("Cannot save raw transaction.")
@@ -414,7 +414,7 @@ func Metrics(w http.ResponseWriter, r *http.Request) {
 }
 
 func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte) *data.EncryptedRawTransaction {
-    recipients := make([][]byte, 1)
+	recipients := make([][]byte, 1)
 	recipients[0] = crypt.GetPublicKeys()[0]
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
@@ -423,7 +423,7 @@ func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payl
 		requestError(w, http.StatusInternalServerError, message)
 		return nil
 	}
-	encRawTrans := data.NewEncryptedRawTransaction(*encPayload.Serialize(),encPayload.Sender)
+	encRawTrans := data.NewEncryptedRawTransaction(*encPayload.Serialize(), encPayload.Sender)
 	err = encRawTrans.Save()
 	if err != nil {
 		log.WithError(err).Error("Could not encRawTrans.Save()")

@@ -41,6 +41,7 @@ func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	ret := getResponseData(t, err, response)
 	return ret
 }
+
 // DoUnixGetJSONRequest is used for test real request calls.
 func DoUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()

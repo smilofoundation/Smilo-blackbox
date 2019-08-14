@@ -59,8 +59,8 @@ type ResendRequest struct {
 
 //StoreRawRequest will marshal/unmarshal payload and from
 type StoreRawRequest struct {
-	Payload   string `json:"payload"`
-	From      string `json:"from,omitempty"`
+	Payload string `json:"payload"`
+	From    string `json:"from,omitempty"`
 }
 
 //PeerURL will marshal/unmarshal url

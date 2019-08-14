@@ -259,9 +259,9 @@ func TestPrivateAPI(t *testing.T) {
 				body:     string([]byte(base64.StdEncoding.EncodeToString(createEncryptedRawTransactionForTest().Hash))),
 				headers: http.Header{
 					utils.HeaderTo: []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
-				response:    "",
-				statusCode:  200,
-				expectedErr: nil,
+				response:         "",
+				statusCode:       200,
+				expectedErr:      nil,
 				followUp:         false,
 				followUpEndpoint: "/transaction",
 				followUpMethod:   "GET",
@@ -452,6 +452,6 @@ func createEncryptedRawTransaction() *data.EncryptedRawTransaction {
 	fromValue := pubkey
 	payload := []byte("12345")
 	encPayloadData, _ := encoding.EncodePayloadData(payload, fromValue, toValues)
-	encTrans := data.NewEncryptedRawTransaction(*encPayloadData.Serialize(),encPayloadData.Sender)
+	encTrans := data.NewEncryptedRawTransaction(*encPayloadData.Serialize(), encPayloadData.Sender)
 	return encTrans
 }

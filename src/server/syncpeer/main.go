@@ -29,7 +29,7 @@ var (
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
 	hostURL             string
-	log                 *logrus.Entry = logrus.WithFields(logrus.Fields{
+	log                 = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "syncpeer",
 	})

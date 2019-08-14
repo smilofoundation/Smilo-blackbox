@@ -53,7 +53,7 @@ var (
 	StormDBPeers *storm.DB
 
 	//serverStatus               = status{false, false}
-	log *logrus.Entry = logrus.WithFields(logrus.Fields{
+	log = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "server",
 	})

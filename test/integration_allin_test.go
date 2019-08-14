@@ -17,20 +17,20 @@
 package test
 
 import (
-	"testing"
-	"io/ioutil"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"time"
+	"io/ioutil"
 	osExec "os/exec"
+	"testing"
+	"time"
 
-	"path/filepath"
-	"os"
-	"net"
+	"github.com/stretchr/testify/require"
+
 	"errors"
+	"net"
+	"os"
+	"path/filepath"
 	"strings"
 )
-
 
 var (
 	waitingErr = errors.New("unix socket dial failed")
@@ -53,8 +53,7 @@ func checkFunc(tmIPCFile string) error {
 	return upcheckErr
 }
 
-
-func runBlackbox(targetNode string) (*osExec.Cmd, error){
+func runBlackbox(targetNode string) (*osExec.Cmd, error) {
 	here, err := os.Getwd()
 	if err != nil {
 		return nil, err
@@ -65,13 +64,11 @@ func runBlackbox(targetNode string) (*osExec.Cmd, error){
 		return nil, err
 	}
 
-
 	cmdStatusChan := make(chan error)
 	blackboxCMD := filepath.Join(here, "..", "blackbox")
 
 	blackboxConfigFile := filepath.Join(here, fmt.Sprintf("test%s.conf", targetNode))
 	blackboxIPC := filepath.Join(here, fmt.Sprintf("blackbox%s.ipc", targetNode))
-
 
 	blackboxDBFile := filepath.Join(tempdir, fmt.Sprintf("blackbox%s.db", targetNode))
 
@@ -105,7 +102,7 @@ func runBlackbox(targetNode string) (*osExec.Cmd, error){
 
 }
 
-func checkblackboxstarted(t *testing.T, err error){
+func checkblackboxstarted(t *testing.T, err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "executable file not found") {
 			t.Fatal(err)
@@ -140,10 +137,9 @@ func TestIntegrationAllInSendAll(t *testing.T) {
 	checkblackboxstarted(t, err5)
 	defer blackboxCmd5.Process.Kill()
 
-
 	//Init()
 
-	waitNodesUp([]int{int(9001),int(9002),int(9003),int(9004),int(9005)})
+	waitNodesUp([]int{int(9001), int(9002), int(9003), int(9004), int(9005)})
 	time.Sleep(1 * time.Minute)
 	to := make([]string, 4)
 	to[0] = testServers[1].PublicKey
@@ -152,10 +148,10 @@ func TestIntegrationAllInSendAll(t *testing.T) {
 	to[3] = testServers[4].PublicKey
 	sendResponse := sendTestPayload(t, testServers[0], to)
 
-	for i:=1; i<5; i++ {
+	for i := 1; i < 5; i++ {
 		receiveResponse := receiveTestPayload(t, testServers[i], sendResponse.Key)
 		if receiveResponse.Payload != TEST_PAYLOAD {
-			require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload,"Payload not received on Server "+fmt.Sprint(i))
+			require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload, "Payload not received on Server "+fmt.Sprint(i))
 		}
 	}
 }

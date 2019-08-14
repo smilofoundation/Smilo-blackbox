@@ -221,7 +221,7 @@ func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 
 	encPayload := encoding.Deserialize(encRawTrans.EncodedPayload)
 	payload := encPayload.Decode(crypt.GetPublicKeys()[0])
-    encTrans := createNewEncodedTransaction(w,r,payload,encRawTrans.Sender,recipients)
+	encTrans := createNewEncodedTransaction(w, r, payload, encRawTrans.Sender, recipients)
 
 	if encTrans != nil {
 		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)

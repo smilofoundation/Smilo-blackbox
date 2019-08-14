@@ -24,22 +24,26 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/log"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/ethereum/go-ethereum/log"
+	"github.com/stretchr/testify/require"
 )
+
 type TestServer struct {
-	Port int
-	Client http.Client
+	Port      int
+	Client    http.Client
 	PublicKey string
 }
+
 var (
-	testServers = make([]TestServer,5)
+	testServers  = make([]TestServer, 5)
 	TEST_PAYLOAD = base64.StdEncoding.EncodeToString([]byte("1234567890abcdefghijklmnopqrs"))
 )
+
 func init() {
 	testServers[0].Port = 9001
 	testServers[0].Client = server.GetSocketClient("./blackbox1.ipc")
@@ -61,7 +65,7 @@ func init() {
 }
 
 func TestMain(m *testing.M) {
-	waitNodesUp([]int{int(9001),int(9002),int(9003),int(9004),int(9005)})
+	waitNodesUp([]int{int(9001), int(9002), int(9003), int(9004), int(9005)})
 	time.Sleep(30 * time.Second)
 	m.Run()
 }
@@ -74,9 +78,9 @@ func TestIntegrationSendAll(t *testing.T) {
 	to[3] = testServers[4].PublicKey
 	sendResponse := sendTestPayload(t, testServers[0], to)
 
-	for i:=1; i<5; i++ {
+	for i := 1; i < 5; i++ {
 		receiveResponse := receiveTestPayload(t, testServers[i], sendResponse.Key)
-		require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload,"Payload not received on Server "+fmt.Sprint(i))
+		require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload, "Payload not received on Server "+fmt.Sprint(i))
 	}
 }
 
@@ -86,12 +90,12 @@ func TestIntegrationSendFew(t *testing.T) {
 	to[1] = testServers[2].PublicKey
 	sendResponse := sendTestPayload(t, testServers[0], to)
 
-	for i:=1; i<5; i++ {
+	for i := 1; i < 5; i++ {
 		receiveResponse := receiveTestPayload(t, testServers[i], sendResponse.Key)
-		if i<3 {
-			require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload,"Payload not received on Server "+fmt.Sprint(i))
+		if i < 3 {
+			require.Equal(t, TEST_PAYLOAD, receiveResponse.Payload, "Payload not received on Server "+fmt.Sprint(i))
 		} else {
-			require.Equal(t, "", receiveResponse.Payload,"Payload received by mistake on Server "+fmt.Sprint(i))
+			require.Equal(t, "", receiveResponse.Payload, "Payload received by mistake on Server "+fmt.Sprint(i))
 		}
 	}
 
@@ -104,9 +108,9 @@ func TestPeerURLPropagation(t *testing.T) {
 }
 
 func getPartyInfo(t *testing.T, targetServer TestServer) syncpeer.PartyInfoResponse {
-	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL:"", SenderNonce: base64.StdEncoding.EncodeToString(make([]byte,24)), SenderKey:targetServer.PublicKey}
+	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL: "", SenderNonce: base64.StdEncoding.EncodeToString(make([]byte, 24)), SenderKey: targetServer.PublicKey}
 	req, err := json.Marshal(partyInfoRequest)
-	require.Empty(t,err)
+	require.Empty(t, err)
 	response := DoPostJSONRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
 	var partyInfoResponse syncpeer.PartyInfoResponse
 	json.Unmarshal([]byte(response), &partyInfoResponse)
@@ -123,7 +127,7 @@ func receiveTestPayload(t *testing.T, targetServer TestServer, key string) api.R
 	return receiveResponse
 }
 
-func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.KeyJSON) {
+func sendTestPayload(t *testing.T, targetServer TestServer, to []string) api.KeyJSON {
 	sendRequest := api.SendRequest{Payload: TEST_PAYLOAD, From: targetServer.PublicKey, To: to}
 	req, err := json.Marshal(sendRequest)
 	if err != nil {
@@ -135,7 +139,7 @@ func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.Ke
 	return sendResponse
 }
 
-func doReceiveRequest(t *testing.T, targetServer TestServer, json string) (string) {
+func doReceiveRequest(t *testing.T, targetServer TestServer, json string) string {
 	req, _ := http.NewRequest("GET", "http+unix://myservice/receive", bytes.NewBuffer([]byte(json)))
 	req.Header.Set("Content-Type", "application/json")
 	response, _ := targetServer.Client.Do(req)
@@ -143,7 +147,7 @@ func doReceiveRequest(t *testing.T, targetServer TestServer, json string) (strin
 	return ret
 }
 
-func doSendRequest(t *testing.T, targetServer TestServer, json string) (string) {
+func doSendRequest(t *testing.T, targetServer TestServer, json string) string {
 	response, _ := targetServer.Client.Post("http+unix://myservice/send", "application/json", bytes.NewBuffer([]byte(json)))
 	ret, _ := getResponseData(response)
 	return ret
@@ -166,14 +170,14 @@ func waitNodesUp(ports []int) {
 }
 
 func getUpcheck(port int) bool {
-     ret := DoRequest("http://localhost:"+fmt.Sprint(port)+"/upcheck")
-     if ret == "" {
-     	ret = DoRequest("https://localhost:"+fmt.Sprint(port)+"/upcheck")
-        if ret == "" {
+	ret := DoRequest("http://localhost:" + fmt.Sprint(port) + "/upcheck")
+	if ret == "" {
+		ret = DoRequest("https://localhost:" + fmt.Sprint(port) + "/upcheck")
+		if ret == "" {
 			return false
 		}
-	 }
-	 return true
+	}
+	return true
 }
 
 func DoPostJSONRequest(t *testing.T, _url string, json string) string {
