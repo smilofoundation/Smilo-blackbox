@@ -17,19 +17,19 @@
 package test
 
 import (
-	"testing"
-	"net/http"
-	"bytes"
-	"io/ioutil"
-	"fmt"
+	"Smilo-blackbox/src/server"
 	"Smilo-blackbox/src/server/api"
+	"Smilo-blackbox/src/server/syncpeer"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"Smilo-blackbox/src/server"
-	"time"
-	"Smilo-blackbox/src/server/syncpeer"
+	"fmt"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/stretchr/testify/require"
+	"io/ioutil"
+	"net/http"
+	"testing"
+	"time"
 )
 type TestServer struct {
 	Port int
@@ -123,14 +123,14 @@ func receiveTestPayload(t *testing.T, targetServer TestServer, key string) api.R
 	return receiveResponse
 }
 
-func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.SendResponse) {
+func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.KeyJson) {
 	sendRequest := api.SendRequest{Payload: TEST_PAYLOAD, From: targetServer.PublicKey, To: to}
 	req, err := json.Marshal(sendRequest)
 	if err != nil {
 		t.Fail()
 	}
 	response := doSendRequest(t, targetServer, string(req))
-	var sendResponse api.SendResponse
+	var sendResponse api.KeyJson
 	json.Unmarshal([]byte(response), &sendResponse)
 	return sendResponse
 }

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server_test
+package server
 
 import (
 	"bytes"
@@ -25,8 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/tv42/httpunix"
 
 	"path/filepath"
@@ -35,7 +33,7 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-func doUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
+func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 
 	response, err := client.Post("http+unix://myservice"+endpoint, "application/json", bytes.NewBuffer([]byte(json)))
@@ -43,7 +41,7 @@ func doUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	return ret
 }
 
-func doUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
+func DoUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 	req, _ := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
 	req.Header.Set("Content-Type", "application/json")
@@ -78,7 +76,7 @@ func GetSocketClient(socketFile string) http.Client {
 	return client
 }
 
-func doUnixRequest(t *testing.T, endpoint string) string {
+func DoUnixRequest(t *testing.T, endpoint string) string {
 	client := getSocketClient()
 
 	response, err := client.Get("http+unix://myservice" + endpoint)
@@ -86,7 +84,7 @@ func doUnixRequest(t *testing.T, endpoint string) string {
 	return ret
 }
 
-func doUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
+func DoUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
 	client := getSocketClient()
 
 	req, _ := http.NewRequest("POST", "http+unix://myservice"+endpoint, bytes.NewBuffer(payload))

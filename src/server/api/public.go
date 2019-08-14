@@ -232,7 +232,7 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 // Delete Deprecated API
 // It receives a POST request with a json containing a DeleteRequest with key and returns Status 200 if succeed, 404 otherwise.
 func Delete(w http.ResponseWriter, r *http.Request) {
-	var jsonReq DeleteRequest
+	var jsonReq KeyJson
 	body, _ := ioutil.ReadAll(r.Body)
 	defer func() {
 		err := r.Body.Close()
@@ -301,6 +301,69 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// StoreRaw It receives a POST request with a payload and returns Status Code 201 with a payload generated hash, on error returns Status Code 500.
+func StoreRaw(w http.ResponseWriter, r *http.Request) {
+	var jsonReq StoreRawRequest
+	body, _ := ioutil.ReadAll(r.Body)
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
+	}()
+	err := json.Unmarshal(body, &jsonReq)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error (%s) decoding json.", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	payload, err := base64.StdEncoding.DecodeString(jsonReq.Payload)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error decoding payload: (%s), %s", r.URL, jsonReq.Payload, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	from, err := base64.StdEncoding.DecodeString(jsonReq.From)
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, error decoding from: (%s), %s", r.URL, jsonReq.From, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	if len(from) <= 0 {
+		from = crypt.GetPublicKeys()[0];
+	}
+
+	encRawTrans := createNewEncodedRawTransaction(w,r,payload,from)
+
+	if encRawTrans == nil {
+		message := fmt.Sprintf("Cannot save raw transaction.")
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
+		return
+	}
+
+	err = encRawTrans.Save()
+	if err != nil {
+		message := fmt.Sprintf("Error saving Raw transaction: %s", err)
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
+		return
+	} else {
+		sendResp := KeyJson{Key: base64.StdEncoding.EncodeToString(encRawTrans.Hash)}
+		err := json.NewEncoder(w).Encode(sendResp)
+		if err != nil {
+			log.WithError(err).Error("Could not json.NewEncoder")
+		}
+		w.Header().Set("Content-Type", "application/json")
+	}
+}
+
 // ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request) {
 	jsonReq := PeerURL{}
@@ -345,4 +408,22 @@ func ConfigPeersGet(w http.ResponseWriter, r *http.Request) {
 // Metrics Receive a GET request and return Status Code 200 and server internal status information in plain text.
 func Metrics(w http.ResponseWriter, r *http.Request) {
 	//TODO:
+}
+
+func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte) *data.EncryptedRawTransaction {
+    recipients := make([][]byte, 1)
+	recipients[0] = crypt.GetPublicKeys()[0]
+	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
+	if err != nil {
+		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
+		return nil
+	}
+	encRawTrans := data.NewEncryptedRawTransaction(*encPayload.Serialize(),encPayload.Sender)
+	err = encRawTrans.Save()
+	if err != nil {
+		log.WithError(err).Error("Could not encRawTrans.Save()")
+	}
+	return encRawTrans
 }

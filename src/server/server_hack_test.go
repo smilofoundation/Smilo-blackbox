@@ -72,8 +72,8 @@ func TestUnixSend(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	response := doUnixPostJSONRequest(t, "/send", string(req))
-	var sendResponse api.SendResponse
+	response := server.DoUnixPostJSONRequest(t, "/send", string(req))
+	var sendResponse api.KeyJson
 	err = json.Unmarshal([]byte(response), &sendResponse)
 	require.NoError(t, err)
 
@@ -83,7 +83,7 @@ func TestUnixSend(t *testing.T) {
 
 	t.Log("Send Response: " + sendResponse.Key)
 
-	response = doUnixGetJSONRequest(t, "/receive", string(req2))
+	response = server.DoUnixGetJSONRequest(t, "/receive", string(req2))
 	var receiveResponse api.ReceiveResponse
 	err = json.Unmarshal([]byte(response), &receiveResponse)
 	require.NoError(t, err)
@@ -98,7 +98,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 	payload := "1234567890abcdefghijklmnopqrs"
 	encPayload := base64.StdEncoding.EncodeToString([]byte(payload))
 	from := "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="
-	response := doUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{utils.HeaderFrom: []string{from}, utils.HeaderTo: to})
+	response := server.DoUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{utils.HeaderFrom: []string{from}, utils.HeaderTo: to})
 
 	key, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {
@@ -111,7 +111,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 		t.Fail()
 	}
 	urlEncodedTo := base64.URLEncoding.EncodeToString(toBytes)
-	response = doUnixRequest(t, "/transaction/"+urlEncodedKey+"?to="+urlEncodedTo)
+	response = server.DoUnixRequest(t, "/transaction/"+urlEncodedKey+"?to="+urlEncodedTo)
 	var receiveResponse api.ReceiveResponse
 	err = json.Unmarshal([]byte(response), &receiveResponse)
 	require.NoError(t, err)
