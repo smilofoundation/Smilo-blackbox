@@ -2,7 +2,7 @@ package data
 
 import "time"
 
-// EncryptedTransaction holds hash and payload
+// EncryptedRawTransaction holds hash and payload
 type EncryptedRawTransaction struct {
 	Hash           []byte `storm:"id"`
 	EncodedPayload []byte
@@ -10,7 +10,7 @@ type EncryptedRawTransaction struct {
 	Timestamp      time.Time `storm:"index"`
 }
 
-// NewEncryptedTransaction will create a new encrypted transaction based on the provided payload
+// NewEncryptedRawTransaction will create a new encrypted transaction based on the provided payload
 func NewEncryptedRawTransaction(encodedPayload []byte, sender []byte) *EncryptedRawTransaction {
 	trans := EncryptedRawTransaction{
 		Hash:           calculateHash(encodedPayload),
@@ -21,7 +21,7 @@ func NewEncryptedRawTransaction(encodedPayload []byte, sender []byte) *Encrypted
 	return &trans
 }
 
-// FindEncryptedTransaction will find a encrypted transaction for a hash
+// FindEncryptedRawTransaction will find a encrypted transaction for a hash
 func FindEncryptedRawTransaction(hash []byte) (*EncryptedRawTransaction, error) {
 	var t EncryptedRawTransaction
 	err := db.One("Hash", hash, &t)

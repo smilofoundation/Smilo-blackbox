@@ -57,6 +57,7 @@ type ResendRequest struct {
 	Key       string `json:"key,omitempty"`
 }
 
+//StoreRawRequest will marshal/unmarshal payload and from
 type StoreRawRequest struct {
 	Payload   string `json:"payload"`
 	From      string `json:"from,omitempty"`

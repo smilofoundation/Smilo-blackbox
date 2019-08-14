@@ -168,7 +168,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns Status Code 200 and encoded key plain text.
+// SendSignedTx It receives header "bb0x-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
 func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 	var err error
 

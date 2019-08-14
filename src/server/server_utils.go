@@ -33,6 +33,7 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
+// DoUnixPostJSONRequest is used for test real request calls.
 func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 
@@ -40,7 +41,7 @@ func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	ret := getResponseData(t, err, response)
 	return ret
 }
-
+// DoUnixGetJSONRequest is used for test real request calls.
 func DoUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 	req, _ := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
@@ -58,6 +59,7 @@ func getSocketClient() *http.Client {
 	return &client
 }
 
+// GetSocketClient is used for test real request calls.
 func GetSocketClient(socketFile string) http.Client {
 	finalPath := utils.BuildFilename(socketFile)
 	u := &httpunix.Transport{
@@ -76,6 +78,7 @@ func GetSocketClient(socketFile string) http.Client {
 	return client
 }
 
+// DoUnixRequest is used for test real request calls.
 func DoUnixRequest(t *testing.T, endpoint string) string {
 	client := getSocketClient()
 
@@ -84,6 +87,7 @@ func DoUnixRequest(t *testing.T, endpoint string) string {
 	return ret
 }
 
+// DoUnixPostRequest is used for test real request calls.
 func DoUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
 	client := getSocketClient()
 

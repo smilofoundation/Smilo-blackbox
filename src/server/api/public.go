@@ -354,14 +354,17 @@ func StoreRaw(w http.ResponseWriter, r *http.Request) {
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
 		return
-	} else {
-		sendResp := KeyJson{Key: base64.StdEncoding.EncodeToString(encRawTrans.Hash)}
-		err := json.NewEncoder(w).Encode(sendResp)
-		if err != nil {
-			log.WithError(err).Error("Could not json.NewEncoder")
-		}
-		w.Header().Set("Content-Type", "application/json")
 	}
+	sendResp := KeyJson{Key: base64.StdEncoding.EncodeToString(encRawTrans.Hash)}
+	err = json.NewEncoder(w).Encode(sendResp)
+	if err != nil {
+		message := fmt.Sprintf("Error encoding json: %s", err)
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
 }
 
 // ConfigPeersPut It receives a PUT request with a json containing a Peer url and returns Status Code 200.
