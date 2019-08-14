@@ -123,14 +123,14 @@ func receiveTestPayload(t *testing.T, targetServer TestServer, key string) api.R
 	return receiveResponse
 }
 
-func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.KeyJson) {
+func sendTestPayload(t *testing.T, targetServer TestServer, to []string) (api.KeyJSON) {
 	sendRequest := api.SendRequest{Payload: TEST_PAYLOAD, From: targetServer.PublicKey, To: to}
 	req, err := json.Marshal(sendRequest)
 	if err != nil {
 		t.Fail()
 	}
 	response := doSendRequest(t, targetServer, string(req))
-	var sendResponse api.KeyJson
+	var sendResponse api.KeyJSON
 	json.Unmarshal([]byte(response), &sendResponse)
 	return sendResponse
 }

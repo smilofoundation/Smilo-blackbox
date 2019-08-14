@@ -232,7 +232,7 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 // Delete Deprecated API
 // It receives a POST request with a json containing a DeleteRequest with key and returns Status 200 if succeed, 404 otherwise.
 func Delete(w http.ResponseWriter, r *http.Request) {
-	var jsonReq KeyJson
+	var jsonReq KeyJSON
 	body, _ := ioutil.ReadAll(r.Body)
 	defer func() {
 		err := r.Body.Close()
@@ -355,7 +355,7 @@ func StoreRaw(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusInternalServerError, message)
 		return
 	}
-	sendResp := KeyJson{Key: base64.StdEncoding.EncodeToString(encRawTrans.Hash)}
+	sendResp := KeyJSON{Key: base64.StdEncoding.EncodeToString(encRawTrans.Hash)}
 	err = json.NewEncoder(w).Encode(sendResp)
 	if err != nil {
 		message := fmt.Sprintf("Error encoding json: %s", err)

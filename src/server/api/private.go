@@ -130,7 +130,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json KeyJson with encoded key.
+// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json KeyJSON with encoded key.
 func Send(w http.ResponseWriter, r *http.Request) {
 	var sendReq SendRequest
 	err := json.NewDecoder(r.Body).Decode(&sendReq)
@@ -159,7 +159,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
 
 	if encTrans != nil {
-		sendResp := KeyJson{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
+		sendResp := KeyJSON{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
 		err := json.NewEncoder(w).Encode(sendResp)
 		if err != nil {
 			log.WithError(err).Error("Could not json.NewEncoder")

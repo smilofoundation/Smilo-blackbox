@@ -31,8 +31,8 @@ type SendRequest struct {
 	To []string `json:"to"`
 }
 
-//KeyJson marshal/unmarshal a key
-type KeyJson struct {
+//KeyJSON marshal/unmarshal a key
+type KeyJSON struct {
 	// Key is the key that can be used to retrieve the submitted transaction.
 	Key string `json:"key"`
 }

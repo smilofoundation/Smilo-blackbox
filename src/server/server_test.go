@@ -14,14 +14,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server_test
+package server
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
-
-	"Smilo-blackbox/src/server"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -45,7 +43,7 @@ var nonce = make([]byte, 24)
 
 func TestPublicAPI(t *testing.T) {
 
-	public, _ := server.InitRouting()
+	public, _ := InitRouting()
 
 	testflight.WithServer(public, func(r *testflight.Requester) {
 
@@ -147,7 +145,7 @@ func TestPublicAPI(t *testing.T) {
 					require.NotEmpty(t, response.StatusCode)
 					require.NotEmpty(t, response.RawBody)
 					if test.endpoint == "/storeraw" {
-						var respJSON api.KeyJson
+						var respJSON api.KeyJSON
 						err := json.Unmarshal([]byte(response.Body), &respJSON)
 						if err != nil {
 							t.Logf("Invalid json response. %v", response)
@@ -196,7 +194,7 @@ func TestPublicAPI(t *testing.T) {
 
 func TestPrivateAPI(t *testing.T) {
 
-	_, private := server.InitRouting()
+	_, private := InitRouting()
 
 	testflight.WithServer(private, func(r *testflight.Requester) {
 
@@ -347,7 +345,7 @@ func TestPrivateAPI(t *testing.T) {
 
 				var err error
 				var sendRequest api.SendRequest
-				var sendResponse api.KeyJson
+				var sendResponse api.KeyJSON
 				var followUpResponse *testflight.Response
 
 				if test.followUpEndpoint == "/receive" {

@@ -14,15 +14,13 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server_test
+package server
 
 import (
 	"net/http"
 	"testing"
 
 	"gopkg.in/urfave/cli.v1"
-
-	"Smilo-blackbox/src/server"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -48,7 +46,7 @@ func TestMain(m *testing.M) {
 		panic("Could not open config for server_hack_test")
 	}
 
-	go server.StartServer()
+	go StartServer()
 
 	config.WorkDir.Value = ""
 
@@ -72,8 +70,8 @@ func TestUnixSend(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-	response := server.DoUnixPostJSONRequest(t, "/send", string(req))
-	var sendResponse api.KeyJson
+	response := DoUnixPostJSONRequest(t, "/send", string(req))
+	var sendResponse api.KeyJSON
 	err = json.Unmarshal([]byte(response), &sendResponse)
 	require.NoError(t, err)
 
@@ -83,7 +81,7 @@ func TestUnixSend(t *testing.T) {
 
 	t.Log("Send Response: " + sendResponse.Key)
 
-	response = server.DoUnixGetJSONRequest(t, "/receive", string(req2))
+	response = DoUnixGetJSONRequest(t, "/receive", string(req2))
 	var receiveResponse api.ReceiveResponse
 	err = json.Unmarshal([]byte(response), &receiveResponse)
 	require.NoError(t, err)
@@ -98,7 +96,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 	payload := "1234567890abcdefghijklmnopqrs"
 	encPayload := base64.StdEncoding.EncodeToString([]byte(payload))
 	from := "MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="
-	response := server.DoUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{utils.HeaderFrom: []string{from}, utils.HeaderTo: to})
+	response := DoUnixPostRequest(t, "/sendraw", []byte(encPayload), http.Header{utils.HeaderFrom: []string{from}, utils.HeaderTo: to})
 
 	key, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {
@@ -111,7 +109,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 		t.Fail()
 	}
 	urlEncodedTo := base64.URLEncoding.EncodeToString(toBytes)
-	response = server.DoUnixRequest(t, "/transaction/"+urlEncodedKey+"?to="+urlEncodedTo)
+	response = DoUnixRequest(t, "/transaction/"+urlEncodedKey+"?to="+urlEncodedTo)
 	var receiveResponse api.ReceiveResponse
 	err = json.Unmarshal([]byte(response), &receiveResponse)
 	require.NoError(t, err)
