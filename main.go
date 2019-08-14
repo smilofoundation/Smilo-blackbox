@@ -62,8 +62,12 @@ func main() {
 		cpuProfilingFile := c.String("cpuprofile")
 		p2pEnabled := c.Bool("p2p")
 		if generateKeys != "" {
-			crypt.GenerateKeys(generateKeys)
-			os.Exit(0)
+			err := crypt.GenerateKeys(generateKeys)
+			if err != nil {
+				os.Exit(-1)
+			} else {
+				os.Exit(0)
+			}
 		} else {
 			if cpuProfilingFile != "" {
 				f, err := os.Create(cpuProfilingFile)
