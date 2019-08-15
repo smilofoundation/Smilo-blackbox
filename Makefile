@@ -76,10 +76,15 @@ lint-sec: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
 	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
 	-E gosec \
-	-E gocyclo \
 	-E interfacer \
 	-E staticcheck \
 	-E unparam \
+	./src/...
+
+lint-cyclo: clean ## Run linters. Use make install-linters first.
+	vendorcheck ./src/...
+	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
+	-E gocyclo \
 	./src/...
 
 cover: ## Runs tests on ./src/ with HTML code coverage
@@ -106,6 +111,7 @@ install-linters: ## Install linters
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u honnef.co/go/tools/cmd/staticcheck
 	go get -u gopkg.in/alecthomas/gometalinter.v2
+	go get -u gopkg.in/alecthomas/gometalinter.v3
 	gometalinter.v2 --vendored-linters --install
 
 

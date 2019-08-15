@@ -52,3 +52,4 @@ matrix:
       script:
         - make install-linters
         - make lint
+        - make lint-sec
