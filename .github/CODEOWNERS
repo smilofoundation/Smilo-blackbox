@@ -1,0 +1,8 @@
+# Lines starting with '#' are comments.
+# Each line is a file pattern followed by one or more owners.
+
+test                                 @thomasmodeneis @mazzon
+src/crypt                            @thomasmodeneis @mazzon
+src/data                             @thomasmodeneis @mazzon
+src/server                           @thomasmodeneis @mazzon
+src/utils                            @thomasmodeneis @mazzon
