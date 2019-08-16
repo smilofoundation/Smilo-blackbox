@@ -45,7 +45,11 @@ func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 // DoUnixGetJSONRequest is used for test real request calls.
 func DoUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
-	req, _ := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
+	req, err := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	req.Header.Set("Content-Type", "application/json")
 	response, err := client.Do(req)
 	ret := getResponseData(t, err, response)
@@ -92,7 +96,11 @@ func DoUnixRequest(t *testing.T, endpoint string) string {
 func DoUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
 	client := getSocketClient()
 
-	req, _ := http.NewRequest("POST", "http+unix://myservice"+endpoint, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "http+unix://myservice"+endpoint, bytes.NewBuffer(payload))
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	req.Header = headers
 	req.Header.Set("Content-Type", "application/octet-stream")
 	response, err := client.Do(req)

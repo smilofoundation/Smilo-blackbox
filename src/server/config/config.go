@@ -222,6 +222,6 @@ func readAllFile(file string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	byteValue, _ := ioutil.ReadAll(plainFile)
-	return byteValue, nil
+	byteValue, err := ioutil.ReadAll(plainFile)
+	return byteValue, err
 }

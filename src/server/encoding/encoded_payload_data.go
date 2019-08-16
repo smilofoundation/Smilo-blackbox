@@ -44,7 +44,11 @@ func (e *EncodedPayloadData) Serialize() *[]byte {
 	serializeBytes(e.Nonce, buffer)
 	serializeArray(e.RecipientList, buffer)
 	serializeBytes(e.RecipientNonce, buffer)
-	ret, _ := ioutil.ReadAll(buffer)
+	ret, err := ioutil.ReadAll(buffer)
+	if err != nil {
+		logrus.WithError(err).Error("Could not read buffer, serialization failed!")
+		ret = []byte{}
+	}
 	return &ret
 }
 
@@ -119,15 +123,24 @@ func serializeBytes(data []byte, buffer *bytes.Buffer) {
 	size := len(data)
 	buffer.Grow(size + 8)
 	binary.BigEndian.PutUint64(tmp, uint64(size))
-	buffer.Write(tmp)
-	buffer.Write(data)
+	_,err := buffer.Write(tmp)
+	if err != nil {
+		logrus.WithError(err).Error("Could not write to buffer, serialization failed!")
+	}
+	_,err = buffer.Write(data)
+	if err != nil {
+		logrus.WithError(err).Error("Could not write to buffer, serialization failed!")
+	}
 }
 
 func serializeArray(data [][]byte, buffer *bytes.Buffer) {
 	tmp := make([]byte, 8)
 	buffer.Grow(8)
 	binary.BigEndian.PutUint64(tmp, uint64(len(data)))
-	buffer.Write(tmp)
+	_,err := buffer.Write(tmp)
+	if err != nil {
+
+	}
 	for _, i := range data {
 		serializeBytes(i, buffer)
 	}
@@ -138,6 +151,7 @@ func deserializeBytes(buffer *bytes.Buffer) []byte {
 	_, err := buffer.Read(sizeB)
 	if err != nil {
 		logrus.WithError(err).Error("Could not buffer.Read")
+		return []byte{}
 	}
 	size := binary.BigEndian.Uint64(sizeB)
 	data := buffer.Next(int(size))
