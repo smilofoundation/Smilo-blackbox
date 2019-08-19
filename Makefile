@@ -56,6 +56,7 @@ lint: clean ## Run linters. Use make install-linters first.
 	golangci-lint run --deadline=3m --disable-all --tests \
 		-E deadcode \
 		-E errcheck \
+		-E staticcheck \
 		-E goconst \
 		-E goimports \
 		-E golint \
@@ -76,6 +77,8 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E unconvert \
 		-E stylecheck \
 		-E bodyclose \
+		-E gosimple \
+		-E unused \
 		--exclude="don't use ALL_CAPS in Go names; use CamelCase"
 
 lint-cyclo: clean ## Run linters. Use make install-linters first.
