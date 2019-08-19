@@ -53,33 +53,34 @@ test-race: clean ## Run tests with -race. Note: expected to fail, but look for "
 
 lint: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	golangci-lint run \
+	golangci-lint run --deadline=3m --disable-all --tests \
+		-E deadcode \
+		-E errcheck \
 		-E goconst \
 		-E goimports \
 		-E golint \
+		-E typecheck \
+		-E ineffassign \
 		-E maligned \
 		-E misspell \
 		-E nakedret \
+		-E structcheck \
 		-E unconvert \
-		--exclude="don't use ALL_CAPS in Go names; use CamelCase" \
-		./src/...
-#	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
-#		-E gotype \
-#		-E gotypex \
-#		./src/...
-
-lint-sec: clean ## Run linters. Use make install-linters first.
-	vendorcheck ./src/...
-	golangci-lint run --disable-all \
-	-E gosec \
-	-E interfacer \
-	-E staticcheck \
-	-E unparam \
-	./src/...
+		-E varcheck \
+		-E govet \
+		-E gosec \
+		-E interfacer \
+		-E staticcheck \
+		-E unparam \
+		-E goimports \
+		-E unconvert \
+		-E stylecheck \
+		-E bodyclose \
+		--exclude="don't use ALL_CAPS in Go names; use CamelCase"
 
 lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	golangci-lint run --disable-all \
+	golangci-lint run --deadline=3m --disable-all \
 	-E gocyclo \
 	./src/...
 
