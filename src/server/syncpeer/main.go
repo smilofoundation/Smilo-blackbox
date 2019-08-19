@@ -238,13 +238,8 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := GetHTTPClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
-	if err != nil {
-		return nil, nil, err
-	}
-	if response.StatusCode != http.StatusOK {
-		return nil, nil, errors.New(response.Status)
-	}
+	cli := GetHTTPClient()
+	response, err := cli.Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr)) //nolint:bodyclose
 	defer func() {
 		if response != nil && response.Body != nil {
 			err := response.Body.Close()
@@ -253,6 +248,12 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 			}
 		}
 	}()
+	if err != nil {
+		return nil, nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, nil, errors.New(response.Status)
+	}
 
 	var responseJSON PartyInfoResponse
 	p, err := ioutil.ReadAll(response.Body)

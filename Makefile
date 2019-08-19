@@ -85,7 +85,6 @@ lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
 	golangci-lint run --deadline=3m --disable-all \
 	-E gocyclo \
-	./src/...
 
 cover: ## Runs tests on ./src/ with HTML code coverage
 	@echo "mode: count" > coverage-all.out

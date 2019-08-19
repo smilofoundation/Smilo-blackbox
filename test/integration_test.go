@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -67,7 +68,8 @@ func init() {
 func TestMain(m *testing.M) {
 	waitNodesUp([]int{int(9001), int(9002), int(9003), int(9004), int(9005)})
 	time.Sleep(30 * time.Second)
-	m.Run()
+	retcode := m.Run()
+	os.Exit(retcode)
 }
 
 func TestIntegrationSendAll(t *testing.T) {
@@ -104,16 +106,22 @@ func TestIntegrationSendFew(t *testing.T) {
 func TestPeerURLPropagation(t *testing.T) {
 	response := getPartyInfo(t, testServers[3])
 	require.NotEmpty(t, response.PeerURLs)
-	require.Equal(t, 5, len(response.PeerURLs))
+	defer func() {
+		if t.Failed() {
+			fmt.Println("PeerURLs: ", response.PeerURLs)
+		}
+	}()
+	require.Equal(t, 4, len(response.PeerURLs))
 }
 
 func getPartyInfo(t *testing.T, targetServer TestServer) syncpeer.PartyInfoResponse {
-	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL: "", SenderNonce: base64.StdEncoding.EncodeToString(make([]byte, 24)), SenderKey: targetServer.PublicKey}
+	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL: "http://localhost:"+fmt.Sprint(targetServer.Port), SenderNonce: base64.StdEncoding.EncodeToString(make([]byte, 24)), SenderKey: targetServer.PublicKey}
 	req, err := json.Marshal(partyInfoRequest)
 	require.Empty(t, err)
 	response := DoPostJSONRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
 	var partyInfoResponse syncpeer.PartyInfoResponse
-	json.Unmarshal([]byte(response), &partyInfoResponse)
+	err = json.Unmarshal([]byte(response), &partyInfoResponse) //nolint
+	//require.NoError(t, err)
 	return partyInfoResponse
 }
 
@@ -121,9 +129,10 @@ func receiveTestPayload(t *testing.T, targetServer TestServer, key string) api.R
 	receiveRequest := api.ReceiveRequest{Key: key, To: targetServer.PublicKey}
 	req2, err2 := json.Marshal(receiveRequest)
 	require.Empty(t, err2)
-	response := doReceiveRequest(t, targetServer, string(req2))
+	response := doReceiveRequest(targetServer, string(req2))
 	var receiveResponse api.ReceiveResponse
-	json.Unmarshal([]byte(response), &receiveResponse)
+	err2 = json.Unmarshal([]byte(response), &receiveResponse) //nolint
+	//require.NoError(t, err2)
 	return receiveResponse
 }
 
@@ -133,13 +142,14 @@ func sendTestPayload(t *testing.T, targetServer TestServer, to []string) api.Key
 	if err != nil {
 		t.Fail()
 	}
-	response := doSendRequest(t, targetServer, string(req))
+	response := doSendRequest(targetServer, string(req))
 	var sendResponse api.KeyJSON
-	json.Unmarshal([]byte(response), &sendResponse)
+	err = json.Unmarshal([]byte(response), &sendResponse)
+	require.NoError(t, err)
 	return sendResponse
 }
 
-func doReceiveRequest(t *testing.T, targetServer TestServer, json string) string {
+func doReceiveRequest(targetServer TestServer, json string) string {
 	req, _ := http.NewRequest("GET", "http+unix://myservice/receive", bytes.NewBuffer([]byte(json)))
 	req.Header.Set("Content-Type", "application/json")
 	response, _ := targetServer.Client.Do(req)
@@ -147,7 +157,7 @@ func doReceiveRequest(t *testing.T, targetServer TestServer, json string) string
 	return ret
 }
 
-func doSendRequest(t *testing.T, targetServer TestServer, json string) string {
+func doSendRequest(targetServer TestServer, json string) string {
 	response, _ := targetServer.Client.Post("http+unix://myservice/send", "application/json", bytes.NewBuffer([]byte(json)))
 	ret, _ := getResponseData(response)
 	return ret

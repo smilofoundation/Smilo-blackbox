@@ -92,7 +92,7 @@ func setOSEnvInt(v, field string, defaultVal int) (r int) {
 	var err error
 	r, err = strconv.Atoi(v)
 	if err != nil {
-		log.WithError(err).Warnf("Going to use default field %s, defaultVal: %d", field, defaultVal)
+		log.WithError(err).Warnf("Going to use default field %s, defaultVal: %s", field, defaultVal)
 	} else {
 		return defaultVal
 	}

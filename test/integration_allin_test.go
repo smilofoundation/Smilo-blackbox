@@ -33,24 +33,24 @@ import (
 )
 
 var (
-	waitingErr = errors.New("unix socket dial failed")
-	upcheckErr = errors.New("http upcheck failed")
-	doneErr    = errors.New("done")
+	errWaiting = errors.New("unix socket dial failed")
+	errUpcheck = errors.New("http upcheck failed")
+	errDone    = errors.New("done")
 )
 
 func checkFunc(tmIPCFile string) error {
 	conn, err := net.Dial("unix", tmIPCFile)
 	if err != nil {
-		return waitingErr
+		return errWaiting
 	}
 	if _, err := conn.Write([]byte("GET /upcheck HTTP/1.0\r\n\r\n")); err != nil {
-		return upcheckErr
+		return errUpcheck
 	}
 	result, err := ioutil.ReadAll(conn)
 	if err != nil || string(result) == "I'm up!" {
-		return doneErr
+		return errDone
 	}
-	return upcheckErr
+	return errUpcheck
 }
 
 func runBlackbox(targetNode string) (*osExec.Cmd, error) {
@@ -84,7 +84,7 @@ func runBlackbox(targetNode string) (*osExec.Cmd, error) {
 
 		for i := 0; i < 10; i++ {
 			time.Sleep(3 * time.Second)
-			if err := checkFunc(blackboxIPC); err != nil && err == doneErr {
+			if err := checkFunc(blackboxIPC); err != nil && err == errDone {
 				cmdStatusChan <- err
 			} else {
 				fmt.Println("Waiting for blackbox to start", "err", err)
@@ -119,23 +119,48 @@ func TestIntegrationAllInSendAll(t *testing.T) {
 
 	blackboxCmd1, err1 := runBlackbox("1")
 	checkblackboxstarted(t, err1)
-	defer blackboxCmd1.Process.Kill()
+	defer func() {
+		err := blackboxCmd1.Process.Kill()
+		if err != nil {
+			fmt.Println("Error killing blackbox process 1", "err", err)
+		}
+	}()
 
 	blackboxCmd2, err2 := runBlackbox("2")
 	checkblackboxstarted(t, err2)
-	defer blackboxCmd2.Process.Kill()
+	defer func() {
+		err := blackboxCmd2.Process.Kill()
+		if err != nil {
+			fmt.Println("Error killing blackbox process 2", "err", err)
+		}
+	}()
 
 	blackboxCmd3, err3 := runBlackbox("3")
 	checkblackboxstarted(t, err3)
-	defer blackboxCmd3.Process.Kill()
+	defer func() {
+		err := blackboxCmd3.Process.Kill()
+		if err != nil {
+			fmt.Println("Error killing blackbox process 3", "err", err)
+		}
+	}()
 
 	blackboxCmd4, err4 := runBlackbox("4")
 	checkblackboxstarted(t, err4)
-	defer blackboxCmd4.Process.Kill()
+	defer func() {
+		err := blackboxCmd4.Process.Kill()
+		if err != nil {
+			fmt.Println("Error killing blackbox process 4", "err", err)
+		}
+	}()
 
 	blackboxCmd5, err5 := runBlackbox("5")
 	checkblackboxstarted(t, err5)
-	defer blackboxCmd5.Process.Kill()
+	defer func() {
+		err := blackboxCmd5.Process.Kill()
+		if err != nil {
+			fmt.Println("Error killing blackbox process 5", "err", err)
+		}
+	}()
 
 	//Init()
 
