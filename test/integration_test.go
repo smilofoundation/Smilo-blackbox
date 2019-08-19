@@ -115,7 +115,7 @@ func TestPeerURLPropagation(t *testing.T) {
 }
 
 func getPartyInfo(t *testing.T, targetServer TestServer) syncpeer.PartyInfoResponse {
-	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL: "http://localhost:"+fmt.Sprint(targetServer.Port), SenderNonce: base64.StdEncoding.EncodeToString(make([]byte, 24)), SenderKey: targetServer.PublicKey}
+	partyInfoRequest := syncpeer.PartyInfoRequest{SenderURL: "http://localhost:" + fmt.Sprint(targetServer.Port), SenderNonce: base64.StdEncoding.EncodeToString(make([]byte, 24)), SenderKey: targetServer.PublicKey}
 	req, err := json.Marshal(partyInfoRequest)
 	require.Empty(t, err)
 	response := DoPostJSONRequest(t, "http://localhost:"+fmt.Sprint(targetServer.Port)+"/partyinfo", string(req))
