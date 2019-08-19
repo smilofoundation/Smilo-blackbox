@@ -116,7 +116,7 @@ func TestUnixSendRawTransactionGet(t *testing.T) {
 
 	retorno, _ := base64.StdEncoding.DecodeString(receiveResponse.Payload)
 	t.Log("Receive Response: " + receiveResponse.Payload)
-	if string(payload) != string(retorno) {
+	if payload != string(retorno) {
 		t.Fail()
 	}
 }

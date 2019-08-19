@@ -53,28 +53,24 @@ test-race: clean ## Run tests with -race. Note: expected to fail, but look for "
 
 lint: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter.v2 --deadline=3m -j 2 --disable-all --tests --vendor \
-		-E deadcode \
-		-E errcheck \
+	golangci-lint run \
 		-E goconst \
 		-E goimports \
 		-E golint \
-		-E gotype \
-		-E gotypex \
-		-E ineffassign \
 		-E maligned \
 		-E misspell \
 		-E nakedret \
-		-E structcheck \
 		-E unconvert \
-		-E varcheck \
-		-E vet \
 		--exclude="don't use ALL_CAPS in Go names; use CamelCase" \
 		./src/...
+#	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
+#		-E gotype \
+#		-E gotypex \
+#		./src/...
 
 lint-sec: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
+	golangci-lint run --disable-all \
 	-E gosec \
 	-E interfacer \
 	-E staticcheck \
@@ -83,7 +79,7 @@ lint-sec: clean ## Run linters. Use make install-linters first.
 
 lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
+	golangci-lint run --disable-all \
 	-E gocyclo \
 	./src/...
 
@@ -109,10 +105,8 @@ doc:
 install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
 	go get -u golang.org/x/tools/cmd/goimports
-	go get -u honnef.co/go/tools/cmd/staticcheck
-	go get -u gopkg.in/alecthomas/gometalinter.v2
-	go get -u gopkg.in/alecthomas/gometalinter.v3
-	gometalinter.v2 --vendored-linters --install
+#	go get -u gopkg.in/alecthomas/gometalinter.v3
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).

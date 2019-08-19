@@ -51,7 +51,7 @@ func NewSafePublicKeyMap() *SafePublicKeyMap {
 func (spm *SafePublicKeyMap) Get(key string) (value *Peer) {
 	spm.RLock()
 	defer spm.RUnlock()
-	result, _ := spm.internal[key]
+	result := spm.internal[key]
 	return result
 }
 

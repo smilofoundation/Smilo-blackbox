@@ -116,7 +116,7 @@ func InitP2p() {
 	for _, thispeer := range peerNodes {
 
 		var urlstr = thispeer.ID
-		if strings.Contains(thispeer.ID, "@") == false && thispeer.RemoteAddr != "" {
+		if !strings.Contains(thispeer.ID, "@") && thispeer.RemoteAddr != "" {
 			urlstr = thispeer.ID + "@" + thispeer.RemoteAddr
 		}
 
@@ -242,7 +242,7 @@ func InitP2PPeers(peers []model.PeerNode) {
 		if peer.ID != "" {
 
 			var urlstr = peer.ID
-			if strings.Contains(peer.ID, "@") == false && peer.RemoteAddr != "" {
+			if !strings.Contains(peer.ID, "@") && peer.RemoteAddr != "" {
 				urlstr = peer.ID + "@" + peer.RemoteAddr
 			}
 
@@ -267,7 +267,7 @@ func InitP2PPeers(peers []model.PeerNode) {
 
 			alreadyAdded := IsPeerAlreadyAdded(thispeer)
 
-			if alreadyAdded == false {
+			if !alreadyAdded {
 				log.
 					WithField("parsedPeer", thispeer.ID.TerminalString()).
 					Warn("Peer not found on the srv.Peers() and database, will run AddPeer. ")
@@ -329,7 +329,7 @@ func InitP2PPeers(peers []model.PeerNode) {
 						found = true
 					}
 				}
-				if found == false {
+				if !found {
 					log.
 						WithField("peer", thispeer.ID.TerminalString()).
 						WithField("targetObject", targetObject).
@@ -368,7 +368,7 @@ func PeerList(p2pMessage Message) {
 }
 
 //GetPeerListSend will get peers
-func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter) {
+func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgWriter) {
 	//TODO: return 10 peers from our database order by last seen, make sure I'm not in it
 	var peerNodes []model.PeerNode
 
@@ -398,10 +398,7 @@ func GetPeerListSend(peer *p2p.Peer, rw p2p.MsgReadWriter) {
 	err = p2p.Send(rw, 0, outmsg)
 	if err != nil {
 		log.WithField("peer", peer).WithError(err).Errorf("ERROR: GET_PEER_LIST, p2p.Send")
-		return
 	}
-
-	return
 }
 
 //GetPeerNodeID will get peer node

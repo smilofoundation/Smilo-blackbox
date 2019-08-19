@@ -203,7 +203,6 @@ func TestPrivateAPI(t *testing.T) {
 			endpoint         string
 			method           string
 			body             string
-			bodyRaw          []byte
 			contentType      string
 			headers          http.Header
 			response         string

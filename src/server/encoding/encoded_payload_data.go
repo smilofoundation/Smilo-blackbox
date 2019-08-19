@@ -123,11 +123,11 @@ func serializeBytes(data []byte, buffer *bytes.Buffer) {
 	size := len(data)
 	buffer.Grow(size + 8)
 	binary.BigEndian.PutUint64(tmp, uint64(size))
-	_,err := buffer.Write(tmp)
+	_, err := buffer.Write(tmp)
 	if err != nil {
 		logrus.WithError(err).Error("Could not write to buffer, serialization failed!")
 	}
-	_,err = buffer.Write(data)
+	_, err = buffer.Write(data)
 	if err != nil {
 		logrus.WithError(err).Error("Could not write to buffer, serialization failed!")
 	}
@@ -137,9 +137,9 @@ func serializeArray(data [][]byte, buffer *bytes.Buffer) {
 	tmp := make([]byte, 8)
 	buffer.Grow(8)
 	binary.BigEndian.PutUint64(tmp, uint64(len(data)))
-	_,err := buffer.Write(tmp)
+	_, err := buffer.Write(tmp)
 	if err != nil {
-
+		return
 	}
 	for _, i := range data {
 		serializeBytes(i, buffer)
