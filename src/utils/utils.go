@@ -39,7 +39,10 @@ const (
 
 //BuildFilename will build a filename with correct path based on pwd
 func BuildFilename(filename string) string {
-	currentDir, _ := os.Getwd()
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 	var workDir string
 	var newDBFile string
 	if flag.Lookup("test.v") != nil {

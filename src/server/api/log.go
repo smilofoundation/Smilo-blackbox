@@ -21,7 +21,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var log *logrus.Entry = logrus.WithFields(logrus.Fields{
+var log = logrus.WithFields(logrus.Fields{
 	"app":     "blackbox",
 	"package": "api",
 })

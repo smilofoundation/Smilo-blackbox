@@ -100,7 +100,10 @@ func WritePrivateKeyFile(key string, filename string) error {
 
 // WritePublicKeyFile creates a file with the pubKey
 func WritePublicKeyFile(key string, filename string) error {
-	dir, _ := os.Getwd() // gives us the source path
+	dir, err := os.Getwd() // gives us the source path
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(dir, "keys/"+filename)
 
 	log.WithField("path", path).Info("Going to Write Public Key File")

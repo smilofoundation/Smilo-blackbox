@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server_test
+package server
 
 import (
 	"bytes"
@@ -25,8 +25,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/log"
-
 	"github.com/tv42/httpunix"
 
 	"path/filepath"
@@ -35,7 +33,8 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-func doUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
+// DoUnixPostJSONRequest is used for test real request calls.
+func DoUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
 
 	response, err := client.Post("http+unix://myservice"+endpoint, "application/json", bytes.NewBuffer([]byte(json)))
@@ -43,9 +42,14 @@ func doUnixPostJSONRequest(t *testing.T, endpoint string, json string) string {
 	return ret
 }
 
-func doUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
+// DoUnixGetJSONRequest is used for test real request calls.
+func DoUnixGetJSONRequest(t *testing.T, endpoint string, json string) string {
 	client := getSocketClient()
-	req, _ := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
+	req, err := http.NewRequest("GET", "http+unix://myservice"+endpoint, bytes.NewBuffer([]byte(json)))
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	req.Header.Set("Content-Type", "application/json")
 	response, err := client.Do(req)
 	ret := getResponseData(t, err, response)
@@ -60,6 +64,7 @@ func getSocketClient() *http.Client {
 	return &client
 }
 
+// GetSocketClient is used for test real request calls.
 func GetSocketClient(socketFile string) http.Client {
 	finalPath := utils.BuildFilename(socketFile)
 	u := &httpunix.Transport{
@@ -78,7 +83,8 @@ func GetSocketClient(socketFile string) http.Client {
 	return client
 }
 
-func doUnixRequest(t *testing.T, endpoint string) string {
+// DoUnixRequest is used for test real request calls.
+func DoUnixRequest(t *testing.T, endpoint string) string {
 	client := getSocketClient()
 
 	response, err := client.Get("http+unix://myservice" + endpoint)
@@ -86,10 +92,15 @@ func doUnixRequest(t *testing.T, endpoint string) string {
 	return ret
 }
 
-func doUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
+// DoUnixPostRequest is used for test real request calls.
+func DoUnixPostRequest(t *testing.T, endpoint string, payload []byte, headers http.Header) string {
 	client := getSocketClient()
 
-	req, _ := http.NewRequest("POST", "http+unix://myservice"+endpoint, bytes.NewBuffer(payload))
+	req, err := http.NewRequest("POST", "http+unix://myservice"+endpoint, bytes.NewBuffer(payload))
+	if err != nil {
+		t.Error(err)
+		t.Fail()
+	}
 	req.Header = headers
 	req.Header.Set("Content-Type", "application/octet-stream")
 	response, err := client.Do(req)

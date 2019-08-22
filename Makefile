@@ -53,14 +53,14 @@ test-race: clean ## Run tests with -race. Note: expected to fail, but look for "
 
 lint: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter.v2 --deadline=3m -j 2 --disable-all --tests --vendor \
+	golangci-lint run --deadline=3m --disable-all --tests \
 		-E deadcode \
 		-E errcheck \
+		-E staticcheck \
 		-E goconst \
 		-E goimports \
 		-E golint \
-		-E gotype \
-		-E gotypex \
+		-E typecheck \
 		-E ineffassign \
 		-E maligned \
 		-E misspell \
@@ -68,19 +68,23 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E structcheck \
 		-E unconvert \
 		-E varcheck \
-		-E vet \
-		--exclude="don't use ALL_CAPS in Go names; use CamelCase" \
-		./src/...
+		-E govet \
+		-E gosec \
+		-E interfacer \
+		-E staticcheck \
+		-E unparam \
+		-E goimports \
+		-E unconvert \
+		-E stylecheck \
+		-E bodyclose \
+		-E gosimple \
+		-E unused \
+		--exclude="don't use ALL_CAPS in Go names; use CamelCase"
 
-lint-sec: clean ## Run linters. Use make install-linters first.
+lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
-	gometalinter.v3 --deadline=3m -j 2 --disable-all --tests --vendor \
-	-E gosec \
+	golangci-lint run --deadline=3m --disable-all \
 	-E gocyclo \
-	-E interfacer \
-	-E staticcheck \
-	-E unparam \
-	./src/...
 
 cover: ## Runs tests on ./src/ with HTML code coverage
 	@echo "mode: count" > coverage-all.out
@@ -104,9 +108,8 @@ doc:
 install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
 	go get -u golang.org/x/tools/cmd/goimports
-	go get -u honnef.co/go/tools/cmd/staticcheck
-	go get -u gopkg.in/alecthomas/gometalinter.v2
-	gometalinter.v2 --vendored-linters --install
+#	go get -u gopkg.in/alecthomas/gometalinter.v3
+	go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).

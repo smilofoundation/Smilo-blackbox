@@ -14,14 +14,12 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with the Smilo-blackbox library. If not, see <http://www.gnu.org/licenses/>.
 
-package server_test
+package server
 
 import (
 	"fmt"
 	"net/http"
 	"testing"
-
-	"Smilo-blackbox/src/server"
 
 	"Smilo-blackbox/src/server/api"
 
@@ -45,7 +43,7 @@ var nonce = make([]byte, 24)
 
 func TestPublicAPI(t *testing.T) {
 
-	public, _ := server.InitRouting()
+	public, _ := InitRouting()
 
 	testflight.WithServer(public, func(r *testflight.Requester) {
 
@@ -88,6 +86,16 @@ func TestPublicAPI(t *testing.T) {
 				expectedErr: nil,
 			},
 			{
+				name:        "test storeraw",
+				endpoint:    "/storeraw",
+				method:      "POST",
+				body:        `{"payload":"MTIzNDU2Nzg5MGFiY2RlZmdoaWprbG1ub3BxcnM=","from":"MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk="}`,
+				contentType: "application/json",
+				response:    "{\"key\":\"gGW65vu3FhCdiMvCHEUoWfTllYeKP4HhVCZaC22Fl+192LnA6C1Rt4T9aGEHWSHUc+5fHwnX6KtjXaHM3h9nBw==\"}\n",
+				statusCode:  200,
+				expectedErr: nil,
+			},
+			{
 				name:        "test resend individual",
 				endpoint:    "/resend",
 				method:      "POST",
@@ -99,7 +107,7 @@ func TestPublicAPI(t *testing.T) {
 			},
 			{
 				name:        "test transaction delete",
-				endpoint:    "/transaction/" + base64.URLEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash),
+				endpoint:    "/transaction/" + base64.URLEncoding.EncodeToString(createEncryptedTransactionForTest().Hash),
 				method:      "DELETE",
 				contentType: "application/json",
 				response:    "",
@@ -136,7 +144,27 @@ func TestPublicAPI(t *testing.T) {
 					require.NotEmpty(t, response)
 					require.NotEmpty(t, response.StatusCode)
 					require.NotEmpty(t, response.RawBody)
-					require.Equal(t, test.response, response.Body)
+					if test.endpoint == "/storeraw" {
+						var respJSON api.KeyJSON
+						err := json.Unmarshal([]byte(response.Body), &respJSON)
+						if err != nil {
+							t.Logf("Invalid json response. %v", response)
+							t.Fail()
+						}
+						key, err := base64.StdEncoding.DecodeString(respJSON.Key)
+						if err != nil {
+							t.Logf("Cannot decode key from json. %v", response)
+							t.Fail()
+						}
+						encRawTrans, err := data.FindEncryptedRawTransaction(key)
+						if err != nil {
+							t.Logf("Raw transaction not found. %v", response)
+							t.Fail()
+						}
+						require.Equal(t, encRawTrans.Hash, key)
+					} else {
+						require.Equal(t, test.response, response.Body)
+					}
 				}
 
 				require.Equal(t, test.statusCode, response.StatusCode)
@@ -166,7 +194,7 @@ func TestPublicAPI(t *testing.T) {
 
 func TestPrivateAPI(t *testing.T) {
 
-	_, private := server.InitRouting()
+	_, private := InitRouting()
 
 	testflight.WithServer(private, func(r *testflight.Requester) {
 
@@ -175,7 +203,6 @@ func TestPrivateAPI(t *testing.T) {
 			endpoint         string
 			method           string
 			body             string
-			bodyRaw          []byte
 			contentType      string
 			headers          http.Header
 			response         string
@@ -208,10 +235,35 @@ func TestPrivateAPI(t *testing.T) {
 				endpoint:    "/delete",
 				method:      "POST",
 				contentType: "application/json",
-				body:        `{"key": "` + base64.StdEncoding.EncodeToString(createEncryptedTransactionForDeletion().Hash) + `"}`,
+				body:        `{"key": "` + base64.StdEncoding.EncodeToString(createEncryptedTransactionForTest().Hash) + `"}`,
 				response:    "Delete successful",
 				statusCode:  200,
 				expectedErr: nil,
+			},
+			{
+				name:     "test send signed tx",
+				endpoint: "/sendsignedtx",
+				method:   "CUSTOM",
+				body:     string([]byte(base64.StdEncoding.EncodeToString(createEncryptedRawTransactionForTest().Hash))),
+				headers: http.Header{
+					utils.HeaderTo: []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				response:    "",
+				statusCode:  200,
+				expectedErr: nil,
+			},
+			{
+				name:     "test send signed tx",
+				endpoint: "/sendsignedtx",
+				method:   "CUSTOM",
+				body:     string([]byte(base64.StdEncoding.EncodeToString(createEncryptedRawTransactionForTest().Hash))),
+				headers: http.Header{
+					utils.HeaderTo: []string{"OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w="}},
+				response:         "",
+				statusCode:       200,
+				expectedErr:      nil,
+				followUp:         false,
+				followUpEndpoint: "/transaction",
+				followUpMethod:   "GET",
 			},
 			{
 				name:             "test send receive",
@@ -292,7 +344,7 @@ func TestPrivateAPI(t *testing.T) {
 
 				var err error
 				var sendRequest api.SendRequest
-				var sendResponse api.SendResponse
+				var sendResponse api.KeyJSON
 				var followUpResponse *testflight.Response
 
 				if test.followUpEndpoint == "/receive" {
@@ -345,9 +397,12 @@ func TestPrivateAPI(t *testing.T) {
 					var responseJSON api.ReceiveResponse
 					err = json.NewDecoder(bytes.NewBuffer(followUpResponse.RawBody)).Decode(&responseJSON)
 					require.NoError(t, err)
-
-					require.Equal(t, test.body, responseJSON.Payload)
-
+					if test.endpoint == "/sendsignedtx" {
+						decodedBody, _ := base64.StdEncoding.DecodeString(responseJSON.Payload)
+						require.Equal(t, string(decodedBody), "12345")
+					} else {
+						require.Equal(t, test.body, responseJSON.Payload)
+					}
 				} else {
 					return
 				}
@@ -361,7 +416,7 @@ func TestPrivateAPI(t *testing.T) {
 
 }
 
-func createEncryptedTransactionForDeletion() *data.EncryptedTransaction {
+func createEncryptedTransactionForTest() *data.EncryptedTransaction {
 	encTrans := createEncryptedTransaction()
 	err := encTrans.Save()
 	if err != nil {
@@ -374,7 +429,28 @@ func createEncryptedTransaction() *data.EncryptedTransaction {
 	toValues := make([][]byte, 1)
 	toValues[0] = []byte("09876543210987654321098765432109")
 	fromValue := []byte("12345678901234567890123456789012")
-	encPayloadData, _ := encoding.EncodePayloadData([]byte("123456"), fromValue, toValues)
+	payload, _ := crypt.NewRandomNonce()
+	encPayloadData, _ := encoding.EncodePayloadData(payload, fromValue, toValues)
 	encTrans := data.NewEncryptedTransaction(*encPayloadData.Serialize())
+	return encTrans
+}
+
+func createEncryptedRawTransactionForTest() *data.EncryptedRawTransaction {
+	encTrans := createEncryptedRawTransaction()
+	err := encTrans.Save()
+	if err != nil {
+		fmt.Println("Could not createEncryptedTransactionForDeletion")
+	}
+	return encTrans
+}
+
+func createEncryptedRawTransaction() *data.EncryptedRawTransaction {
+	toValues := make([][]byte, 1)
+	pubkey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
+	toValues[0] = pubkey
+	fromValue := pubkey
+	payload := []byte("12345")
+	encPayloadData, _ := encoding.EncodePayloadData(payload, fromValue, toValues)
+	encTrans := data.NewEncryptedRawTransaction(*encPayloadData.Serialize(), encPayloadData.Sender)
 	return encTrans
 }

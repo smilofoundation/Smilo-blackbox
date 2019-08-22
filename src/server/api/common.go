@@ -95,7 +95,16 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 func PushTransactionForOtherNodes(encryptedTransaction data.EncryptedTransaction, recipient []byte) {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
-		_, err := syncpeer.GetHTTPClient().Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload))))
+		cli := syncpeer.GetHTTPClient()
+		response, err := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		defer func() {
+			if response != nil && response.Body != nil {
+				err := response.Body.Close()
+				if err != nil {
+					log.WithError(err).Error("Could not response.Body.Close()")
+				}
+			}
+		}()
 		if err != nil {
 			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
 		}

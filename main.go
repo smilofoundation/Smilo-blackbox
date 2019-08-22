@@ -74,10 +74,17 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				pprof.StartCPUProfile(f)
+				err = pprof.StartCPUProfile(f)
+				if err != nil {
+					log.Fatal(err)
+				}
 				defer pprof.StopCPUProfile()
 			}
-			config.LoadConfig(configFile)
+			err := config.LoadConfig(configFile)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
 			server.StartServer()
 			if p2pEnabled {
 				server.InitP2p()

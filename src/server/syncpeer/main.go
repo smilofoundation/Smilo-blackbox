@@ -29,7 +29,7 @@ var (
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
 	hostURL             string
-	log                 *logrus.Entry = logrus.WithFields(logrus.Fields{
+	log                 = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "syncpeer",
 	})
@@ -56,8 +56,8 @@ func getRequestTimeout() (t time.Duration) {
 	return t
 }
 func getOrCreateCertPool() *x509.CertPool {
-	rootCAs, _ := x509.SystemCertPool()
-	if rootCAs == nil {
+	rootCAs, err := x509.SystemCertPool()
+	if rootCAs == nil || err != nil {
 		rootCAs = x509.NewCertPool()
 	}
 	return rootCAs
@@ -227,7 +227,10 @@ func GetPeerURL(publicKey []byte) (string, error) {
 
 //GetPublicKeysFromOtherNode get pub from other nodes
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error) {
-	nonce, _ := crypt.NewRandomNonce()
+	nonce, err := crypt.NewRandomNonce()
+	if err != nil {
+		return nil, nil, err
+	}
 	reqJSON := PartyInfoRequest{SenderURL: hostURL, SenderNonce: base64.StdEncoding.EncodeToString(nonce), SenderKey: base64.StdEncoding.EncodeToString(publicKey)}
 	reqStr, err := json.Marshal(reqJSON)
 	privateKey := crypt.GetPrivateKey(publicKey)
@@ -235,13 +238,8 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 	if err != nil {
 		return nil, nil, err
 	}
-	response, err := GetHTTPClient().Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr))
-	if err != nil {
-		return nil, nil, err
-	}
-	if response.StatusCode != http.StatusOK {
-		return nil, nil, errors.New(response.Status)
-	}
+	cli := GetHTTPClient()
+	response, err := cli.Post(url+"/partyinfo", "application/json", bytes.NewBuffer(reqStr)) //nolint:bodyclose
 	defer func() {
 		if response != nil && response.Body != nil {
 			err := response.Body.Close()
@@ -250,6 +248,12 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 			}
 		}
 	}()
+	if err != nil {
+		return nil, nil, err
+	}
+	if response.StatusCode != http.StatusOK {
+		return nil, nil, errors.New(response.Status)
+	}
 
 	var responseJSON PartyInfoResponse
 	p, err := ioutil.ReadAll(response.Body)
@@ -261,8 +265,14 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 		return nil, nil, err
 	}
 	for _, provenKey := range responseJSON.PublicKeys {
-		remotePublicKey, _ := base64.StdEncoding.DecodeString(provenKey.Key)
-		remoteProof, _ := base64.StdEncoding.DecodeString(provenKey.Proof)
+		remotePublicKey, err := base64.StdEncoding.DecodeString(provenKey.Key)
+		if err != nil {
+			continue
+		}
+		remoteProof, err := base64.StdEncoding.DecodeString(provenKey.Proof)
+		if err != nil {
+			continue
+		}
 		sharedKey := crypt.ComputeSharedKey(privateKey, remotePublicKey)
 		if string(crypt.DecryptPayload(sharedKey, remoteProof, nonce)) != "" {
 			retPubKeys = append(retPubKeys, remotePublicKey)
