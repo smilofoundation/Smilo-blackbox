@@ -139,12 +139,8 @@ blackbox-windows:
 #	xgo --go=latest --targets=windows/386 -out=./bin/blackbox .
 
 blackbox-android:
-	xgo --go=latest --targets=android-16/amd64 -out=./bin/blackbox .
 	xgo --go=latest --targets=android-16/386 -out=./bin/blackbox .
-	xgo --go=latest --targets=android-16/arm-5 -out=./bin/blackbox .
-	xgo --go=latest --targets=android-16/arm-6 -out=./bin/blackbox .
-	xgo --go=latest --targets=android-16/arm-7 -out=./bin/blackbox .
-	xgo --go=latest --targets=android-16/arm64 -out=./bin/blackbox .
+	xgo --go=latest --targets=android-16/arm -out=./bin/blackbox .
 
 blackbox-ios:
 	xgo --go=latest --targets=ios/arm-7 -out=./bin/blackbox .
