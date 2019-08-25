@@ -24,6 +24,15 @@ Official Golang implementation of the Smilo Vault protocol.
 * [Syncpeer](docs/syncpeer.md) documentation
 * [Utils](docs/utils.md) documentation
 
+### Private Transaction Send/Get Sequence Diagram
+
+![New Transaction Sequence](./docs/transaction-sequence-diagram.png)
+
+## Smilo Hybrid Blockchain + Blackbox Architecture Diagram
+
+![Logical architecture](./docs/smilo-architecture.png)
+
+
 ## License
 
 ```
