@@ -1,15 +1,17 @@
 package dynamodb
 
 import (
-	utils2 "Smilo-blackbox/src/utils"
+	"reflect"
+	"strings"
+
 	"github.com/aws/aws-sdk-go/aws"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
 	dynDBAttr "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"reflect"
-	"strings"
+
+	utils2 "Smilo-blackbox/src/utils"
 )
 
-func GetDeleteItemInput(data interface{}) (*dynDB.DeleteItemInput,error) {
+func GetDeleteItemInput(data interface{}) (*dynDB.DeleteItemInput, error) {
 	keys, err := dynDBAttr.MarshalMap(data)
 	if err != nil {
 		return nil, err
@@ -17,14 +19,14 @@ func GetDeleteItemInput(data interface{}) (*dynDB.DeleteItemInput,error) {
 	t := utils2.GetType(data)
 	for key := range keys {
 
-        field, ok := t.FieldByName(key)
-        if ok && field.Tag.Get("key") == "true" {
-        	continue
+		field, ok := t.FieldByName(key)
+		if ok && field.Tag.Get("key") == "true" {
+			continue
 		}
 		delete(keys, key)
 	}
 	input := &dynDB.DeleteItemInput{
-		Key: keys,
+		Key:       keys,
 		TableName: getTablename(data),
 	}
 	return input, nil
@@ -36,7 +38,7 @@ func GetPutItemInput(data interface{}) (*dynDB.PutItemInput, error) {
 		return nil, err
 	}
 	input := &dynDB.PutItemInput{
-		Item: keys,
+		Item:                   keys,
 		ReturnConsumedCapacity: aws.String("TOTAL"),
 		TableName:              getTablename(data),
 	}
@@ -49,11 +51,11 @@ func GetItemInput(fieldname string, value interface{}, to interface{}) (*dynDB.G
 		return nil, err
 	}
 	keys := map[string]*dynDB.AttributeValue{
-		fieldname: 	av,
-	};
+		fieldname: av,
+	}
 	input := &dynDB.GetItemInput{
-        Key: 		keys,
-		TableName:  getTablename(to),
+		Key:       keys,
+		TableName: getTablename(to),
 	}
 	return input, err
 }
@@ -62,4 +64,3 @@ func getTablename(obj interface{}) *string {
 	s := reflect.TypeOf(obj).String()
 	return aws.String(strings.TrimPrefix(s, "*types."))
 }
-

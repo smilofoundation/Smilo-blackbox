@@ -18,12 +18,13 @@ package utils
 
 import (
 	"flag"
-	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"os"
 	"path"
 	"reflect"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -42,7 +43,10 @@ const (
 
 //BuildFilename will build a filename with correct path based on pwd
 func BuildFilename(filename string) string {
-	currentDir, _ := os.Getwd()
+	currentDir, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
 	var workDir string
 	var newDBFile string
 	if flag.Lookup("test.v") != nil {
@@ -79,7 +83,7 @@ func GetMetadata(data interface{}) (string, string) {
 
 		field := t.Field(key)
 		if field.Tag.Get("key") == "true" {
-			keyField = field.Name;
+			keyField = field.Name
 		}
 	}
 	return t.Name(), keyField
@@ -100,6 +104,6 @@ func ReadAllFile(file string, log *logrus.Entry) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	byteValue, _ := ioutil.ReadAll(plainFile)
-	return byteValue, nil
+	byteValue, err := ioutil.ReadAll(plainFile)
+	return byteValue, err
 }

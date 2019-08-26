@@ -49,24 +49,27 @@ func ComputePublicKey(secret []byte) ([]byte, error) {
 }
 
 // GenerateKeys will generate key/pub and save into file
-func GenerateKeys(generateKeys string) {
+func GenerateKeys(generateKeys string) error {
 	log.WithField("generateKeys", generateKeys).Info("Going to generate encryption keys")
 	files := strings.Split(generateKeys, ",")
 	for i := range files {
 		keyPair, err := tweetnacl.CryptoBoxKeyPair()
 		if err != nil {
 			log.WithError(err).Error("Could not tweetnacl.CryptoBoxKeyPair")
-			return
+			return err
 		}
 		err = WritePrivateKeyFile(base64.StdEncoding.EncodeToString(keyPair.SecretKey), files[i]+".key")
 		if err != nil {
 			log.WithError(err).Error("Could not WritePrivateKeyFile")
+			return err
 		}
 		err = WritePublicKeyFile(base64.StdEncoding.EncodeToString(keyPair.PublicKey), files[i]+".pub")
 		if err != nil {
 			log.WithError(err).Error("Could not WritePublicKeyFile")
+			return err
 		}
 	}
+	return nil
 }
 
 // WritePrivateKeyFile creates a json file with the private key
@@ -97,7 +100,10 @@ func WritePrivateKeyFile(key string, filename string) error {
 
 // WritePublicKeyFile creates a file with the pubKey
 func WritePublicKeyFile(key string, filename string) error {
-	dir, _ := os.Getwd() // gives us the source path
+	dir, err := os.Getwd() // gives us the source path
+	if err != nil {
+		return err
+	}
 	path := filepath.Join(dir, "keys/"+filename)
 
 	log.WithField("path", path).Info("Going to Write Public Key File")

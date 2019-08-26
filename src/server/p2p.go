@@ -40,7 +40,7 @@ type Peer struct {
 var (
 	//protocols       []p2p.Protocol
 	srv             *p2p.Server
-	maxPeersNetwork int
+//	maxPeersNetwork int
 )
 
 var (
@@ -52,31 +52,22 @@ var (
 
 			go func() {
 
-				for {
+				for content := range msgC {
 
-					select {
+					switch content.Header {
 
-					case content, ok := <-msgC:
-						if ok {
-
-							switch content.Header {
-
-							case model.GET_PEER_LIST:
-								err := p2p.Send(rw, 0, content)
-								if err != nil {
-									log.
-										WithField("peer", peer).WithError(err).Error("GET_PEER_LIST, p2p.Send, Could not send message")
-									return
-								}
-								continue
-							}
-
-						} else {
-							log.WithField("peer", peer).Error("p2p.Send, Could not get message from channel")
+					case model.GET_PEER_LIST:
+						err := p2p.Send(rw, 0, content)
+						if err != nil {
+							log.
+								WithField("peer", peer).WithError(err).Error("GET_PEER_LIST, p2p.Send, Could not send message")
 							return
 						}
+						continue
 					}
+
 				}
+				log.WithField("peer", peer).Error("p2p.Send, Could not get message from channel")
 			}()
 
 			for {
@@ -171,7 +162,7 @@ var (
 )
 
 // SendMsg will send a message
-func SendMsg(peer *p2p.Peer, rw p2p.MsgReadWriter, err error, outmsg Message) {
+func SendMsg(peer *p2p.Peer, rw p2p.MsgWriter, err error, outmsg Message) {
 
 	if outmsg.Header != "" {
 		err = p2p.Send(rw, 0, outmsg)

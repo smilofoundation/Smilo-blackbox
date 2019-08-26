@@ -17,12 +17,14 @@
 package api
 
 import (
-	"Smilo-blackbox/src/data/types"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+
+	"Smilo-blackbox/src/data/types"
 
 	"Smilo-blackbox/src/server/encoding"
 
@@ -129,7 +131,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json SendResponse with encoded key.
+// Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json KeyJSON with encoded key.
 func Send(w http.ResponseWriter, r *http.Request) {
 	var sendReq SendRequest
 	err := json.NewDecoder(r.Body).Decode(&sendReq)
@@ -158,13 +160,93 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
 
 	if encTrans != nil {
-		sendResp := SendResponse{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
+		sendResp := KeyJSON{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
 		err := json.NewEncoder(w).Encode(sendResp)
 		if err != nil {
 			log.WithError(err).Error("Could not json.NewEncoder")
 		}
 		w.Header().Set("Content-Type", "application/json")
 	}
+}
+
+// SendSignedTx It receives header "bb0x-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
+func SendSignedTx(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	to := r.Header.Get(utils.HeaderTo)
+
+	if to == "" {
+		message := fmt.Sprintf("Invalid request: %s, invalid headers. to:%s", r.URL, to)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	recipients, errors := splitToString(to)
+	if len(errors) > 0 {
+		message := fmt.Sprintf("Invalid request: %s, %s.", r.URL, strings.Join(errors, ", "))
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	encodedHash, err := ioutil.ReadAll(r.Body)
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close()")
+		}
+	}()
+	if err != nil || encodedHash == nil {
+		message := fmt.Sprintf("Invalid request: %s, missing transaction hash, err: %s", r.URL, err)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	key, err := base64.StdEncoding.DecodeString(string(encodedHash))
+	if err != nil {
+		message := fmt.Sprintf("Invalid request: %s, hash value (%s) is not a valid key.", r.URL, encodedHash)
+		log.Error(message)
+		requestError(w, http.StatusBadRequest, message)
+		return
+	}
+
+	encRawTrans, err := types.FindEncryptedRawTransaction(key)
+	if err != nil || encRawTrans == nil {
+		message := fmt.Sprintf("Raw Transaction key: %s not found", hex.EncodeToString(key))
+		log.Error(message)
+		requestError(w, http.StatusNotFound, message)
+		return
+	}
+
+	encPayload := encoding.Deserialize(encRawTrans.EncodedPayload)
+	payload := encPayload.Decode(crypt.GetPublicKeys()[0])
+	encTrans := createNewEncodedTransaction(w, r, payload, encRawTrans.Sender, recipients)
+
+	if encTrans != nil {
+		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)
+		log.WithField("txEncoded", txEncoded).Info("Created transaction, ")
+		_, err := w.Write([]byte(txEncoded))
+		if err != nil {
+			log.WithError(err).Error("Could not w.Write")
+		}
+		w.Header().Set("Content-Type", "text/plain")
+	}
+}
+
+func splitToString(to string) ([][]byte, []string) {
+	encodedRecipients := strings.Split(to, ",")
+	var errors []string
+	var recipients = make([][]byte, len(encodedRecipients))
+	for i := 0; i < len(encodedRecipients); i++ {
+		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
+		if err != nil {
+			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
+		}
+		recipients[i] = decodedValue
+	}
+	return recipients, errors
 }
 
 func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *types.EncryptedTransaction {
@@ -180,10 +262,14 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 	if err != nil {
 		log.WithError(err).Error("Could not encTrans.Save()")
 	}
+	pushToAllRecipients(recipients, encTrans)
+	return encTrans
+}
+
+func pushToAllRecipients(recipients [][]byte, encTrans *types.EncryptedTransaction) {
 	for _, recipient := range recipients {
 		PushTransactionForOtherNodes(*encTrans, recipient)
 	}
-	return encTrans
 }
 
 // Receive is a Deprecated API

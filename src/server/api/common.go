@@ -17,12 +17,13 @@
 package api
 
 import (
-	"Smilo-blackbox/src/data/types"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"Smilo-blackbox/src/data/types"
 
 	"bytes"
 
@@ -49,7 +50,7 @@ func Upcheck(w http.ResponseWriter, r *http.Request) {
 
 //API Request path "/api", response json rest api spec.
 func API(w http.ResponseWriter, r *http.Request) {
-
+	// TODO: Implement an api endpoint
 }
 
 //UnknownRequest will debug unknown reqs
@@ -95,7 +96,16 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransaction, recipient []byte) {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
-		_, err := syncpeer.GetHTTPClient().Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload))))
+		cli := syncpeer.GetHTTPClient()
+		response, err := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		defer func() {
+			if response != nil && response.Body != nil {
+				err := response.Body.Close()
+				if err != nil {
+					log.WithError(err).Error("Could not response.Body.Close()")
+				}
+			}
+		}()
 		if err != nil {
 			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
 		}

@@ -19,9 +19,10 @@ package config
 import (
 	"encoding/base64"
 	"encoding/json"
+	"io/ioutil"
+
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
-	"io/ioutil"
 
 	"Smilo-blackbox/src/crypt"
 
@@ -216,4 +217,3 @@ func ReadPublicKey(pubFile string) ([]byte, error) {
 
 	return publicKey[0:32], err
 }
-

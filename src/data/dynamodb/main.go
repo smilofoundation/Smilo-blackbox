@@ -2,32 +2,33 @@ package dynamodb
 
 import (
 	"errors"
+
 	"github.com/aws/aws-sdk-go/aws/session"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
 	dynDBAttr "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/sirupsen/logrus"
 )
 
-type DynamodbDatabaseInstance struct {
-	db *dynDB.DynamoDB
+type DatabaseInstance struct {
+	db  *dynDB.DynamoDB
 	log *logrus.Entry
 }
 
-func (dyndb *DynamodbDatabaseInstance) Close() error {
-	dyndb.db=nil
+func (dyndb *DatabaseInstance) Close() error {
+	dyndb.db = nil
 	return nil
 }
 
-func (dyndb *DynamodbDatabaseInstance) Delete(data interface{}) error {
+func (dyndb *DatabaseInstance) Delete(data interface{}) error {
 	item, err := GetDeleteItemInput(data)
 	if err != nil {
 		return err
 	}
-	_,err = dyndb.db.DeleteItem(item)
+	_, err = dyndb.db.DeleteItem(item)
 	return err
 }
 
-func (dyndb *DynamodbDatabaseInstance) Find(fieldname string, value interface{}, to interface{}) error {
+func (dyndb *DatabaseInstance) Find(fieldname string, value interface{}, to interface{}) error {
 	input, err := GetItemInput(fieldname, value, to)
 	if err != nil {
 		dyndb.log.Error("Unable to convert to a Dynamo DB type")
@@ -36,21 +37,21 @@ func (dyndb *DynamodbDatabaseInstance) Find(fieldname string, value interface{},
 	ret, err := dyndb.db.GetItem(input)
 	if err == nil {
 		if ret.Item == nil {
-			return errors.New("Not found")
+			return errors.New("not found")
 		}
 		err = dynDBAttr.UnmarshalMap(ret.Item, to)
 	}
 	return err
 }
-func (dyndb *DynamodbDatabaseInstance) Save(data interface{}) error {
+func (dyndb *DatabaseInstance) Save(data interface{}) error {
 	item, err := GetPutItemInput(data)
 	if err != nil {
 		return err
 	}
-	_,err = dyndb.db.PutItem(item)
+	_, err = dyndb.db.PutItem(item)
 	return err
 }
-func DynamoDBOpen(filename string, log *logrus.Entry) (*DynamodbDatabaseInstance,error) {
+func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 
 	//sess, err := session.NewSession()
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -61,7 +62,7 @@ func DynamoDBOpen(filename string, log *logrus.Entry) (*DynamodbDatabaseInstance
 	//}
 	db := dynDB.New(sess)
 	log.Info("Opening DB: ", filename)
-//	db, err := storm.Open(filename)
+	//	db, err := storm.Open(filename)
 
 	//if err != nil {
 	//	defer func() {
@@ -69,7 +70,7 @@ func DynamoDBOpen(filename string, log *logrus.Entry) (*DynamodbDatabaseInstance
 	//		log.WithError(err).Fatal("Could not open DBFile: ", filename, ", error: ", err)
 	//		os.Exit(1)
 	//	}()
-//	}
-	bdb := DynamodbDatabaseInstance{db, log}
+	//	}
+	bdb := DatabaseInstance{db, log}
 	return &bdb, nil
 }

@@ -31,8 +31,8 @@ type SendRequest struct {
 	To []string `json:"to"`
 }
 
-//SendResponse marshal/unmarshal a key
-type SendResponse struct {
+//KeyJSON marshal/unmarshal a key
+type KeyJSON struct {
 	// Key is the key that can be used to retrieve the submitted transaction.
 	Key string `json:"key"`
 }
@@ -48,11 +48,6 @@ type ReceiveResponse struct {
 	Payload string `json:"payload"`
 }
 
-//DeleteRequest marshal/unmarshal key
-type DeleteRequest struct {
-	Key string `json:"key"`
-}
-
 //ResendRequest will marshal/unmarshal type, pub and pk
 type ResendRequest struct {
 	// Type is the resend request type. It should be either "all" or "individual" depending on if
@@ -60,6 +55,12 @@ type ResendRequest struct {
 	Type      string `json:"type"`
 	PublicKey string `json:"publicKey"`
 	Key       string `json:"key,omitempty"`
+}
+
+//StoreRawRequest will marshal/unmarshal payload and from
+type StoreRawRequest struct {
+	Payload string `json:"payload"`
+	From    string `json:"from,omitempty"`
 }
 
 //PeerURL will marshal/unmarshal url

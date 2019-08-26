@@ -22,18 +22,9 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
-var DBI DatabaseInstance
-
-type DatabaseInstance interface {
-	Close() error
-	Delete(data interface{}) error
-	Find(fieldname string, value interface{}, to interface{}) error
-	Save(data interface{}) error
-}
-
 // EncryptedTransaction holds hash and payload
 type EncryptedTransaction struct {
-	Hash           []byte	`key:"true"`
+	Hash           []byte `key:"true"`
 	EncodedPayload []byte
 	Timestamp      time.Time
 }
@@ -68,7 +59,7 @@ func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error) {
 	var t EncryptedTransaction
 	err := DBI.Find("Hash", hash, &t)
 	if err != nil {
-//		log.Error("Unable to find transaction.")
+		//		log.Error("Unable to find transaction.")
 		return nil, err
 	}
 	return &t, nil

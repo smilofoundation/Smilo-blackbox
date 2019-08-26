@@ -23,10 +23,8 @@ import (
 	"Smilo-blackbox/src/data/types"
 )
 
-
 var dbFile string
 var dbEngine = ""
-
 
 // SetFilename set filename
 func SetFilename(filename string) {
@@ -36,21 +34,22 @@ func SetFilename(filename string) {
 func SetEngine(engine string) {
 	dbEngine = engine
 }
+
 // Start will start the db
 func Start() {
 	var err error
 	switch dbEngine {
-		case "boltdb":
-			types.DBI, err = boltdb.BoltDBOpen(dbFile, log)
-		case "dynamodb":
-			types.DBI, err = dynamodb.DynamoDBOpen(dbFile, log)
-		case "redis":
-		    types.DBI, err = redis.RedisOpen(dbFile, log)
-		default:
-		    panic("Unknown Database Engine")
+	case "boltdb":
+		types.DBI, err = boltdb.DbOpen(dbFile, log)
+	case "dynamodb":
+		types.DBI, err = dynamodb.DbOpen(dbFile, log)
+	case "redis":
+		types.DBI, err = redis.DBOpen(dbFile, log)
+	default:
+		panic("Unknown Database Engine")
 	}
 	if err != nil {
-        log.Fatal("Unable to connect to database.")
+		log.Fatal("Unable to connect to database.")
 	}
 
 }

@@ -17,10 +17,11 @@
 package data
 
 import (
-	"Smilo-blackbox/src/data/types"
 	"os"
 	"testing"
 	"time"
+
+	"Smilo-blackbox/src/data/types"
 
 	"github.com/stretchr/testify/require"
 
@@ -29,18 +30,18 @@ import (
 
 type testEngine struct {
 	Filename string
-	Engine string
+	Engine   string
 }
 
 func TestMain(m *testing.M) {
 	// TODO: Tests to dynamodb and redis rely on services running to accept requests, for now they are just commented out.
 	//       To run all tests we need to start services using docker instances and configure environment for aws.
 	engines := []testEngine{
-		{Filename:utils.BuildFilename("blackbox.db"), Engine:"boltdb"},
+		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb"},
 		//{Filename:"", Engine:"dynamodb"},
 		//{Filename:"redis/test.conf", Engine:"redis"},
 	}
-    for _, eng := range engines {
+	for _, eng := range engines {
 		SetFilename(eng.Filename)
 		SetEngine(eng.Engine)
 		Start()
@@ -50,7 +51,7 @@ func TestMain(m *testing.M) {
 			os.Exit(retcode)
 		}
 	}
-    os.Exit(0)
+	os.Exit(0)
 }
 
 func TestEncryptedTransaction_Save_Retrieve(t *testing.T) {

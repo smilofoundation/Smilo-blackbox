@@ -6,6 +6,7 @@ Official Golang implementation of the Smilo Vault protocol.
 [![GoDoc](https://godoc.org/github.com/Smilo-platform/Smilo-blackbox?status.svg)](https://godoc.org/github.com/Smilo-platform/Smilo-blackbox)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Smilo-platform/Smilo-blackbox)](https://goreportcard.com/report/github.com/Smilo-platform/Smilo-blackbox)
 [![Docker Repository on Quay](https://quay.io/repository/smilo/smilo-blackbox/status "Docker Repository on Quay")](https://quay.io/repository/smilo/smilo-blackbox)
+[![Gitter](https://badges.gitter.im/go-smilo/community.svg)](https://gitter.im/go-smilo/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 ### Dependencies
 - Golang 1.11

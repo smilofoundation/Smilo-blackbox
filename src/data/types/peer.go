@@ -16,37 +16,34 @@
 
 package types
 
-//Peer holds url and pub for a peer
+//Peer holds URL and pub for a peer
 type Peer struct {
-	publicKey []byte `storm:"id"`
-	url       string
+	PublicKey []byte `storm:"id"`
+	URL       string
 }
 
-//NewPeer create new peer based on pk and url
+//NewPeer create new peer based on pk and URL
 func NewPeer(pKey []byte, nodeURL string) *Peer {
-	p := Peer{publicKey: pKey, url: nodeURL}
+	p := Peer{PublicKey: pKey, URL: nodeURL}
 	return &p
 }
 
 //Update will update a peer
-func Update(pKey []byte, nodeURL string) *Peer {
+func Update(pKey []byte, nodeURL string) (*Peer, error) {
 	p, err := FindPeer(pKey)
 	if err != nil {
 		p = NewPeer(pKey, nodeURL)
 	} else {
-		p.url = nodeURL
+		p.URL = nodeURL
 	}
 	err = p.Save()
-	if err != nil {
-		//data.log.WithError(err).Error("Could not Update, failed to execute Save method")
-	}
-	return p
+	return p, err
 }
 
 //FindPeer will find a peer
 func FindPeer(publicKey []byte) (*Peer, error) {
 	var p Peer
-	err := DBI.Find("publicKey", publicKey, &p)
+	err := DBI.Find("id", publicKey, &p)
 	if err != nil {
 		//data.log.Error("Unable to find Peer.")
 		return nil, err

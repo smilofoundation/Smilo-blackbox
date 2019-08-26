@@ -53,7 +53,7 @@ var (
 	StormDBPeers *storm.DB
 
 	//serverStatus               = status{false, false}
-	log *logrus.Entry = logrus.WithFields(logrus.Fields{
+	log = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
 		"package": "server",
 	})
@@ -260,6 +260,7 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	publicAPI.HandleFunc("/version", api.GetVersion).Methods("GET")
 	publicAPI.HandleFunc("/push", api.Push).Methods("POST")
 	publicAPI.HandleFunc("/resend", api.Resend).Methods("POST")
+	publicAPI.HandleFunc("/storeraw", api.StoreRaw).Methods("POST")
 	publicAPI.HandleFunc("/partyinfo", api.GetPartyInfo).Methods("POST")
 	publicAPI.NotFoundHandler = http.HandlerFunc(api.UnknownRequest)
 
@@ -269,6 +270,7 @@ func InitRouting() (*mux.Router, *mux.Router) {
 	privateAPI.HandleFunc("/send", api.Send).Methods("POST")
 	privateAPI.HandleFunc("/sendraw", api.SendRaw).Methods("POST")
 	privateAPI.HandleFunc("/receive", api.Receive).Methods("GET")
+	privateAPI.HandleFunc("/sendsignedtx", api.SendSignedTx).Methods("POST")
 	privateAPI.HandleFunc("/receiveraw", api.ReceiveRaw).Methods("GET")
 	privateAPI.HandleFunc("/delete", api.Delete).Methods("POST")
 

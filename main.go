@@ -62,18 +62,29 @@ func main() {
 		cpuProfilingFile := c.String("cpuprofile")
 		p2pEnabled := c.Bool("p2p")
 		if generateKeys != "" {
-			crypt.GenerateKeys(generateKeys)
-			os.Exit(0)
+			err := crypt.GenerateKeys(generateKeys)
+			if err != nil {
+				os.Exit(-1)
+			} else {
+				os.Exit(0)
+			}
 		} else {
 			if cpuProfilingFile != "" {
 				f, err := os.Create(cpuProfilingFile)
 				if err != nil {
 					log.Fatal(err)
 				}
-				pprof.StartCPUProfile(f)
+				err = pprof.StartCPUProfile(f)
+				if err != nil {
+					log.Fatal(err)
+				}
 				defer pprof.StopCPUProfile()
 			}
-			config.LoadConfig(configFile)
+			err := config.LoadConfig(configFile)
+			if err != nil {
+				log.Fatal(err)
+				os.Exit(1)
+			}
 			server.StartServer()
 			if p2pEnabled {
 				server.InitP2p()
