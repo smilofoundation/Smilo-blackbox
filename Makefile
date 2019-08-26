@@ -108,8 +108,44 @@ doc:
 install-linters: ## Install linters
 	go get -u github.com/FiloSottile/vendorcheck
 	go get -u golang.org/x/tools/cmd/goimports
-#	go get -u gopkg.in/alecthomas/gometalinter.v3
-	go get github.com/golangci/golangci-lint/cmd/golangci-lint
+	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+
+install-tools:
+	go get -u github.com/karalabe/xgo
+
+cross: install-tools blackbox-linux blackbox-linux-arm blackbox-darwin blackbox-windows blackbox-android blackbox-ios
+	xgo --go=latest --targets=linux/amd64  --remote=github.com/Smilo-platform/Smilo-blackbox .
+
+blackbox-linux:
+	xgo --go=latest --targets=linux/amd64 -out=./bin/blackbox  .
+	xgo --go=latest --targets=linux/386 -out=./bin/blackbox  .
+
+blackbox-linux-arm:
+	xgo --go=latest --targets=linux/arm-5 -out=./bin/blackbox  .
+	xgo --go=latest --targets=linux/arm-6 -out=./bin/blackbox  .
+	xgo --go=latest --targets=linux/arm-7 -out=./bin/blackbox  .
+	xgo --go=latest --targets=linux/arm64 -out=./bin/blackbox  .
+#	xgo --go=latest --targets=linux/mips -out=./bin/blackbox  .
+#	xgo --go=latest --targets=linux/mipsle -out=./bin/blackbox  .
+#	xgo --go=latest --targets=linux/mips64 -out=./bin/blackbox  .
+#	xgo --go=latest --targets=linux/mips64le -out=./bin/blackbox  .
+
+blackbox-darwin:
+	xgo --go=latest --targets=darwin/amd64 -out=./bin/blackbox .
+	xgo --go=latest --targets=darwin/386 -out=./bin/blackbox .
+
+blackbox-windows:
+#	xgo --go=latest --targets=windows/amd64 -out=./bin/blackbox .
+#	xgo --go=latest --targets=windows/386 -out=./bin/blackbox .
+
+blackbox-android:
+	xgo --go=latest --targets=android-16/386 -out=./bin/blackbox .
+	xgo --go=latest --targets=android-16/arm -out=./bin/blackbox .
+
+blackbox-ios:
+	xgo --go=latest --targets=ios/arm-7 -out=./bin/blackbox .
+	xgo --go=latest --targets=ios/arm64 -out=./bin/blackbox .
+
 
 
 format:  # Formats the code. Must have goimports installed (use make install-linters).
