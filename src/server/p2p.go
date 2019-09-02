@@ -40,7 +40,7 @@ type Peer struct {
 var (
 	//protocols       []p2p.Protocol
 	srv             *p2p.Server
-//	maxPeersNetwork int
+	maxPeersNetwork int
 )
 
 var (
