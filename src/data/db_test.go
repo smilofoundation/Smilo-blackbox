@@ -83,3 +83,11 @@ func TestEncryptedTransaction_Delete(t *testing.T) {
 
 	require.Empty(t, trans3)
 }
+
+func TestGetAllPeers(t *testing.T) {
+	peers, err := types.GetAllPeers()
+	if err != nil {
+		require.Fail(t, "Unexpected error retrieving peers")
+	}
+	require.Equal(t,peers, &[]types.Peer{})
+}

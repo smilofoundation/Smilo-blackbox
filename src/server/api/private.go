@@ -264,13 +264,13 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
-		return nil, nil
+		return nil, err
 	}
 	encTrans := types.NewEncryptedTransaction(*encPayload.Serialize())
 	err = encTrans.Save()
 	if err != nil {
 		log.WithError(err).Error("Could not encTrans.Save()")
-		return nil, nil
+		return nil, err
 	}
 	pushToAllRecipients(recipients, encTrans)
 	return encTrans, nil

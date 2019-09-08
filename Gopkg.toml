@@ -34,10 +34,6 @@
   version = "1.0.0"
 
 [[constraint]]
-  name = "github.com/ethereum/go-ethereum"
-  version = "1.8.12"
-
-[[constraint]]
   branch = "master"
   name = "github.com/facebookgo/grace"
 

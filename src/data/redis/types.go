@@ -20,6 +20,21 @@ type EncryptedRawTransaction struct {
 	Timestamp      time.Time `json:"timestamp"`
 }
 
+type PublicKeyUrl struct {
+	PublicKey []byte `json:"publickey"`
+	URL       string `json:"url"`
+}
+
+type Peer struct {
+	URL         string		`json:"url"`
+	PublicKeys  [][]byte	`json:"publickeys"`
+	SkipCycles  int			`json:"skipcycles"`
+	Failures    int			`json:"failures"`
+	LastFailure time.Time 	`json:"lastfailure"`
+	Tries       int			`json:"tries"`
+	NextUpdate  time.Time	`json:"nextupdate"`
+}
+
 func GetKey(name string, value interface{}) string {
 	return fmt.Sprintf("%s:%v", name, value)
 }
@@ -31,6 +46,12 @@ func GetTagged(dat interface{}) interface{} {
 		return &dat2
 	case *types.EncryptedRawTransaction:
 		dat2 := EncryptedRawTransaction(*dat.(*types.EncryptedRawTransaction))
+		return &dat2
+	case *types.PublicKeyUrl:
+		dat2 := PublicKeyUrl(*dat.(*types.PublicKeyUrl))
+		return &dat2
+	case *types.Peer:
+		dat2 := Peer(*dat.(*types.Peer))
 		return &dat2
 	default:
 		return dat
@@ -45,5 +66,11 @@ func GetUntagged(dat interface{}, gen interface{}) {
 	case *EncryptedRawTransaction:
 		dat2 := types.EncryptedRawTransaction(*dat.(*EncryptedRawTransaction))
 		*gen.(*types.EncryptedRawTransaction) = dat2
+	case *PublicKeyUrl:
+		dat2 := types.PublicKeyUrl(*dat.(*PublicKeyUrl))
+		*gen.(*types.PublicKeyUrl) = dat2
+	case *Peer:
+		dat2 := types.Peer(*dat.(*Peer))
+		*gen.(*types.Peer) = dat2
 	}
 }

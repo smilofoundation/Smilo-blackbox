@@ -38,6 +38,7 @@ import (
 var (
 	log    *logrus.Entry
 	config Config
+    InitialPeers []string
 
 	//GenerateKeys (cli) uses it for key pair
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
@@ -85,6 +86,7 @@ var (
 	P2PEnabled = cli.BoolFlag{Name: "p2p", Usage: "Enable p2p communication"}
 	//RootCert  (cli) uses it for certs
 	RootCert = cli.StringFlag{Name: "root_cert", Value: "", Usage: ""}
+
 )
 
 func initLog() {
@@ -179,8 +181,9 @@ func parseConfigValues() {
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
 	data.SetEngine(DBEngine.Value)
 	syncpeer.SetHostURL(HostName.Value + ":" + Port.Value)
+	InitialPeers = make([]string, len(config.Peers))
 	for _, peerdata := range config.Peers {
-		syncpeer.PeerAdd(peerdata.URL)
+		InitialPeers = append(InitialPeers, peerdata.URL)
 	}
 }
 

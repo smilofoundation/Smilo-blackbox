@@ -16,34 +16,29 @@
 
 package types
 
-//Peer holds URL and pub for a peer
+import "time"
+
+//Peer holds peer synchronization information
 type Peer struct {
-	PublicKey []byte `storm:"id"`
-	URL       string
+	URL         string `key:"true"`
+	PublicKeys  [][]byte
+	SkipCycles  int
+	Failures    int
+	LastFailure time.Time
+	Tries       int
+	NextUpdate  time.Time
 }
 
-//NewPeer create new peer based on pk and URL
-func NewPeer(pKey []byte, nodeURL string) *Peer {
-	p := Peer{PublicKey: pKey, URL: nodeURL}
+//NewPublicKeyUrl create new peer based on pk and URL
+func NewPeer(URL string) *Peer {
+	p := Peer{URL: URL, PublicKeys: make([][]byte, 0, 128), SkipCycles:0, Failures:0, Tries:0, NextUpdate: time.Now()}
 	return &p
 }
 
-//Update will update a peer
-func Update(pKey []byte, nodeURL string) (*Peer, error) {
-	p, err := FindPeer(pKey)
-	if err != nil {
-		p = NewPeer(pKey, nodeURL)
-	} else {
-		p.URL = nodeURL
-	}
-	err = p.Save()
-	return p, err
-}
-
-//FindPeer will find a peer
-func FindPeer(publicKey []byte) (*Peer, error) {
+//FindPublicKeyUrl will find a peer
+func FindPeer(URL string) (*Peer, error) {
 	var p Peer
-	err := DBI.Find("id", publicKey, &p)
+	err := DBI.Find("URL", URL, &p)
 	if err != nil {
 		//data.log.Error("Unable to find Peer.")
 		return nil, err
@@ -59,4 +54,30 @@ func (p *Peer) Save() error {
 //Delete delete a peer on db
 func (p *Peer) Delete() error {
 	return DBI.Delete(p)
+}
+
+func GetAllPeers() (*[]Peer, error) {
+	return DBI.AllPeers()
+}
+
+func FindNextUpdatablePeer(postpone time.Duration) (*Peer, error) {
+	return DBI.GetNextPeer(postpone)
+}
+
+func UpdateNewPeers(peers []string) error {
+	for _,peer := range peers {
+        p, err := FindPeer(peer)
+        if err != nil {
+        	return err
+		}
+        if p == nil {
+        	p:=NewPeer(peer)
+        	err = p.Save()
+            if err != nil {
+				return err
+			}
+		}
+        // If peer already exists just ignore.
+	}
+	return nil
 }

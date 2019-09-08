@@ -19,6 +19,21 @@ type EncryptedRawTransaction struct {
 	Timestamp      time.Time `storm:"index"`
 }
 
+type PublicKeyUrl struct {
+	PublicKey []byte `storm:"id"`
+	URL       string `storm:"index"`
+}
+
+type Peer struct {
+	URL         string `storm:"id"`
+	PublicKeys  [][]byte
+	SkipCycles  int
+	Failures    int
+	LastFailure time.Time
+	Tries       int
+	NextUpdate  time.Time `storm:"index"`
+}
+
 func GetTagged(dat interface{}) interface{} {
 	switch dat.(type) {
 	case *types.EncryptedTransaction:
@@ -26,6 +41,12 @@ func GetTagged(dat interface{}) interface{} {
 		return &dat2
 	case *types.EncryptedRawTransaction:
 		dat2 := EncryptedRawTransaction(*dat.(*types.EncryptedRawTransaction))
+		return &dat2
+	case *types.PublicKeyUrl:
+		dat2 := PublicKeyUrl(*dat.(*types.PublicKeyUrl))
+		return &dat2
+	case *types.Peer:
+		dat2 := Peer(*dat.(*types.Peer))
 		return &dat2
 	default:
 		return dat
@@ -40,5 +61,12 @@ func GetUntagged(dat interface{}, gen interface{}) {
 	case *EncryptedRawTransaction:
 		dat2 := types.EncryptedRawTransaction(*dat.(*EncryptedRawTransaction))
 		*gen.(*types.EncryptedRawTransaction) = dat2
+	case *PublicKeyUrl:
+		dat2 := types.PublicKeyUrl(*dat.(*PublicKeyUrl))
+		*gen.(*types.PublicKeyUrl) = dat2
+	case *Peer:
+		dat2 := types.Peer(*dat.(*Peer))
+		*gen.(*types.Peer) = dat2
 	}
 }
+

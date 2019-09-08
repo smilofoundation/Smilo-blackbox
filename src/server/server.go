@@ -17,6 +17,8 @@
 package server
 
 import (
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/syncpeer"
 	"net"
 	"net/http"
 	"os"
@@ -32,25 +34,17 @@ import (
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
 
-	"sync"
 	"time"
 
-	"github.com/asdine/storm"
 	"github.com/tidwall/buntdb"
 
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/utils"
 )
 
 var (
-	msgC       = make(chan Message)
-	msgCmutex  = &sync.Mutex{}
 	privateAPI *mux.Router
 	publicAPI  *mux.Router
-
-	//StormDBPeers is the main object for peers db
-	StormDBPeers *storm.DB
 
 	//serverStatus               = status{false, false}
 	log = logrus.WithFields(logrus.Fields{
@@ -105,24 +99,6 @@ func initServer() {
 	PRIVATE_SERVER_READ_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_READ_TIMEOUT_STR, "PRIVATE_SERVER_READ_TIMEOUT", PRIVATE_SERVER_READ_TIMEOUT)
 	PRIVATE_SERVER_WRITE_TIMEOUT = setOSEnvInt(PRIVATE_SERVER_WRITE_TIMEOUT_STR, "PRIVATE_SERVER_WRITE_TIMEOUT", PRIVATE_SERVER_WRITE_TIMEOUT)
 
-	finalPath := utils.BuildFilename(config.PeersDBFile.Value)
-	_, err := os.Create(finalPath)
-	if err != nil {
-		log.Fatalf("Failed to start StormDBPeers file at %s", config.Socket.Value)
-	}
-
-	StormDBPeers, err = storm.Open(finalPath)
-	if err != nil {
-		defer func() {
-			err := StormDBPeers.Close()
-			if err != nil {
-				log.WithError(err).Error("Could not StormDBPeers.Close")
-			}
-		}()
-		log.WithError(err).Error("Could not open StormDBPeers")
-		os.Exit(1)
-	}
-
 }
 
 // SetLogger set the logger
@@ -156,13 +132,15 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 //StartServer will start the server
 func StartServer() {
 	port, isTLS, workDir := config.Port.Value, config.IsTLS.Destination, config.WorkDir.Value
+	data.Start()
+	for _, peerdata := range config.InitialPeers {
+		syncpeer.PeerAdd(peerdata)
+	}
 	initServer()
 	log.Info("Starting server")
 	pub, priv := NewServer(port)
 
 	log.Info("Server starting --> " + port)
-	data.Start()
-
 	if *isTLS {
 		log.Info("Will start TLS Mode")
 		servCert := config.ServCert.Value

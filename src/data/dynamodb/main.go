@@ -1,7 +1,9 @@
 package dynamodb
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"errors"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
@@ -51,26 +53,24 @@ func (dyndb *DatabaseInstance) Save(data interface{}) error {
 	_, err = dyndb.db.PutItem(item)
 	return err
 }
+
+func (dyndb *DatabaseInstance) AllPeers () (*[]types.Peer, error) {
+	return nil, nil
+}
+func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
+    //TODO: Implement NextPeer for DynamoDB
+	return nil, nil
+}
+
 func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 
-	//sess, err := session.NewSession()
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
-	//if err != nil {
-	//	return nil, err
-	//}
+
 	db := dynDB.New(sess)
 	log.Info("Opening DB: ", filename)
-	//	db, err := storm.Open(filename)
 
-	//if err != nil {
-	//	defer func() {
-	//		err = db.Close()
-	//		log.WithError(err).Fatal("Could not open DBFile: ", filename, ", error: ", err)
-	//		os.Exit(1)
-	//	}()
-	//	}
 	bdb := DatabaseInstance{db, log}
 	return &bdb, nil
 }

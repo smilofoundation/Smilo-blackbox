@@ -1,8 +1,10 @@
 package redis
 
 import (
+	"Smilo-blackbox/src/data/types"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
@@ -57,6 +59,16 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 	ret := rds.bd.Set(GetKey(name, value), bytesValue, -1)
 	return ret.Err()
 }
+
+func (rds *DatabaseInstance) AllPeers () (*[]types.Peer, error) {
+	return nil, nil
+}
+
+func (rds *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
+	//TODO: Implement NextPeer for Redis
+	return nil, nil
+}
+
 func DBOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 	byteValue, err := utils2.ReadAllFile(filename, log)
 	if err == nil {

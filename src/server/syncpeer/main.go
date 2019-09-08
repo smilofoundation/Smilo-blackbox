@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	sync2 "sync"
 	"time"
 
 	"crypto/tls"
@@ -18,14 +17,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/data/types"
 )
 
 var (
-	peerChannel         = make(chan *Peer, 1024)
-	peerList            []*Peer
-	publicKeysHashMap   = NewSafePublicKeyMap()
+	//peerChannel         = make(chan *Peer, 1024)
+	//peerList            []*Peer
 	keepRunning         = true
-	mutex               sync2.RWMutex
+	//mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
 	hostURL             string
@@ -100,82 +99,57 @@ func sync() {
 	keepRunning = true
 	for keepRunning {
 		time.Sleep(timeBetweenCycles)
-		updateAllPeers()
-		updatePeersList()
+		updatePeer()
 	}
 }
 
-func updatePeersList() {
-	mutex.Lock()
-	defer mutex.Unlock()
-	for j := len(peerList) - 1; j >= 0; j-- {
-		if peerList[j].tries > 3 {
-			peer := peerList[j]
-			if j < len(peerList)-1 {
-				peerList = append(peerList[0:j], peerList[j+1:]...)
-			} else {
-				peerList = peerList[0:j]
-			}
-			for _, pubKeys := range peer.publicKeys {
-				if publicKeysHashMap.Get(string(pubKeys)) == peer {
-					publicKeysHashMap.Delete(string(pubKeys))
-				}
-			}
-		}
-	}
-	for {
-		select {
-		case p := <-peerChannel:
-			alreadyExists := false
-			for _, peer := range peerList {
-				if peer.url == p.url {
-					alreadyExists = true
-					break
-				}
-			}
-			if !alreadyExists {
-				peerList = append(peerList, p)
-			}
-		default:
-			return
-		}
-	}
-}
-
-func updateAllPeers() {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	for i, peer := range peerList {
-		if peer.failures > 10 {
-			if time.Since(peer.lastFailure) > (15 * time.Minute) {
-				peer.failures = 0
-				peer.tries++
-			}
-		} else {
-			if peer.skipcycles > 0 {
-				peer.skipcycles--
-				continue
-			}
-			time.Sleep(timeBetweenRequests)
-			updatePeer(i)
-		}
-	}
-}
-
-func updatePeer(i int) {
-	publicKeys, err := queryPeer(peerList[i].url)
+func updatePeer() {
+	peer, err := types.FindNextUpdatablePeer(2*client.Timeout)
 	if err != nil {
-		peerList[i].failures++
-		peerList[i].lastFailure = time.Now()
-		log.Errorf("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
+		//panic
+	}
+	if peer.Failures > 10 {
+		if time.Since(peer.LastFailure) > (15 * time.Minute) {
+			peer.Failures = 0
+			peer.Tries++
+		}
 	} else {
-		peerList[i].failures = 0
-		peerList[i].tries = 0
-		peerList[i].publicKeys = publicKeys
-		peerList[i].skipcycles = 10 * len(publicKeys)
+		if peer.SkipCycles > 0 {
+			peer.SkipCycles--
+		} else {
+			updateFromRemotePeerData(peer)
+		}
+	}
+	if peer.Tries > 3 {
+		for _, pubKeys := range peer.PublicKeys {
+			pkurl, err := types.FindPublicKeyUrl(pubKeys)
+			if err != nil {
+				//panic
+			}
+			if pkurl.URL == peer.URL {
+				pkurl.Delete()
+			}
+		}
+        peer.Delete()
+	}
+	peer.Save()
+}
+
+func updateFromRemotePeerData(peer *types.Peer) {
+	publicKeys, err := queryPeer(peer.URL)
+	if err != nil {
+		peer.Failures++
+		peer.LastFailure = time.Now()
+		log.Errorf("Unable to query the peer: %s, Error: %s", peer.URL, err)
+	} else {
+		peer.Failures = 0
+		peer.Tries = 0
+		peer.PublicKeys = publicKeys
+		peer.SkipCycles = 10 * len(publicKeys)
 	}
 	for j := range publicKeys {
-		publicKeysHashMap.Store(string(publicKeys[j]), peerList[i])
+		pkURL := types.NewPublicKeyUrl(publicKeys[j], peer.URL)
+		pkURL.Save()
 	}
 }
 
@@ -193,34 +167,36 @@ func queryPeer(url string) ([][]byte, error) {
 }
 
 func peerAddAll(urls ...string) {
-	for _, url := range urls {
-		PeerAdd(url)
+	err := types.UpdateNewPeers(urls)
+	if err != nil {
+		//panic
 	}
 }
 
-//PeerAdd add peer url
 func PeerAdd(url string) {
-	if url != hostURL {
-		peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
-	}
+	peerAddAll(url)
 }
-
 //GetPeers get peers
 func GetPeers() []string {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	urls := make([]string, 0, len(peerList))
-	for _, peer := range peerList {
-		urls = append(urls, peer.url)
+	peerList, err := types.GetAllPeers()
+	if err != nil {
+		// panic
+	}
+	urls := make([]string, 0, len(*peerList))
+	for _, peer := range *peerList {
+		urls = append(urls, peer.URL)
 	}
 	return urls
 }
 
 //GetPeerURL get url
 func GetPeerURL(publicKey []byte) (string, error) {
-	peer := publicKeysHashMap.Get(string(publicKey))
+	peer, err := types.FindPublicKeyUrl(publicKey)
+	if err != nil {
+		//panic
+	}
 	if peer != nil {
-		return peer.url, nil
+		return peer.URL, nil
 	}
 	return "", errors.New("unknown Public Key Peer")
 }
