@@ -15,14 +15,14 @@
 * [func ComputeSharedKey(senderKey []byte, publicKey []byte) []byte](#ComputeSharedKey)
 * [func DecryptPayload(sharedKey []byte, encryptedPayload []byte, nonce []byte) []byte](#DecryptPayload)
 * [func EncryptPayload(sharedKey []byte, payload []byte, nonce []byte) []byte](#EncryptPayload)
-* [func GenerateKeys(generateKeys string)](#GenerateKeys)
+* [func GenerateKeys(generateKeys string) error](#GenerateKeys)
 * [func GetPrivateKey(publicKey []byte) []byte](#GetPrivateKey)
 * [func GetPublicKeys() [][]byte](#GetPublicKeys)
 * [func NewRandomKey() ([]byte, error)](#NewRandomKey)
 * [func NewRandomNonce() ([]byte, error)](#NewRandomNonce)
 * [func PutKeyPair(pair KeyPair)](#PutKeyPair)
-* [func WritePrivateKeyFile(key string, filename string) error](#WritePrivateKeyFile)
-* [func WritePublicKeyFile(key string, filename string) error](#WritePublicKeyFile)
+* [func WritePrivateKeyFile(key string, filepath string) error](#WritePrivateKeyFile)
+* [func WritePublicKeyFile(key string, filepath string) error](#WritePublicKeyFile)
 * [type KeyPair](#KeyPair)
 
 
@@ -33,7 +33,7 @@
 
 
 
-## <a name="ComputePublicKey">func</a> [ComputePublicKey](/src/target/keys.go?s=1209:1261#L47)
+## <a name="ComputePublicKey">func</a> [ComputePublicKey](/src/target/keys.go?s=1192:1244#L46)
 ``` go
 func ComputePublicKey(secret []byte) ([]byte, error)
 ```
@@ -65,9 +65,9 @@ EncryptPayload will encrypt payload based on a key and nonce
 
 
 
-## <a name="GenerateKeys">func</a> [GenerateKeys](/src/target/keys.go?s=1365:1403#L52)
+## <a name="GenerateKeys">func</a> [GenerateKeys](/src/target/keys.go?s=1348:1392#L51)
 ``` go
-func GenerateKeys(generateKeys string)
+func GenerateKeys(generateKeys string) error
 ```
 GenerateKeys will generate key/pub and save into file
 
@@ -113,17 +113,17 @@ PutKeyPair will put a pair into pairs var
 
 
 
-## <a name="WritePrivateKeyFile">func</a> [WritePrivateKeyFile](/src/target/keys.go?s=2139:2198#L73)
+## <a name="WritePrivateKeyFile">func</a> [WritePrivateKeyFile](/src/target/keys.go?s=2172:2231#L75)
 ``` go
-func WritePrivateKeyFile(key string, filename string) error
+func WritePrivateKeyFile(key string, filepath string) error
 ```
 WritePrivateKeyFile creates a json file with the private key
 
 
 
-## <a name="WritePublicKeyFile">func</a> [WritePublicKeyFile](/src/target/keys.go?s=2820:2878#L99)
+## <a name="WritePublicKeyFile">func</a> [WritePublicKeyFile](/src/target/keys.go?s=2681:2739#L93)
 ``` go
-func WritePublicKeyFile(key string, filename string) error
+func WritePublicKeyFile(key string, filepath string) error
 ```
 WritePublicKeyFile creates a file with the pubKey
 
@@ -136,6 +136,7 @@ type KeyPair struct {
     PrivateKey []byte
     PublicKey  []byte
 }
+
 ```
 KeyPair holds PrivateKey and PublicKey
 

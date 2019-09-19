@@ -35,6 +35,7 @@ type EncodedPayloadData struct {
     RecipientNonce []byte
     RecipientList  [][]byte
 }
+
 ```
 EncodedPayloadData holds the encoded payload data (sender,nonce,cipher,recipientNonce and list)
 
@@ -44,14 +45,14 @@ EncodedPayloadData holds the encoded payload data (sender,nonce,cipher,recipient
 
 
 
-### <a name="Deserialize">func</a> [Deserialize](/src/target/encoded_payload_data.go?s=1550:1609#L52)
+### <a name="Deserialize">func</a> [Deserialize](/src/target/encoded_payload_data.go?s=1667:1726#L56)
 ``` go
 func Deserialize(encodedPayload []byte) *EncodedPayloadData
 ```
 Deserialize obj
 
 
-### <a name="EncodePayloadData">func</a> [EncodePayloadData](/src/target/encoded_payload_data.go?s=1935:2038#L64)
+### <a name="EncodePayloadData">func</a> [EncodePayloadData](/src/target/encoded_payload_data.go?s=2052:2155#L68)
 ``` go
 func EncodePayloadData(payload []byte, sender []byte, recipients [][]byte) (*EncodedPayloadData, error)
 ```
@@ -61,7 +62,7 @@ EncodePayloadData encode payload data
 
 
 
-### <a name="EncodedPayloadData.Decode">func</a> (\*EncodedPayloadData) [Decode](/src/target/encoded_payload_data.go?s=2869:2922#L95)
+### <a name="EncodedPayloadData.Decode">func</a> (\*EncodedPayloadData) [Decode](/src/target/encoded_payload_data.go?s=2986:3039#L99)
 ``` go
 func (e *EncodedPayloadData) Decode(to []byte) []byte
 ```

@@ -37,7 +37,7 @@
 
 
 
-## <a name="AppendCertificate">func</a> [AppendCertificate](/src/target/main.go?s=1337:1377#L67)
+## <a name="AppendCertificate">func</a> [AppendCertificate](/src/target/main.go?s=1339:1379#L67)
 ``` go
 func AppendCertificate(cert []byte) bool
 ```
@@ -45,7 +45,7 @@ AppendCertificate append cert
 
 
 
-## <a name="GetHTTPClient">func</a> [GetHTTPClient](/src/target/main.go?s=6380:6413#L275)
+## <a name="GetHTTPClient">func</a> [GetHTTPClient](/src/target/main.go?s=6530:6563#L285)
 ``` go
 func GetHTTPClient() *http.Client
 ```
@@ -53,7 +53,7 @@ GetHTTPClient get http client
 
 
 
-## <a name="GetPeerURL">func</a> [GetPeerURL](/src/target/main.go?s=4562:4611#L220)
+## <a name="GetPeerURL">func</a> [GetPeerURL](/src/target/main.go?s=4564:4613#L220)
 ``` go
 func GetPeerURL(publicKey []byte) (string, error)
 ```
@@ -61,7 +61,7 @@ GetPeerURL get url
 
 
 
-## <a name="GetPeers">func</a> [GetPeers](/src/target/main.go?s=4350:4374#L209)
+## <a name="GetPeers">func</a> [GetPeers](/src/target/main.go?s=4352:4376#L209)
 ``` go
 func GetPeers() []string
 ```
@@ -69,7 +69,7 @@ GetPeers get peers
 
 
 
-## <a name="GetPublicKeysFromOtherNode">func</a> [GetPublicKeysFromOtherNode](/src/target/main.go?s=4815:4904#L229)
+## <a name="GetPublicKeysFromOtherNode">func</a> [GetPublicKeysFromOtherNode](/src/target/main.go?s=4817:4906#L229)
 ``` go
 func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []string, error)
 ```
@@ -77,7 +77,7 @@ GetPublicKeysFromOtherNode get pub from other nodes
 
 
 
-## <a name="PeerAdd">func</a> [PeerAdd](/src/target/main.go?s=4168:4192#L202)
+## <a name="PeerAdd">func</a> [PeerAdd](/src/target/main.go?s=4170:4194#L202)
 ``` go
 func PeerAdd(url string)
 ```
@@ -85,7 +85,7 @@ PeerAdd add peer url
 
 
 
-## <a name="SetHostURL">func</a> [SetHostURL](/src/target/main.go?s=1929:1956#L95)
+## <a name="SetHostURL">func</a> [SetHostURL](/src/target/main.go?s=1931:1958#L95)
 ``` go
 func SetHostURL(url string)
 ```
@@ -93,7 +93,7 @@ SetHostURL set host
 
 
 
-## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=1602:1618#L78)
+## <a name="StartSync">func</a> [StartSync](/src/target/main.go?s=1604:1620#L78)
 ``` go
 func StartSync()
 ```
@@ -109,6 +109,7 @@ type PartyInfoRequest struct {
     SenderKey   string `json:"key"`
     SenderNonce string `json:"nonce"`
 }
+
 ```
 PartyInfoRequest used to marshal/unmarshal json
 
@@ -127,6 +128,7 @@ type PartyInfoResponse struct {
     PublicKeys []ProvenPublicKey `json:"publicKeys"`
     PeerURLs   []string          `json:"peers"`
 }
+
 ```
 PartyInfoResponse used to marshal/unmarshal json
 
@@ -144,6 +146,7 @@ PartyInfoResponse used to marshal/unmarshal json
 type Peer struct {
     // contains filtered or unexported fields
 }
+
 ```
 Peer used to marshal/unmarshal json
 
@@ -162,6 +165,7 @@ type ProvenPublicKey struct {
     Key   string `json:"key"`
     Proof string `json:"proof"`
 }
+
 ```
 ProvenPublicKey used to marshal/unmarshal json
 
@@ -180,6 +184,7 @@ type SafePublicKeyMap struct {
     sync2.RWMutex
     // contains filtered or unexported fields
 }
+
 ```
 SafePublicKeyMap used to marshal/unmarshal json
 
@@ -199,7 +204,7 @@ NewSafePublicKeyMap create new key
 
 
 
-### <a name="SafePublicKeyMap.Delete">func</a> (\*SafePublicKeyMap) [Delete](/src/target/types.go?s=1218:1265#L59)
+### <a name="SafePublicKeyMap.Delete">func</a> (\*SafePublicKeyMap) [Delete](/src/target/types.go?s=1215:1262#L59)
 ``` go
 func (spm *SafePublicKeyMap) Delete(key string)
 ```
@@ -217,7 +222,7 @@ Get will get internal key
 
 
 
-### <a name="SafePublicKeyMap.Store">func</a> (\*SafePublicKeyMap) [Store](/src/target/types.go?s=1353:1412#L66)
+### <a name="SafePublicKeyMap.Store">func</a> (\*SafePublicKeyMap) [Store](/src/target/types.go?s=1350:1409#L66)
 ``` go
 func (spm *SafePublicKeyMap) Store(key string, value *Peer)
 ```
