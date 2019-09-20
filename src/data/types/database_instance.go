@@ -1,6 +1,9 @@
 package types
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 var DBI DatabaseInstance
 
@@ -12,3 +15,5 @@ type DatabaseInstance interface {
 	Save(data interface{}) error
 	GetNextPeer(pospone time.Duration) (*Peer, error)
 }
+
+var ErrNotFound = errors.New("not found")

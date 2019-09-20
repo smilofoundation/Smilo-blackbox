@@ -16,36 +16,34 @@
 
 package types
 
-//PublicKeyUrl holds URL and pub for a peer
-type PublicKeyUrl struct {
+//PublicKeyURL holds URL and pub for a peer
+type PublicKeyURL struct {
 	PublicKey []byte `key:"true"`
 	URL       string
 }
 
-//NewPublicKeyUrl create new peer based on pk and URL
-func NewPublicKeyUrl(pKey []byte, nodeURL string) *PublicKeyUrl {
-	p := PublicKeyUrl{PublicKey: pKey, URL: nodeURL}
+//NewPublicKeyURL create new peer based on pk and URL
+func NewPublicKeyURL(pKey []byte, nodeURL string) *PublicKeyURL {
+	p := PublicKeyURL{PublicKey: pKey, URL: nodeURL}
 	return &p
 }
 
-//FindPublicKeyUrl will find a peer
-func FindPublicKeyUrl(publicKey []byte) (*PublicKeyUrl, error) {
-	var p PublicKeyUrl
+//FindPublicKeyURL will find a peer
+func FindPublicKeyURL(publicKey []byte) (*PublicKeyURL, error) {
+	var p PublicKeyURL
 	err := DBI.Find("PublicKey", publicKey, &p)
 	if err != nil {
-		//data.log.Error("Unable to find Peer.")
 		return nil, err
 	}
 	return &p, nil
 }
 
-//Save save a PublicKeyUrl into db
-func (p *PublicKeyUrl) Save() error {
+//Save save a PublicKeyURL into db
+func (p *PublicKeyURL) Save() error {
 	return DBI.Save(p)
 }
 
-//Delete delete a PublicKeyUrl on db
-func (p *PublicKeyUrl) Delete() error {
+//Delete delete a PublicKeyURL on db
+func (p *PublicKeyURL) Delete() error {
 	return DBI.Delete(p)
 }
-

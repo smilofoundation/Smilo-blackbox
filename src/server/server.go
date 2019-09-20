@@ -17,12 +17,13 @@
 package server
 
 import (
-	"Smilo-blackbox/src/data"
-	"Smilo-blackbox/src/server/syncpeer"
 	"net"
 	"net/http"
 	"os"
 	"strconv"
+
+	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/server/syncpeer"
 
 	"Smilo-blackbox/src/server/api"
 

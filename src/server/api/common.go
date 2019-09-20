@@ -93,11 +93,12 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 }
 
 //PushTransactionForOtherNodes will push encrypted transaction to other nodes
-func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransaction, recipient []byte) {
+func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransaction, recipient []byte) error {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
 		cli := syncpeer.GetHTTPClient()
-		response, err := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		response, err2 := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		err = err2
 		defer func() {
 			if response != nil && response.Body != nil {
 				err := response.Body.Close()
@@ -106,10 +107,11 @@ func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransactio
 				}
 			}
 		}()
-		if err != nil {
-			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
-		}
 	}
+	if err != nil {
+		log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
+	}
+	return err
 }
 
 // will write status into header and log error if any

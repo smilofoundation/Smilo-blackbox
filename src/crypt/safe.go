@@ -32,6 +32,10 @@ var computedKeys = make(map[string][]byte)
 
 var mutex = sync.RWMutex{}
 
+var ReadRandom = func(b []byte) (n int, err error) {
+	return rand.Read(b)
+}
+
 // KeyPair holds PrivateKey and PublicKey
 type KeyPair struct {
 	PrivateKey []byte
@@ -64,14 +68,14 @@ func GetPrivateKey(publicKey []byte) []byte {
 // NewRandomKey generate new key
 func NewRandomKey() ([]byte, error) {
 	b := make([]byte, 32)
-	_, err := rand.Read(b)
+	_, err := ReadRandom(b)
 	return b, err
 }
 
 // NewRandomNonce generate new nonce
 func NewRandomNonce() ([]byte, error) {
 	b := make([]byte, 24)
-	_, err := rand.Read(b)
+	_, err := ReadRandom(b)
 	return b, err
 }
 

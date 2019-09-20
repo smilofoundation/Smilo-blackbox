@@ -239,9 +239,9 @@ func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.WithError(err).Error("Could not w.Write")
+		requestError(w, http.StatusInternalServerError, err.Error())
 	}
 
-	requestError(w,http.StatusInternalServerError, err.Error())
 }
 
 func splitToString(to string) ([][]byte, []string) {
@@ -269,17 +269,30 @@ func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload
 	encTrans := types.NewEncryptedTransaction(*encPayload.Serialize())
 	err = encTrans.Save()
 	if err != nil {
-		log.WithError(err).Error("Could not encTrans.Save()")
+		message := "Error saving encrypted transaction."
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
 		return nil, err
 	}
-	pushToAllRecipients(recipients, encTrans)
+	failed := pushToAllRecipients(recipients, encTrans)
+	if len(failed) > 0 {
+		// TODO: Think about a retry queue, it will be useful for mobile blackboxes
+		msg := "Unable to find peers for: " + strings.Join(failed, ",")
+		requestError(w, http.StatusExpectationFailed, msg)
+		return nil, fmt.Errorf(msg)
+	}
 	return encTrans, nil
 }
 
-func pushToAllRecipients(recipients [][]byte, encTrans *types.EncryptedTransaction) {
+func pushToAllRecipients(recipients [][]byte, encTrans *types.EncryptedTransaction) []string {
+	failedRecipients := make([]string, 0, len(recipients))
 	for _, recipient := range recipients {
-		PushTransactionForOtherNodes(*encTrans, recipient)
+		err := PushTransactionForOtherNodes(*encTrans, recipient)
+		if err != nil {
+			failedRecipients = append(failedRecipients, base64.StdEncoding.EncodeToString(recipient))
+		}
 	}
+	return failedRecipients
 }
 
 // Receive is a Deprecated API

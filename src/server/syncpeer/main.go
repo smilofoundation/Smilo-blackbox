@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -21,12 +22,10 @@ import (
 )
 
 var (
-	//peerChannel         = make(chan *Peer, 1024)
-	//peerList            []*Peer
 	keepRunning         = true
-	//mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
+	timeBetweenUpdates  = 15 * time.Minute
 	hostURL             string
 	log                 = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
@@ -38,20 +37,19 @@ var (
 		DisableCompression: true,
 		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
 	}
-	client = &http.Client{
-		Transport: tr,
-		Timeout:   getRequestTimeout(),
-	}
+	client = SetupHTTPClientWrapper()
 )
 
 func getRequestTimeout() (t time.Duration) {
 	value := os.Getenv("REQUEST_TIMEOUT")
-	vint, err := strconv.Atoi(value)
-	if err != nil {
-		t = 30 * time.Second
-	} else {
-		t = time.Duration(vint) * time.Second
+	_, err := strconv.Atoi(value)
+	if err == nil {
+		t, err = time.ParseDuration(value + "s")
+		if err == nil {
+			return t
+		}
 	}
+	t = 30 * time.Second
 	return t
 }
 func getOrCreateCertPool() *x509.CertPool {
@@ -68,9 +66,27 @@ func AppendCertificate(cert []byte) bool {
 	if !ok {
 		log.Error("Unable to append additional Root CA certificate.")
 	} else {
-		client = &http.Client{Transport: tr}
+		client = SetupHTTPClientWrapper()
 	}
 	return ok
+}
+
+func SetupHTTPClientWrapper() *HTTPClientWrapper {
+	clientWrapper := HTTPClientWrapper{
+		http.Client{
+			Transport: tr,
+			Timeout:   getRequestTimeout(),
+		},
+		nil,
+		nil,
+	}
+	clientWrapper.RequestResponseFunction = func(req *http.Request) (response *http.Response, e error) {
+		return clientWrapper.Client.Do(req)
+	}
+	clientWrapper.PostResponseFunction = func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+		return clientWrapper.Client.Post(url, contentType, body)
+	}
+	return &clientWrapper
 }
 
 //StartSync start sync
@@ -98,41 +114,22 @@ func SetHostURL(url string) {
 func sync() {
 	keepRunning = true
 	for keepRunning {
-		time.Sleep(timeBetweenCycles)
+		time.Sleep(timeBetweenRequests)
 		updatePeer()
 	}
 }
 
 func updatePeer() {
-	peer, err := types.FindNextUpdatablePeer(2*client.Timeout)
+	peer, err := types.FindNextUpdatablePeer(timeBetweenCycles)
 	if err != nil {
-		//panic
+		log.Panicf("Unable to get next the peer, Error: %s", err)
 	}
-	if peer.Failures > 10 {
-		if time.Since(peer.LastFailure) > (15 * time.Minute) {
-			peer.Failures = 0
-			peer.Tries++
-		}
-	} else {
-		if peer.SkipCycles > 0 {
-			peer.SkipCycles--
-		} else {
-			updateFromRemotePeerData(peer)
-		}
+	if peer == nil {
+		time.Sleep(timeBetweenCycles)
+		return
 	}
-	if peer.Tries > 3 {
-		for _, pubKeys := range peer.PublicKeys {
-			pkurl, err := types.FindPublicKeyUrl(pubKeys)
-			if err != nil {
-				//panic
-			}
-			if pkurl.URL == peer.URL {
-				pkurl.Delete()
-			}
-		}
-        peer.Delete()
-	}
-	peer.Save()
+	log.Debugf("Starting update of: %s", peer.URL)
+	updateFromRemotePeerData(peer)
 }
 
 func updateFromRemotePeerData(peer *types.Peer) {
@@ -140,16 +137,48 @@ func updateFromRemotePeerData(peer *types.Peer) {
 	if err != nil {
 		peer.Failures++
 		peer.LastFailure = time.Now()
+		peer.NextUpdate = time.Now().Add(timeBetweenCycles)
 		log.Errorf("Unable to query the peer: %s, Error: %s", peer.URL, err)
+		if peer.Failures > 9 {
+			peer.Failures = 0
+			peer.Tries++
+			peer.NextUpdate = time.Now().Add(timeBetweenUpdates)
+		}
+		if peer.Tries > 3 {
+			for _, pubKeys := range peer.PublicKeys {
+				pkurl, err := types.FindPublicKeyURL(pubKeys)
+				if err != nil {
+					log.Panicf("Unable to get public key, Error: %s", err)
+				}
+				if pkurl.URL == peer.URL {
+					err := pkurl.Delete()
+					if err != nil {
+						log.WithError(err).Panic("Could not delete remote peer public key.")
+					}
+				}
+			}
+			err = peer.Delete()
+			if err != nil {
+				log.WithError(err).Panic("Could not delete peer.")
+			}
+			return
+		}
 	} else {
 		peer.Failures = 0
 		peer.Tries = 0
 		peer.PublicKeys = publicKeys
-		peer.SkipCycles = 10 * len(publicKeys)
+		peer.NextUpdate = time.Now().Add(timeBetweenUpdates)
 	}
 	for j := range publicKeys {
-		pkURL := types.NewPublicKeyUrl(publicKeys[j], peer.URL)
-		pkURL.Save()
+		pkURL := types.NewPublicKeyURL(publicKeys[j], peer.URL)
+		err := pkURL.Save()
+		if err != nil {
+			log.WithError(err).Panic("Could not save peer public key.")
+		}
+	}
+	err = peer.Save()
+	if err != nil {
+		log.WithError(err).Panic("Could not save peer.")
 	}
 }
 
@@ -167,20 +196,21 @@ func queryPeer(url string) ([][]byte, error) {
 }
 
 func peerAddAll(urls ...string) {
-	err := types.UpdateNewPeers(urls)
+	err := types.UpdateNewPeers(urls, hostURL)
 	if err != nil {
-		//panic
+		log.WithError(err).Panic("Unable to insert peers to database.")
 	}
 }
 
 func PeerAdd(url string) {
 	peerAddAll(url)
 }
+
 //GetPeers get peers
 func GetPeers() []string {
 	peerList, err := types.GetAllPeers()
 	if err != nil {
-		// panic
+		log.WithError(err).Panic("Unable to retrieve peer list from database.")
 	}
 	urls := make([]string, 0, len(*peerList))
 	for _, peer := range *peerList {
@@ -191,9 +221,10 @@ func GetPeers() []string {
 
 //GetPeerURL get url
 func GetPeerURL(publicKey []byte) (string, error) {
-	peer, err := types.FindPublicKeyUrl(publicKey)
-	if err != nil {
-		//panic
+
+	peer, err := types.FindPublicKeyURL(publicKey)
+	if err != nil && err != types.ErrNotFound {
+		log.WithError(err).Panic("Unable to query database")
 	}
 	if peer != nil {
 		return peer.URL, nil
@@ -250,14 +281,18 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 			continue
 		}
 		sharedKey := crypt.ComputeSharedKey(privateKey, remotePublicKey)
+		log.Info(base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, nonce, nonce)))
 		if string(crypt.DecryptPayload(sharedKey, remoteProof, nonce)) != "" {
 			retPubKeys = append(retPubKeys, remotePublicKey)
+			log.Debugf("Public Key accepted: %s", provenKey.Key)
+		} else {
+			log.Debugf("Public Key ignored: %s", provenKey.Key)
 		}
 	}
 	return retPubKeys, responseJSON.PeerURLs, nil
 }
 
 //GetHTTPClient get http client
-func GetHTTPClient() *http.Client {
+func GetHTTPClient() *HTTPClientWrapper {
 	return client
 }

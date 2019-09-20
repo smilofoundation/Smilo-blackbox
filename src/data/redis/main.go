@@ -1,10 +1,11 @@
 package redis
 
 import (
-	"Smilo-blackbox/src/data/types"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"Smilo-blackbox/src/data/types"
 
 	"github.com/go-redis/redis"
 	"github.com/sirupsen/logrus"
@@ -60,7 +61,7 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 	return ret.Err()
 }
 
-func (rds *DatabaseInstance) AllPeers () (*[]types.Peer, error) {
+func (rds *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 	return nil, nil
 }
 

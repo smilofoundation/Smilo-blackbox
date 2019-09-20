@@ -1,8 +1,8 @@
 package syncpeer
 
 import (
-	sync2 "sync"
-	"time"
+	"io"
+	"net/http"
 )
 
 //PartyInfoRequest used to marshal/unmarshal json
@@ -24,47 +24,16 @@ type ProvenPublicKey struct {
 	Proof string `json:"proof"`
 }
 
-//Peer used to marshal/unmarshal json
-type Peer struct {
-	url         string
-	publicKeys  [][]byte
-	skipcycles  int
-	failures    int
-	lastFailure time.Time
-	tries       int
+type HTTPClientWrapper struct {
+	http.Client
+	RequestResponseFunction func(req *http.Request) (*http.Response, error)
+	PostResponseFunction    func(url, contentType string, body io.Reader) (resp *http.Response, err error)
 }
 
-//SafePublicKeyMap used to marshal/unmarshal json
-type SafePublicKeyMap struct {
-	sync2.RWMutex
-	internal map[string]*Peer
+func (h *HTTPClientWrapper) Do(req *http.Request) (*http.Response, error) {
+	return h.RequestResponseFunction(req)
 }
 
-//NewSafePublicKeyMap create new key
-func NewSafePublicKeyMap() *SafePublicKeyMap {
-	return &SafePublicKeyMap{
-		internal: make(map[string]*Peer),
-	}
-}
-
-//Get will get internal key
-func (spm *SafePublicKeyMap) Get(key string) (value *Peer) {
-	spm.RLock()
-	defer spm.RUnlock()
-	result := spm.internal[key]
-	return result
-}
-
-//Delete will delete internal key
-func (spm *SafePublicKeyMap) Delete(key string) {
-	spm.Lock()
-	defer spm.Unlock()
-	delete(spm.internal, key)
-}
-
-//Store will store key
-func (spm *SafePublicKeyMap) Store(key string, value *Peer) {
-	spm.Lock()
-	defer spm.Unlock()
-	spm.internal[key] = value
+func (h *HTTPClientWrapper) Post(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+	return h.PostResponseFunction(url, contentType, body)
 }

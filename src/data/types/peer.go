@@ -22,25 +22,26 @@ import "time"
 type Peer struct {
 	URL         string `key:"true"`
 	PublicKeys  [][]byte
-	SkipCycles  int
 	Failures    int
 	LastFailure time.Time
 	Tries       int
 	NextUpdate  time.Time
 }
 
-//NewPublicKeyUrl create new peer based on pk and URL
-func NewPeer(URL string) *Peer {
-	p := Peer{URL: URL, PublicKeys: make([][]byte, 0, 128), SkipCycles:0, Failures:0, Tries:0, NextUpdate: time.Now()}
+//NewPublicKeyURL create new peer based on pk and URL
+func NewPeer(url string) *Peer {
+	p := Peer{URL: url, PublicKeys: make([][]byte, 0, 128), Failures: 0, Tries: 0, NextUpdate: time.Now()}
 	return &p
 }
 
-//FindPublicKeyUrl will find a peer
+//FindPublicKeyURL will find a peer
 func FindPeer(URL string) (*Peer, error) {
 	var p Peer
 	err := DBI.Find("URL", URL, &p)
 	if err != nil {
-		//data.log.Error("Unable to find Peer.")
+		if err == ErrNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &p, nil
@@ -64,20 +65,23 @@ func FindNextUpdatablePeer(postpone time.Duration) (*Peer, error) {
 	return DBI.GetNextPeer(postpone)
 }
 
-func UpdateNewPeers(peers []string) error {
-	for _,peer := range peers {
-        p, err := FindPeer(peer)
-        if err != nil {
-        	return err
+func UpdateNewPeers(peers []string, hostURL string) error {
+	for _, peer := range peers {
+		if peer == hostURL {
+			continue
 		}
-        if p == nil {
-        	p:=NewPeer(peer)
-        	err = p.Save()
-            if err != nil {
+		p, err := FindPeer(peer)
+		if err != nil && err != ErrNotFound {
+			return err
+		}
+		if p == nil {
+			p := NewPeer(peer)
+			err = p.Save()
+			if err != nil {
 				return err
 			}
 		}
-        // If peer already exists just ignore.
+		// If peer already exists just ignore.
 	}
 	return nil
 }

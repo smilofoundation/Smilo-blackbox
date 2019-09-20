@@ -26,7 +26,6 @@ func FindEncryptedRawTransaction(hash []byte) (*EncryptedRawTransaction, error) 
 	var t EncryptedRawTransaction
 	err := DBI.Find("Hash", hash, &t)
 	if err != nil {
-		//		log.Error("Unable to find transaction.")
 		return nil, err
 	}
 	return &t, nil

@@ -99,7 +99,9 @@ func ReadAllFile(file string, log *logrus.Entry) ([]byte, error) {
 	plainFile, err := os.Open(file)
 	defer func() {
 		err := plainFile.Close()
-		log.WithError(err).Error("Could not plainFile.Close")
+		if err != nil {
+			log.WithError(err).Error("Could not plainFile.Close")
+		}
 	}()
 	if err != nil {
 		return nil, err

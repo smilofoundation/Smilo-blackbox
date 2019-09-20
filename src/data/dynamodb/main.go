@@ -1,9 +1,10 @@
 package dynamodb
 
 import (
-	"Smilo-blackbox/src/data/types"
 	"errors"
 	"time"
+
+	"Smilo-blackbox/src/data/types"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
@@ -54,11 +55,11 @@ func (dyndb *DatabaseInstance) Save(data interface{}) error {
 	return err
 }
 
-func (dyndb *DatabaseInstance) AllPeers () (*[]types.Peer, error) {
+func (dyndb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 	return nil, nil
 }
 func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
-    //TODO: Implement NextPeer for DynamoDB
+	//TODO: Implement NextPeer for DynamoDB
 	return nil, nil
 }
 

@@ -84,10 +84,46 @@ func TestEncryptedTransaction_Delete(t *testing.T) {
 	require.Empty(t, trans3)
 }
 
-func TestGetAllPeers(t *testing.T) {
+func TestGetAllPeersEmpty(t *testing.T) {
 	peers, err := types.GetAllPeers()
 	if err != nil {
 		require.Fail(t, "Unexpected error retrieving peers")
 	}
-	require.Equal(t,peers, &[]types.Peer{})
+	require.Equal(t, peers, &[]types.Peer{})
+}
+
+func TestGetAllPeers(t *testing.T) {
+	err := types.UpdateNewPeers([]string{"teste1", "teste2", "teste3", "teste4"}, "")
+	require.NoError(t, err)
+	peers, err := types.GetAllPeers()
+	if err != nil {
+		require.Fail(t, "Unexpected error retrieving peers")
+	}
+	require.Equal(t, len(*peers), 4)
+	require.Equal(t, (*peers)[0].URL, "teste1")
+	require.Equal(t, (*peers)[3].URL, "teste4")
+
+	for _, peer := range *peers {
+		err = peer.Delete()
+		require.NoError(t, err)
+	}
+}
+
+func TestGetNextPeer(t *testing.T) {
+	err := types.UpdateNewPeers([]string{"teste1", "teste2"}, "")
+	require.NoError(t, err)
+	peer1, err := types.FindNextUpdatablePeer(10 * time.Second)
+	if err != nil {
+		require.Fail(t, "Unexpected error retrieving peer")
+	}
+	require.Equal(t, peer1.URL, "teste1")
+	peer2, err := types.FindNextUpdatablePeer(10 * time.Second)
+	if err != nil {
+		require.Fail(t, "Unexpected error retrieving peer")
+	}
+	require.Equal(t, peer2.URL, "teste2")
+	err = peer1.Delete()
+	require.NoError(t, err)
+	err = peer2.Delete()
+	require.NoError(t, err)
 }
