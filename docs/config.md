@@ -125,6 +125,7 @@ type Config struct {
     DBFile      string   `json:"dbfile,omitempty"`
     PeersDBFile string   `json:"peersdbfile,omitempty"`
 }
+
 ```
 Config json file specification
 
@@ -143,6 +144,7 @@ type Key struct {
     PrivateKeyFile string `json:"config"`
     PublicKeyFile  string `json:"publicKey"`
 }
+
 ```
 Key json file specification
 
@@ -161,6 +163,7 @@ type Keys struct {
     Passwords []string `json:"passwords"`
     KeyData   []Key    `json:"keyData"`
 }
+
 ```
 Keys json file specification
 
@@ -178,6 +181,7 @@ Keys json file specification
 type Peer struct {
     URL string `json:"url"`
 }
+
 ```
 Peer json file specification
 
@@ -196,6 +200,7 @@ type PrivateKey struct {
     Data PrivateKeyBytes `json:"data"`
     Type string          `json:"type"`
 }
+
 ```
 PrivateKey holds data and type
 
@@ -213,6 +218,7 @@ PrivateKey holds data and type
 type PrivateKeyBytes struct {
     Bytes string `json:"bytes"`
 }
+
 ```
 PrivateKeyBytes Start of Private Key json file specification
 
@@ -232,6 +238,7 @@ type Server struct {
     TLSCert string `json:"tlscert,omitempty"`
     TLSKey  string `json:"tlskey,omitempty"`
 }
+
 ```
 Server Start of Config json file specification
 

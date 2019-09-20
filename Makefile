@@ -79,7 +79,7 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E bodyclose \
 		-E gosimple \
 		-E unused \
-		--exclude="don't use ALL_CAPS in Go names; use CamelCase"
+		--exclude="should not use ALL_CAPS in Go names; use CamelCase instead,don't use ALL_CAPS in Go names; use CamelCase"
 
 lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...

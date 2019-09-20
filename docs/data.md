@@ -14,6 +14,11 @@
 * [func SetFilename(filename string)](#SetFilename)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
 * [func Start()](#Start)
+* [type EncryptedRawTransaction](#EncryptedRawTransaction)
+  * [func FindEncryptedRawTransaction(hash []byte) (*EncryptedRawTransaction, error)](#FindEncryptedRawTransaction)
+  * [func NewEncryptedRawTransaction(encodedPayload []byte, sender []byte) *EncryptedRawTransaction](#NewEncryptedRawTransaction)
+  * [func (et *EncryptedRawTransaction) Delete() error](#EncryptedRawTransaction.Delete)
+  * [func (et *EncryptedRawTransaction) Save() error](#EncryptedRawTransaction.Save)
 * [type EncryptedTransaction](#EncryptedTransaction)
   * [func CreateEncryptedTransaction(hash []byte, encodedPayload []byte, timestamp time.Time) *EncryptedTransaction](#CreateEncryptedTransaction)
   * [func FindEncryptedTransaction(hash []byte) (*EncryptedTransaction, error)](#FindEncryptedTransaction)
@@ -29,7 +34,7 @@
 
 
 #### <a name="pkg-files">Package files</a>
-[db.go](/src/Smilo-blackbox/src/data/db.go) [encrypted_transaction.go](/src/Smilo-blackbox/src/data/encrypted_transaction.go) [log.go](/src/Smilo-blackbox/src/data/log.go) [peer.go](/src/Smilo-blackbox/src/data/peer.go) 
+[db.go](/src/Smilo-blackbox/src/data/db.go) [encrypted_raw_transaction.go](/src/Smilo-blackbox/src/data/encrypted_raw_transaction.go) [encrypted_transaction.go](/src/Smilo-blackbox/src/data/encrypted_transaction.go) [log.go](/src/Smilo-blackbox/src/data/log.go) [peer.go](/src/Smilo-blackbox/src/data/peer.go) 
 
 
 
@@ -43,7 +48,7 @@ SetFilename set filename
 
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=1033:1070#L30)
+## <a name="SetLogger">func</a> [SetLogger](/src/target/log.go?s=1019:1056#L30)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -60,6 +65,59 @@ Start will start the db
 
 
 
+## <a name="EncryptedRawTransaction">type</a> [EncryptedRawTransaction](/src/target/encrypted_raw_transaction.go?s=79:242#L6)
+``` go
+type EncryptedRawTransaction struct {
+    Hash           []byte `storm:"id"`
+    EncodedPayload []byte
+    Sender         []byte
+    Timestamp      time.Time `storm:"index"`
+}
+
+```
+EncryptedRawTransaction holds hash and payload
+
+
+
+
+
+
+
+### <a name="FindEncryptedRawTransaction">func</a> [FindEncryptedRawTransaction](/src/target/encrypted_raw_transaction.go?s=712:791#L25)
+``` go
+func FindEncryptedRawTransaction(hash []byte) (*EncryptedRawTransaction, error)
+```
+FindEncryptedRawTransaction will find a encrypted transaction for a hash
+
+
+### <a name="NewEncryptedRawTransaction">func</a> [NewEncryptedRawTransaction](/src/target/encrypted_raw_transaction.go?s=344:438#L14)
+``` go
+func NewEncryptedRawTransaction(encodedPayload []byte, sender []byte) *EncryptedRawTransaction
+```
+NewEncryptedRawTransaction will create a new encrypted transaction based on the provided payload
+
+
+
+
+
+### <a name="EncryptedRawTransaction.Delete">func</a> (\*EncryptedRawTransaction) [Delete](/src/target/encrypted_raw_transaction.go?s=1081:1130#L41)
+``` go
+func (et *EncryptedRawTransaction) Delete() error
+```
+Delete delete it on the db
+
+
+
+
+### <a name="EncryptedRawTransaction.Save">func</a> (\*EncryptedRawTransaction) [Save](/src/target/encrypted_raw_transaction.go?s=979:1026#L36)
+``` go
+func (et *EncryptedRawTransaction) Save() error
+```
+Save saves into db
+
+
+
+
 ## <a name="EncryptedTransaction">type</a> [EncryptedTransaction](/src/target/encrypted_transaction.go?s=918:1055#L26)
 ``` go
 type EncryptedTransaction struct {
@@ -67,6 +125,7 @@ type EncryptedTransaction struct {
     EncodedPayload []byte
     Timestamp      time.Time `storm:"index"`
 }
+
 ```
 EncryptedTransaction holds hash and payload
 
@@ -123,6 +182,7 @@ Save saves into db
 type Peer struct {
     // contains filtered or unexported fields
 }
+
 ```
 Peer holds url and pub for a peer
 
