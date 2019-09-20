@@ -111,6 +111,8 @@ func initServer() {
 		log.Fatalf("Failed to start StormDBPeers file at %s", config.Socket.Value)
 	}
 
+	log.WithField("maxPeersNetwork", maxPeersNetwork).Info("Init server")
+
 	StormDBPeers, err = storm.Open(finalPath)
 	if err != nil {
 		defer func() {
