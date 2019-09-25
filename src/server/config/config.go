@@ -50,6 +50,8 @@ var (
 	PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
 	//Port (cli) uses it for local api public port
 	Port = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+	//Hostaddr (cli) uses it for local api public binding Host Address
+	Hostaddr = cli.StringFlag{Name: "hostaddr", Value: "127.0.0.1", Usage: "Local IP to bind the Public API"}
 	//Socket (cli) uses it for socket
 	Socket = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
 	//OtherNodes (cli) uses it for other nodes
@@ -61,7 +63,7 @@ var (
 	//Storage (cli) uses it for  db name
 	Storage = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
 	//HostName (cli) uses it for hostname
-	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
+	HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName is the PartyInfoRequest url argument by used by syncpeer.sync()"}
 
 	//WorkDir (cli) uses it for work dir
 	WorkDir = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
@@ -100,7 +102,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Hostaddr, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
 }
 
 //LoadConfig will load cfg
@@ -131,6 +133,9 @@ func parseConfigValues() {
 	Port.Value = strconv.FormatInt(int64(config.Server.Port), 10)
 	if config.UnixSocket != "" {
 		Socket.Value = config.UnixSocket
+	}
+	if config.Server.Hostaddr != "" {
+		Hostaddr.Value = config.Server.Hostaddr
 	}
 	if config.HostName != "" {
 		HostName.Value = config.HostName
@@ -215,13 +220,15 @@ func ReadPublicKey(pubFile string) ([]byte, error) {
 
 func readAllFile(file string) ([]byte, error) {
 	plainFile, err := os.Open(file)
-	defer func() {
-		err := plainFile.Close()
-		log.WithError(err).Error("Could not plainFile.Close")
-	}()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		err := plainFile.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not Close ")
+		}
+	}()
 	byteValue, err := ioutil.ReadAll(plainFile)
 	return byteValue, err
 }

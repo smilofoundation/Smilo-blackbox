@@ -27,7 +27,7 @@
 * [func InitP2p()](#InitP2p)
 * [func InitRouting() (*mux.Router, *mux.Router)](#InitRouting)
 * [func IsPeerAlreadyAdded(parsedPeer *discover.Node) bool](#IsPeerAlreadyAdded)
-* [func NewServer(Port string) (*http.Server, *http.Server)](#NewServer)
+* [func NewServer(Hostaddr, Port string) (*http.Server, *http.Server)](#NewServer)
 * [func PeerList(p2pMessage Message)](#PeerList)
 * [func SendMsg(peer *p2p.Peer, rw p2p.MsgWriter, err error, outmsg Message)](#SendMsg)
 * [func SetLogger(loggers *logrus.Entry)](#SetLogger)
@@ -171,7 +171,7 @@ InitP2p will init p2p
 
 
 
-## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=7205:7250#L254)
+## <a name="InitRouting">func</a> [InitRouting](/src/target/server.go?s=7467:7512#L256)
 ``` go
 func InitRouting() (*mux.Router, *mux.Router)
 ```
@@ -187,9 +187,9 @@ IsPeerAlreadyAdded check if peer already connected
 
 
 
-## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=4253:4309#L139)
+## <a name="NewServer">func</a> [NewServer](/src/target/server.go?s=4325:4391#L141)
 ``` go
-func NewServer(Port string) (*http.Server, *http.Server)
+func NewServer(Hostaddr, Port string) (*http.Server, *http.Server)
 ```
 NewServer will create a new http server instance -- pub and private
 
@@ -211,7 +211,7 @@ SendMsg will send a message
 
 
 
-## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=4035:4072#L129)
+## <a name="SetLogger">func</a> [SetLogger](/src/target/server.go?s=4107:4144#L131)
 ``` go
 func SetLogger(loggers *logrus.Entry)
 ```
@@ -219,7 +219,7 @@ SetLogger set the logger
 
 
 
-## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=4825:4843#L157)
+## <a name="StartServer">func</a> [StartServer](/src/target/server.go?s=5044:5062#L159)
 ``` go
 func StartServer()
 ```

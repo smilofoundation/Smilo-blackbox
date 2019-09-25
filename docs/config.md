@@ -44,6 +44,8 @@ var (
     PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
     //Port (cli) uses it for local api public port
     Port = cli.StringFlag{Name: "port", Value: "9000", Usage: "Local port to the Public API"}
+    //Hostaddr (cli) uses it for local api public binding Host Address
+    Hostaddr = cli.StringFlag{Name: "hostaddr", Value: "127.0.0.1", Usage: "Local IP to bind the Public API"}
     //Socket (cli) uses it for socket
     Socket = cli.StringFlag{Name: "socket", Value: "blackbox.ipc", Usage: "IPC socket to the Private API"}
     //OtherNodes (cli) uses it for other nodes
@@ -55,7 +57,7 @@ var (
     //Storage (cli) uses it for  db name
     Storage = cli.StringFlag{Name: "storage", Value: "blackbox.db", Usage: "Database file name"}
     //HostName (cli) uses it for hostname
-    HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName for public API"}
+    HostName = cli.StringFlag{Name: "hostname", Value: "http://localhost", Usage: "HostName is the PartyInfoRequest url argument by used by syncpeer.sync()"}
 
     //WorkDir (cli) uses it for work dir
     WorkDir = cli.StringFlag{Name: "workdir", Value: "../../", Usage: ""}
@@ -80,7 +82,7 @@ var (
 ```
 
 
-## <a name="Init">func</a> [Init](/src/target/config.go?s=3924:3947#L97)
+## <a name="Init">func</a> [Init](/src/target/config.go?s=4148:4171#L99)
 ``` go
 func Init(app *cli.App)
 ```
@@ -88,7 +90,7 @@ Init will init cli and logs
 
 
 
-## <a name="LoadConfig">func</a> [LoadConfig](/src/target/config.go?s=4263:4303#L107)
+## <a name="LoadConfig">func</a> [LoadConfig](/src/target/config.go?s=4497:4537#L109)
 ``` go
 func LoadConfig(configPath string) error
 ```
@@ -96,7 +98,7 @@ LoadConfig will load cfg
 
 
 
-## <a name="ReadPrimaryKey">func</a> [ReadPrimaryKey](/src/target/config.go?s=6225:6275#L183)
+## <a name="ReadPrimaryKey">func</a> [ReadPrimaryKey](/src/target/config.go?s=6539:6589#L188)
 ``` go
 func ReadPrimaryKey(pkFile string) ([]byte, error)
 ```
@@ -104,7 +106,7 @@ ReadPrimaryKey will read pk
 
 
 
-## <a name="ReadPublicKey">func</a> [ReadPublicKey](/src/target/config.go?s=6734:6784#L204)
+## <a name="ReadPublicKey">func</a> [ReadPublicKey](/src/target/config.go?s=7048:7098#L209)
 ``` go
 func ReadPublicKey(pubFile string) ([]byte, error)
 ```
@@ -113,7 +115,7 @@ ReadPublicKey will read pub
 
 
 
-## <a name="Config">type</a> [Config](/src/target/types.go?s=1688:2047#L57)
+## <a name="Config">type</a> [Config](/src/target/types.go?s=1736:2095#L58)
 ``` go
 type Config struct {
     Server      Server   `json:"server"`
@@ -138,7 +140,7 @@ Config json file specification
 
 
 
-## <a name="Key">type</a> [Key](/src/target/types.go?s=1424:1524#L45)
+## <a name="Key">type</a> [Key](/src/target/types.go?s=1472:1572#L46)
 ``` go
 type Key struct {
     PrivateKeyFile string `json:"config"`
@@ -157,7 +159,7 @@ Key json file specification
 
 
 
-## <a name="Keys">type</a> [Keys](/src/target/types.go?s=1557:1653#L51)
+## <a name="Keys">type</a> [Keys](/src/target/types.go?s=1605:1701#L52)
 ``` go
 type Keys struct {
     Passwords []string `json:"passwords"`
@@ -176,7 +178,7 @@ Keys json file specification
 
 
 
-## <a name="Peer">type</a> [Peer](/src/target/types.go?s=1347:1392#L40)
+## <a name="Peer">type</a> [Peer](/src/target/types.go?s=1395:1440#L41)
 ``` go
 type Peer struct {
     URL string `json:"url"`
@@ -231,12 +233,13 @@ PrivateKeyBytes Start of Private Key json file specification
 
 
 
-## <a name="Server">type</a> [Server](/src/target/types.go?s=1177:1314#L33)
+## <a name="Server">type</a> [Server](/src/target/types.go?s=1177:1362#L33)
 ``` go
 type Server struct {
-    Port    int    `json:"port"`
-    TLSCert string `json:"tlscert,omitempty"`
-    TLSKey  string `json:"tlskey,omitempty"`
+    Port     int    `json:"port"`
+    Hostaddr string `json:"hostaddr,omitempty"`
+    TLSCert  string `json:"tlscert,omitempty"`
+    TLSKey   string `json:"tlskey,omitempty"`
 }
 
 ```
