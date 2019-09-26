@@ -1,4 +1,5 @@
 port = 9001
+hostaddr = "0.0.0.0"
 workdir = "data"
 socket = "constellation.ipc"
 othernodes = ["http://127.0.0.1:9000/"]

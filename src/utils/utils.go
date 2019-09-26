@@ -25,7 +25,7 @@ import (
 
 const (
 	//BlackBoxVersion holds bb version
-	BlackBoxVersion = "Smilo Black Box 0.1.0"
+	BlackBoxVersion = "v1.0.4"
 	//UpcheckMessage http up check msg
 	UpcheckMessage = "I'm up!"
 
