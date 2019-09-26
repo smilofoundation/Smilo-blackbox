@@ -10,7 +10,7 @@ RUN cd /go/src/Smilo-blackbox && make build
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
-COPY --from=builder /go/src/Smilo-blackbox/blackbox /usr/local/bin/
+COPY --from=builder /go/src/Smilo-blackbox/bin/blackbox /usr/local/bin/
 
 EXPOSE 9000
 ENTRYPOINT ["blackbox"]
