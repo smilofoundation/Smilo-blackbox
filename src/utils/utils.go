@@ -80,7 +80,6 @@ func GetMetadata(data interface{}) (string, string) {
 	t := GetType(data)
 	keyField := ""
 	for key := 0; key < t.NumField(); key++ {
-
 		field := t.Field(key)
 		if field.Tag.Get("key") == "true" {
 			keyField = field.Name

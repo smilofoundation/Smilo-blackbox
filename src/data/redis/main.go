@@ -13,6 +13,12 @@ import (
 	utils2 "Smilo-blackbox/src/utils"
 )
 
+var (
+	peerName, peerKey = utils2.GetMetadata(&types.Peer{})
+)
+
+const peerIndexName = "NextPeerIndex"
+
 type DatabaseInstance struct {
 	bd  *redis.Client
 	log *logrus.Entry
@@ -26,7 +32,12 @@ func (rds *DatabaseInstance) Delete(data interface{}) error {
 	name, key := utils2.GetMetadata(data)
 	value := utils2.GetField(data, key)
 	ret := rds.bd.Del(GetKey(name, value))
-	return ret.Err()
+	err := ret.Err()
+	if err == nil && name == peerName {
+		ret := rds.bd.ZRem(peerIndexName, value)
+		err = ret.Err()
+	}
+	return err
 }
 
 func (rds *DatabaseInstance) Find(fieldname string, value interface{}, to interface{}) error {
@@ -56,18 +67,57 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 	if err != nil {
 		return err
 	}
-
-	ret := rds.bd.Set(GetKey(name, value), bytesValue, -1)
-	return ret.Err()
+    keyValue := GetKey(name, value)
+	ret := rds.bd.Set(keyValue, bytesValue, -1)
+	err = ret.Err()
+	if err == nil && name == peerName {
+		score := float64(tagged.(Peer).NextUpdate.Unix())
+		ret := rds.bd.ZAdd(peerIndexName, redis.Z{Score:score,Member:keyValue})
+		err = ret.Err()
+	}
+	return err
 }
 
 func (rds *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
-	return nil, nil
+	var cursor uint64
+	keys, cursor, err := rds.bd.Scan(cursor, GetKey(peerName, "*"), 128).Result()
+	if err != nil {
+		return nil, err
+	}
+	allPeers := make([]types.Peer, 0, len(keys))
+	for _, key := range keys {
+		var peer types.Peer
+		err := rds.Find(peerKey, GetKeyValue(peerName, key),&peer)
+		if err != nil {
+			return nil, err
+		}
+		allPeers = append(allPeers, peer)
+	}
+	return &allPeers, nil
 }
 
 func (rds *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
-	//TODO: Implement NextPeer for Redis
-	return nil, nil
+	ret := rds.bd.ZRange(peerIndexName,0,0)
+	err := ret.Err()
+	var peer types.Peer
+	if err == nil {
+		list, err := ret.Result()
+		if err == nil && len(list) > 0 {
+			err := rds.Find(peerKey, list[0] , &peer)
+			if err == nil {
+				if peer.NextUpdate.Before(time.Now()) {
+					peer.NextUpdate.Add(postpone)
+					err = peer.Save()
+					if err == nil {
+						return &peer, nil
+					}
+				} else {
+					return nil, nil
+				}
+			}
+		}
+	}
+	return nil, err
 }
 
 func DBOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {

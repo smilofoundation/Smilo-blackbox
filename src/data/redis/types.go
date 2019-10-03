@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"Smilo-blackbox/src/data/types"
@@ -36,6 +37,10 @@ type Peer struct {
 
 func GetKey(name string, value interface{}) string {
 	return fmt.Sprintf("%s:%v", name, value)
+}
+
+func GetKeyValue(name string, keyString string) string {
+	return strings.TrimPrefix(keyString, name+":")
 }
 
 func GetTagged(dat interface{}) interface{} {
