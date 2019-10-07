@@ -56,6 +56,8 @@ func main() {
 	config.Init(app)
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
+	app.Version = "1.0.3"
+
 	app.Action = func(c *cli.Context) error {
 		generateKeys := c.String("generate-keys")
 		configFile := c.String("configfile")
