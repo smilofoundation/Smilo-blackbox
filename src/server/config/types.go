@@ -31,9 +31,10 @@ type PrivateKey struct {
 
 //Server Start of Config json file specification
 type Server struct {
-	Port    int    `json:"port"`
-	TLSCert string `json:"tlscert,omitempty"`
-	TLSKey  string `json:"tlskey,omitempty"`
+	Port     int    `json:"port"`
+	Hostaddr string `json:"hostaddr,omitempty"`
+	TLSCert  string `json:"tlscert,omitempty"`
+	TLSKey   string `json:"tlskey,omitempty"`
 }
 
 //Peer json file specification

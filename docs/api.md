@@ -60,7 +60,7 @@ API Request path "/api", response json rest api spec.
 
 
 
-## <a name="ConfigPeersGet">func</a> [ConfigPeersGet](/src/target/public.go?s=14078:14137#L420)
+## <a name="ConfigPeersGet">func</a> [ConfigPeersGet](/src/target/public.go?s=14101:14160#L422)
 ``` go
 func ConfigPeersGet(w http.ResponseWriter, r *http.Request)
 ```
@@ -68,7 +68,7 @@ ConfigPeersGet Receive a GET request with index on path and return Status Code 2
 
 
 
-## <a name="ConfigPeersPut">func</a> [ConfigPeersPut](/src/target/public.go?s=13494:13553#L403)
+## <a name="ConfigPeersPut">func</a> [ConfigPeersPut](/src/target/public.go?s=13517:13576#L405)
 ``` go
 func ConfigPeersPut(w http.ResponseWriter, r *http.Request)
 ```
@@ -76,7 +76,7 @@ ConfigPeersPut It receives a PUT request with a json containing a Peer url and r
 
 
 
-## <a name="Delete">func</a> [Delete](/src/target/public.go?s=8777:8828#L254)
+## <a name="Delete">func</a> [Delete](/src/target/public.go?s=8800:8851#L256)
 ``` go
 func Delete(w http.ResponseWriter, r *http.Request)
 ```
@@ -101,7 +101,7 @@ GetVersion Request path "/version", response plain text version ID
 
 
 
-## <a name="Metrics">func</a> [Metrics](/src/target/public.go?s=15235:15287#L455)
+## <a name="Metrics">func</a> [Metrics](/src/target/public.go?s=15258:15310#L457)
 ``` go
 func Metrics(w http.ResponseWriter, r *http.Request)
 ```
@@ -109,7 +109,7 @@ Metrics Receive a GET request and return Status Code 200 and server internal sta
 
 
 
-## <a name="Push">func</a> [Push](/src/target/public.go?s=3385:3434#L93)
+## <a name="Push">func</a> [Push](/src/target/public.go?s=3408:3457#L95)
 ``` go
 func Push(w http.ResponseWriter, r *http.Request)
 ```
@@ -134,7 +134,7 @@ It receives a ReceiveRequest json with an encoded key (hash) and to values, retu
 
 
 
-## <a name="ReceiveRaw">func</a> [ReceiveRaw](/src/target/public.go?s=5040:5095#L150)
+## <a name="ReceiveRaw">func</a> [ReceiveRaw](/src/target/public.go?s=5063:5118#L152)
 ``` go
 func ReceiveRaw(w http.ResponseWriter, r *http.Request)
 ```
@@ -142,7 +142,7 @@ ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return
 
 
 
-## <a name="Resend">func</a> [Resend](/src/target/public.go?s=6827:6878#L199)
+## <a name="Resend">func</a> [Resend](/src/target/public.go?s=6850:6901#L201)
 ``` go
 func Resend(w http.ResponseWriter, r *http.Request)
 ```
@@ -199,7 +199,7 @@ SetLogger set the logger
 
 
 
-## <a name="StoreRaw">func</a> [StoreRaw](/src/target/public.go?s=11340:11393#L331)
+## <a name="StoreRaw">func</a> [StoreRaw](/src/target/public.go?s=11363:11416#L333)
 ``` go
 func StoreRaw(w http.ResponseWriter, r *http.Request)
 ```
@@ -207,7 +207,7 @@ StoreRaw It receives a POST request with a payload and returns Status Code 201 w
 
 
 
-## <a name="TransactionDelete">func</a> [TransactionDelete](/src/target/public.go?s=10416:10478#L307)
+## <a name="TransactionDelete">func</a> [TransactionDelete](/src/target/public.go?s=10439:10501#L309)
 ``` go
 func TransactionDelete(w http.ResponseWriter, r *http.Request)
 ```

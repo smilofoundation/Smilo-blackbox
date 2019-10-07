@@ -48,7 +48,9 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		err := r.Body.Close()
-		log.WithError(err).Error("Could not r.Body.Close")
+		if err != nil {
+			log.WithError(err).Error("Could not r.Body.Close")
+		}
 	}()
 	err = json.Unmarshal(body, &jsonReq)
 	if err != nil {

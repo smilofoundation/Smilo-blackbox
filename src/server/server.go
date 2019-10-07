@@ -113,11 +113,11 @@ func SetLogger(loggers *logrus.Entry) {
 }
 
 //NewServer will create a new http server instance -- pub and private
-func NewServer(Port string) (*http.Server, *http.Server) {
+func NewServer(Hostaddr, Port string) (*http.Server, *http.Server) {
 	publicAPI, privateAPI = InitRouting()
-
+	log.WithField("Hostaddr", Hostaddr).WithField("Port", Port).Info("Will create a new http server instance")
 	return &http.Server{
-			Addr:         ":" + Port,
+			Addr:         Hostaddr + ":" + Port,
 			Handler:      publicAPI,
 			ReadTimeout:  time.Duration(PUBLIC_SERVER_READ_TIMEOUT) * time.Second,
 			WriteTimeout: time.Duration(PUBLIC_SERVER_WRITE_TIMEOUT) * time.Second,
@@ -132,14 +132,14 @@ func NewServer(Port string) (*http.Server, *http.Server) {
 
 //StartServer will start the server
 func StartServer() {
-	port, isTLS, workDir := config.Port.Value, config.IsTLS.Destination, config.WorkDir.Value
+	port, hostaddr, isTLS, workDir := config.Port.Value, config.Hostaddr.Value, config.IsTLS.Destination, config.WorkDir.Value
 	data.Start()
 	for _, peerdata := range config.InitialPeers {
 		syncpeer.PeerAdd(peerdata)
 	}
 	initServer()
 	log.Info("Starting server")
-	pub, priv := NewServer(port)
+	pub, priv := NewServer(hostaddr, port)
 
 	log.Info("Server starting --> " + port)
 	if *isTLS {

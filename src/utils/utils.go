@@ -29,7 +29,7 @@ import (
 
 const (
 	//BlackBoxVersion holds bb version
-	BlackBoxVersion = "Smilo Black Box 0.1.0"
+	BlackBoxVersion = "v1.0.4"
 	//UpcheckMessage http up check msg
 	UpcheckMessage = "I'm up!"
 
@@ -96,15 +96,15 @@ func GetField(data interface{}, field string) interface{} {
 
 func ReadAllFile(file string, log *logrus.Entry) ([]byte, error) {
 	plainFile, err := os.Open(file)
-	defer func() {
-		err := plainFile.Close()
-		if err != nil {
-			log.WithError(err).Error("Could not plainFile.Close")
-		}
-	}()
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		err := plainFile.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not Close ")
+		}
+	}()
 	byteValue, err := ioutil.ReadAll(plainFile)
 	return byteValue, err
 }

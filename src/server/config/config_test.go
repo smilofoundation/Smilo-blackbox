@@ -61,5 +61,7 @@ func TestPublicPrivateKeysLoad(t *testing.T) {
 	actual := base64.StdEncoding.EncodeToString(privateKey)
 
 	require.Equal(t, expected, actual, "configPrivateKey should be equal to privateKey")
+	Hostaddr.Value = config.Server.Hostaddr
+	require.NotEmpty(t, Hostaddr.Value, "Host address should not be null")
 
 }

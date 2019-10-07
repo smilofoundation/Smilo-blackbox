@@ -23,7 +23,7 @@
 ``` go
 const (
     //BlackBoxVersion holds bb version
-    BlackBoxVersion = "Smilo Black Box 0.1.0"
+    BlackBoxVersion = "v1.0.4"
     //UpcheckMessage http up check msg
     UpcheckMessage = "I'm up!"
 
@@ -38,7 +38,7 @@ const (
 
 
 
-## <a name="BuildFilename">func</a> [BuildFilename](/src/target/utils.go?s=1248:1290#L41)
+## <a name="BuildFilename">func</a> [BuildFilename](/src/target/utils.go?s=1233:1275#L41)
 ``` go
 func BuildFilename(filename string) string
 ```

@@ -25,18 +25,18 @@ clean:
 
 
 build: clean
-	go build -o blackbox main.go
+	go build -o bin/blackbox main.go
 
 docker: clean
 	docker build --no-cache -t $(FULLDOCKERNAME) .
 
 build-mv: clean
-	go build -o blackbox main.go
-	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)
+	go build -o bin/blackbox main.go
+	mv bin/blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)
 
 build-mv-rev: clean
-	go build -o blackbox main.go
-	mv blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)-$(GIT_REV)
+	go build -o bin/blackbox main.go
+	mv bin/blackbox /opt/gocode/src/go-smilo/build/third-party/blackbox-$(VERSION)-$(GIT_REV)
 
 test: clean ## Run tests
 	go test ./src/... -timeout=10m
@@ -163,18 +163,18 @@ integration-clean:
 integration-network-up:
 	rm ./test/*.log | true
 	rm ./test/*.prof | true
-	./blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof &> ./test/1.log &
+	bin/blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof 2>> ./test/1.log &
 	sleep 1
-	./blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof &> ./test/2.log&
+	bin/blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof 2>> ./test/2.log &
 	sleep 1
-	./blackbox --configfile ./test/test3.conf  &> ./test/3.log &
+	bin/blackbox --configfile ./test/test3.conf  2>> ./test/3.log &
 	sleep 1
-	./blackbox --configfile ./test/test4.conf  &> ./test/4.log &
+	bin/blackbox --configfile ./test/test4.conf  2>> ./test/4.log &
 	sleep 1
-	./blackbox --configfile ./test/test5.conf  &> ./test/5.log &
+	bin/blackbox --configfile ./test/test5.conf  2>> ./test/5.log &
 	sleep 1
 
-integration-test: integration-clean build integration-network-up
+integration-test: build integration-clean build integration-network-up
 	go test ./test/... -timeout=10m -count=1 || true
 	killall -1 blackbox
 	make integration-clean
