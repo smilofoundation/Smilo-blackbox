@@ -17,6 +17,7 @@
 package data
 
 import (
+	"Smilo-blackbox/src/utils"
 	"os"
 	"testing"
 	"time"
@@ -24,8 +25,6 @@ import (
 	"Smilo-blackbox/src/data/types"
 
 	"github.com/stretchr/testify/require"
-
-	"Smilo-blackbox/src/utils"
 )
 
 type testEngine struct {
@@ -38,8 +37,8 @@ func TestMain(m *testing.M) {
 	//       To run all tests we need to start services using docker instances and configure environment for aws.
 	engines := []testEngine{
 		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb"},
-		//{Filename:"", Engine:"dynamodb"},
-		//{Filename:"redis/test.conf", Engine:"redis"},
+		//{Filename: "", Engine: "dynamodb"},
+		//{Filename: "redis/test.conf", Engine: "redis"},
 	}
 	for _, eng := range engines {
 		SetFilename(eng.Filename)
@@ -93,15 +92,17 @@ func TestGetAllPeersEmpty(t *testing.T) {
 }
 
 func TestGetAllPeers(t *testing.T) {
-	err := types.UpdateNewPeers([]string{"teste1", "teste2", "teste3", "teste4"}, "")
+	testValues := []string{"teste1", "teste2", "teste3", "teste4"}
+	err := types.UpdateNewPeers(testValues, "")
 	require.NoError(t, err)
 	peers, err := types.GetAllPeers()
 	if err != nil {
 		require.Fail(t, "Unexpected error retrieving peers")
 	}
 	require.Equal(t, len(*peers), 4)
-	require.Equal(t, (*peers)[0].URL, "teste1")
-	require.Equal(t, (*peers)[3].URL, "teste4")
+	require.Contains(t, testValues, (*peers)[0].URL)
+	require.Contains(t, testValues, (*peers)[3].URL)
+	require.NotEqual(t, (*peers)[0].URL, (*peers)[3].URL)
 
 	for _, peer := range *peers {
 		err = peer.Delete()
@@ -110,18 +111,20 @@ func TestGetAllPeers(t *testing.T) {
 }
 
 func TestGetNextPeer(t *testing.T) {
-	err := types.UpdateNewPeers([]string{"teste1", "teste2"}, "")
+	testValues := []string{"teste1", "teste2"}
+	err := types.UpdateNewPeers(testValues, "")
 	require.NoError(t, err)
 	peer1, err := types.FindNextUpdatablePeer(10 * time.Second)
 	if err != nil {
 		require.Fail(t, "Unexpected error retrieving peer")
 	}
-	require.Equal(t, peer1.URL, "teste1")
+	require.Contains(t, testValues, peer1.URL)
 	peer2, err := types.FindNextUpdatablePeer(10 * time.Second)
 	if err != nil {
 		require.Fail(t, "Unexpected error retrieving peer")
 	}
-	require.Equal(t, peer2.URL, "teste2")
+	require.Contains(t, testValues, peer2.URL)
+	require.NotEqual(t, peer1.URL, peer2.URL)
 	err = peer1.Delete()
 	require.NoError(t, err)
 	err = peer2.Delete()

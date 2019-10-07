@@ -31,10 +31,11 @@ func (rds *DatabaseInstance) Close() error {
 func (rds *DatabaseInstance) Delete(data interface{}) error {
 	name, key := utils2.GetMetadata(data)
 	value := utils2.GetField(data, key)
-	ret := rds.bd.Del(GetKey(name, value))
+	keyValue := GetKey(name, value)
+	ret := rds.bd.Del(keyValue)
 	err := ret.Err()
 	if err == nil && name == peerName {
-		ret := rds.bd.ZRem(peerIndexName, value)
+		ret := rds.bd.ZRem(peerIndexName, keyValue)
 		err = ret.Err()
 	}
 	return err
@@ -46,6 +47,9 @@ func (rds *DatabaseInstance) Find(fieldname string, value interface{}, to interf
 		ret := rds.bd.Get(GetKey(name, value))
 		str, err := ret.Result()
 		if err != nil {
+			if err.Error() == "redis: nil" {
+				return types.ErrNotFound
+			}
 			return err
 		}
 		data := GetTagged(to)
@@ -67,12 +71,12 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 	if err != nil {
 		return err
 	}
-    keyValue := GetKey(name, value)
+	keyValue := GetKey(name, value)
 	ret := rds.bd.Set(keyValue, bytesValue, -1)
 	err = ret.Err()
 	if err == nil && name == peerName {
-		score := float64(tagged.(Peer).NextUpdate.Unix())
-		ret := rds.bd.ZAdd(peerIndexName, redis.Z{Score:score,Member:keyValue})
+		score := float64(tagged.(*Peer).NextUpdate.Unix())
+		ret := rds.bd.ZAdd(peerIndexName, redis.Z{Score: score, Member: keyValue})
 		err = ret.Err()
 	}
 	return err
@@ -80,14 +84,14 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 
 func (rds *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 	var cursor uint64
-	keys, cursor, err := rds.bd.Scan(cursor, GetKey(peerName, "*"), 128).Result()
+	keys, _, err := rds.bd.Scan(cursor, GetKey(peerName, "*"), 128).Result()
 	if err != nil {
 		return nil, err
 	}
 	allPeers := make([]types.Peer, 0, len(keys))
 	for _, key := range keys {
 		var peer types.Peer
-		err := rds.Find(peerKey, GetKeyValue(peerName, key),&peer)
+		err := rds.Find(peerKey, GetKeyValue(peerName, key), &peer)
 		if err != nil {
 			return nil, err
 		}
@@ -97,16 +101,16 @@ func (rds *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 }
 
 func (rds *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
-	ret := rds.bd.ZRange(peerIndexName,0,0)
+	ret := rds.bd.ZRange(peerIndexName, 0, 0)
 	err := ret.Err()
 	var peer types.Peer
 	if err == nil {
 		list, err := ret.Result()
 		if err == nil && len(list) > 0 {
-			err := rds.Find(peerKey, list[0] , &peer)
+			err := rds.Find(peerKey, GetKeyValue(peerName, list[0]), &peer)
 			if err == nil {
 				if peer.NextUpdate.Before(time.Now()) {
-					peer.NextUpdate.Add(postpone)
+					peer.NextUpdate = time.Now().Add(postpone)
 					err = peer.Save()
 					if err == nil {
 						return &peer, nil

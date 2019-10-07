@@ -1,11 +1,11 @@
 package dynamodb
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
 	"time"
 
 	"Smilo-blackbox/src/data/types"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
 	dynDBAttr "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -59,16 +59,19 @@ func (dyndb *DatabaseInstance) Save(data interface{}) error {
 func (dyndb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 	peerList := make([]types.Peer, 0, 128)
 	input := &dynDB.ScanInput{
-		TableName:            aws.String(*getTablename(&types.Peer{})),
+		TableName: aws.String(*getTablename(&types.Peer{})),
 	}
-    out, err := dyndb.db.Scan(input)
-    if err != nil {
-    	return nil, err
+	out, err := dyndb.db.Scan(input)
+	if err != nil {
+		return nil, err
 	}
-    for _, item := range out.Items {
-    	var peer types.Peer
+	for _, item := range out.Items {
+		var peer types.Peer
 		err = dynDBAttr.UnmarshalMap(item, &peer)
-    	peerList = append(peerList, peer)
+		if err != nil {
+			return nil, err
+		}
+		peerList = append(peerList, peer)
 	}
 	return &peerList, nil
 }
@@ -81,8 +84,10 @@ func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer,
 		return nil, err
 	}
 	input := &dynDB.ScanInput{
-		FilterExpression:     expr.Filter(),
-		TableName:            aws.String(*getTablename(&types.Peer{})),
+		FilterExpression:          expr.Filter(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		TableName:                 aws.String(*getTablename(&types.Peer{})),
 	}
 	out, err := dyndb.db.Scan(input)
 	if err != nil {
@@ -100,7 +105,7 @@ func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer,
 			return &peer, nil
 		}
 	}
-    return nil, err
+	return nil, err
 }
 
 func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
