@@ -34,7 +34,7 @@ type Peer struct {
 }
 
 func GetTagged(dat interface{}) interface{} {
-	switch dat.(type) {
+	switch dat.(type) { //nolint
 	case *types.EncryptedTransaction:
 		dat2 := EncryptedTransaction(*dat.(*types.EncryptedTransaction))
 		return &dat2
@@ -53,7 +53,7 @@ func GetTagged(dat interface{}) interface{} {
 }
 
 func GetUntagged(dat interface{}, gen interface{}) {
-	switch dat.(type) {
+	switch dat.(type) { //nolint
 	case *EncryptedTransaction:
 		dat2 := types.EncryptedTransaction(*dat.(*EncryptedTransaction))
 		*gen.(*types.EncryptedTransaction) = dat2
