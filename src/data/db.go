@@ -33,7 +33,7 @@ func SetFilename(filename string) {
 
 // Start will start the db
 func Start() {
-
+    var err error
 	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
 		_, err := os.Create(dbFile)
 		if err != nil {
@@ -42,7 +42,7 @@ func Start() {
 	}
 
 	log.Info("Opening DB: ", dbFile)
-	db, err := storm.Open(dbFile)
+	db, err = storm.Open(dbFile)
 
 	if err != nil {
 		defer func() {
