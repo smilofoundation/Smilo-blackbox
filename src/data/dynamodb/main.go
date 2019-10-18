@@ -1,6 +1,7 @@
 package dynamodb
 
 import (
+	"reflect"
 	"time"
 
 	"Smilo-blackbox/src/data/types"
@@ -54,6 +55,36 @@ func (dyndb *DatabaseInstance) Save(data interface{}) error {
 	}
 	_, err = dyndb.db.PutItem(item)
 	return err
+}
+
+func (dyndb *DatabaseInstance) All(instances interface{}) error {
+	result := reflect.ValueOf(instances)
+	resultItem := reflect.New(reflect.TypeOf(result.Elem().Interface()).Elem()).Elem().Addr().Interface()
+	input := &dynDB.ScanInput{
+		TableName: aws.String(*getTablename(resultItem)),
+	}
+	out, err := dyndb.db.Scan(input)
+	if err != nil {
+		return err
+	}
+	result = reflect.ValueOf(
+		reflect.MakeSlice(
+			reflect.SliceOf(
+				reflect.TypeOf(resultItem).Elem()),
+			0,
+			len(out.Items)).
+			Interface())
+	for _, item := range out.Items {
+		err = dynDBAttr.UnmarshalMap(item, resultItem)
+		if err != nil {
+			return err
+		}
+		tmp2 := reflect.ValueOf(resultItem)
+		result = reflect.Append(result, tmp2.Elem())
+	}
+
+	types.GetUntaggedArrayPtr(result.Interface(), instances)
+	return nil
 }
 
 func (dyndb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {

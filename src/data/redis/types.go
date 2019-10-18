@@ -78,3 +78,18 @@ func GetUntagged(dat interface{}, gen interface{}) {
 		*gen.(*types.Peer) = dat2
 	}
 }
+
+func GetTaggedArray(dat interface{}) interface{} {
+	switch dat.(type) { //nolint
+	case *[]types.EncryptedTransaction:
+		return &[]EncryptedTransaction{}
+	case *[]types.EncryptedRawTransaction:
+		return &[]EncryptedRawTransaction{}
+	case *[]types.PublicKeyURL:
+		return &[]PublicKeyURL{}
+	case *[]types.Peer:
+		return &[]Peer{}
+	default:
+		return dat
+	}
+}

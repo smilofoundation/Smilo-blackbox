@@ -2,6 +2,7 @@ package boltdb
 
 import (
 	"os"
+	"reflect"
 	"sync"
 	"time"
 
@@ -47,6 +48,41 @@ func (bdb *DatabaseInstance) Find(fieldname string, value interface{}, to interf
 	}
 	GetUntagged(taggedTo, to)
 	return err
+}
+
+func (bdb *DatabaseInstance) All(instances interface{}) error {
+	result := reflect.ValueOf(instances)
+	resultItem := reflect.New(reflect.TypeOf(result.Elem().Interface()).Elem()).Elem().Addr().Interface()
+	requestItem := GetTagged(resultItem)
+	request := GetTaggedArray(instances)
+    mutex.Lock()
+	locked := true
+	defer func() {
+		if locked {
+			mutex.Unlock()
+		}
+	}()
+	err := bdb.bd.All(request)
+	mutex.Unlock()
+	locked = false
+	if err != nil {
+		return err
+	}
+	result = reflect.ValueOf(
+		reflect.MakeSlice(
+			reflect.SliceOf(
+				reflect.TypeOf(resultItem).Elem()),
+				0,
+				reflect.ValueOf(request).Elem().Len()).
+			Interface())
+	for i:=0; i < reflect.ValueOf(request).Elem().Len(); i++ {
+		requestItem = reflect.ValueOf(request).Elem().Index(i).Addr().Interface()
+		GetUntagged(requestItem, resultItem)
+		tmp2 := reflect.ValueOf(resultItem)
+		result = reflect.Append(result, tmp2.Elem())
+	}
+	types.GetUntaggedArrayPtr(result.Interface(), instances)
+	return nil
 }
 
 func (bdb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
@@ -116,9 +152,11 @@ func (bdb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, e
 func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
-	_, err := os.Create(filename)
-	if err != nil {
-		log.Fatalf("Failed to start DB file at %s", filename)
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		_, err := os.Create(filename)
+		if err != nil {
+			log.Fatalf("Failed to start DB file at %s", filename)
+		}
 	}
 
 	log.Info("Opening DB: ", filename)

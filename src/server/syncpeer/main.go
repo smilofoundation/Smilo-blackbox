@@ -169,16 +169,20 @@ func updateFromRemotePeerData(peer *types.Peer) {
 		peer.PublicKeys = publicKeys
 		peer.NextUpdate = time.Now().Add(timeBetweenUpdates)
 	}
+	SavePublicKeys(publicKeys, peer)
+	err = peer.Save()
+	if err != nil {
+		log.WithError(err).Panic("Could not save peer.")
+	}
+}
+
+func SavePublicKeys(publicKeys [][]byte, peer *types.Peer) {
 	for j := range publicKeys {
 		pkURL := types.NewPublicKeyURL(publicKeys[j], peer.URL)
 		err := pkURL.Save()
 		if err != nil {
 			log.WithError(err).Panic("Could not save peer public key.")
 		}
-	}
-	err = peer.Save()
-	if err != nil {
-		log.WithError(err).Panic("Could not save peer.")
 	}
 }
 

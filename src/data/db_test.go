@@ -19,6 +19,7 @@ package data
 import (
 	"Smilo-blackbox/src/utils"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -110,6 +111,26 @@ func TestGetAllPeers(t *testing.T) {
 	}
 }
 
+func TestGetAll(t *testing.T) {
+	testValues := []string{"teste1", "teste2", "teste3", "teste4"}
+	err := types.UpdateNewPeers(testValues, "")
+	require.NoError(t, err)
+	peers := make([]types.Peer,0)
+	err = types.GetAll(&peers)
+	if err != nil {
+		require.Fail(t, "Unexpected error retrieving peers")
+	}
+	require.Equal(t, len(peers), 4)
+	require.Contains(t, testValues, (peers)[0].URL)
+	require.Contains(t, testValues, (peers)[3].URL)
+	require.NotEqual(t, (peers)[0].URL, (peers)[3].URL)
+
+	for _, peer := range peers {
+		err = peer.Delete()
+		require.NoError(t, err)
+	}
+}
+
 func TestGetNextPeer(t *testing.T) {
 	testValues := []string{"teste1", "teste2"}
 	err := types.UpdateNewPeers(testValues, "")
@@ -129,4 +150,53 @@ func TestGetNextPeer(t *testing.T) {
 	require.NoError(t, err)
 	err = peer2.Delete()
 	require.NoError(t, err)
+}
+
+func TestMigrateBoltDB(t *testing.T) {
+	var peers []types.Peer
+	var transactions []types.EncryptedTransaction
+	var rawTransactions []types.EncryptedRawTransaction
+	var publicKeys []types.PublicKeyURL
+
+	for i:=0; i<1000; i++ {
+		now := time.Now()
+		trans := types.CreateEncryptedTransaction([]byte(strconv.Itoa(i)), []byte("Payload: "+strconv.Itoa(i)), now)
+		err := trans.Save()
+		require.NoError(t, err)
+	}
+	for i:=0; i<100; i++ {
+		trans := types.NewEncryptedRawTransaction([]byte("Payload: "+strconv.Itoa(i)),[]byte(""))
+		err := trans.Save()
+		require.NoError(t, err)
+	}
+
+	for i:=0; i<200; i++ {
+		peer := types.NewPeer("teste " + strconv.Itoa(i))
+		for j:=0; j<10; j++ {
+			peer.PublicKeys = append(peer.PublicKeys, []byte("pk_"+strconv.Itoa(i)+"_"+strconv.Itoa(j)))
+		}
+		err := peer.Save()
+		require.NoError(t,err)
+	}
+	err := types.GetAll(&peers)
+	require.NoError(t,err)
+    err = types.DBI.Close()
+    require.NoError(t, err)
+	err = Migrate(dbEngine, dbFile, BOLTDBENGINE, "blackbox2.db")
+	require.NoError(t,err)
+
+
+	err = types.GetAll(&peers)
+	require.NoError(t,err)
+	err = types.GetAll(&transactions)
+	require.NoError(t,err)
+	err = types.GetAll(&rawTransactions)
+	require.NoError(t,err)
+	err = types.GetAll(&publicKeys)
+	require.NoError(t,err)
+
+	require.Equal(t, 1000, len(transactions))
+	require.Equal(t, 100, len(rawTransactions))
+	require.Equal(t, 200, len(peers))
+	require.Equal(t, 2000, len(publicKeys))
 }

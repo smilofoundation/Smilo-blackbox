@@ -3,6 +3,7 @@ package redis
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"time"
 
 	"Smilo-blackbox/src/data/types"
@@ -80,6 +81,35 @@ func (rds *DatabaseInstance) Save(data interface{}) error {
 		err = ret.Err()
 	}
 	return err
+}
+
+func (rds *DatabaseInstance) All(instances interface{}) error {
+	result := reflect.ValueOf(instances)
+	resultItem := reflect.New(reflect.TypeOf(result.Elem().Interface()).Elem()).Elem().Addr().Interface()
+	name, keyName := utils2.GetMetadata(resultItem)
+	var cursor uint64
+	keys, _, err := rds.bd.Scan(cursor, GetKey(name, "*"), 128).Result()
+	if err != nil {
+		return err
+	}
+	result = reflect.ValueOf(
+		reflect.MakeSlice(
+			reflect.SliceOf(
+				reflect.TypeOf(resultItem).Elem()),
+			0,
+			len(keys)).
+			Interface())
+	for _, key := range keys {
+		err := rds.Find(keyName, GetKeyValue(name, key), resultItem)
+		if err != nil {
+			return err
+		}
+		tmp2 := reflect.ValueOf(resultItem)
+		result = reflect.Append(result, tmp2.Elem())
+	}
+
+	types.GetUntaggedArrayPtr(result.Interface(), instances)
+	return nil
 }
 
 func (rds *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
