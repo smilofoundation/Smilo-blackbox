@@ -33,9 +33,12 @@ func SetFilename(filename string) {
 
 // Start will start the db
 func Start() {
-	_, err := os.Create(dbFile)
-	if err != nil {
-		log.Fatalf("Failed to start DB file at %s", dbFile)
+	var err error
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		_, err := os.Create(dbFile)
+		if err != nil {
+			log.Fatalf("Failed to start DB file at %s", dbFile)
+		}
 	}
 
 	log.Info("Opening DB: ", dbFile)
