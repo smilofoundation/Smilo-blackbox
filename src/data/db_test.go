@@ -31,17 +31,19 @@ import (
 type testEngine struct {
 	Filename string
 	Engine   string
+	CleanUp  func()
 }
 
 func TestMain(m *testing.M) {
 	// TODO: Tests to dynamodb and redis rely on services running to accept requests, for now they are just commented out.
 	//       To run all tests we need to start services using docker instances and configure environment for aws.
 	engines := []testEngine{
-		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb"},
-		//{Filename: "", Engine: "dynamodb"},
-		//{Filename: "redis/test.conf", Engine: "redis"},
+		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb", CleanUp: func (){os.Remove(utils.BuildFilename("blackbox.db"))}},
+		//{Filename: "", Engine: "dynamodb", CleanUp: func (){}},
+		//{Filename: "redis/test.conf", Engine: "redis", CleanUp: func (){}},
 	}
 	for _, eng := range engines {
+		eng.CleanUp()
 		SetFilename(eng.Filename)
 		SetEngine(eng.Engine)
 		Start()
@@ -158,7 +160,7 @@ func TestMigrateBoltDB(t *testing.T) {
 	var rawTransactions []types.EncryptedRawTransaction
 	var publicKeys []types.PublicKeyURL
 
-	for i:=0; i<1000; i++ {
+	for i:=0; i<100; i++ {
 		now := time.Now()
 		trans := types.CreateEncryptedTransaction([]byte(strconv.Itoa(i)), []byte("Payload: "+strconv.Itoa(i)), now)
 		err := trans.Save()
@@ -172,7 +174,7 @@ func TestMigrateBoltDB(t *testing.T) {
 
 	for i:=0; i<200; i++ {
 		peer := types.NewPeer("teste " + strconv.Itoa(i))
-		for j:=0; j<10; j++ {
+		for j:=0; j<2; j++ {
 			peer.PublicKeys = append(peer.PublicKeys, []byte("pk_"+strconv.Itoa(i)+"_"+strconv.Itoa(j)))
 		}
 		err := peer.Save()
@@ -182,6 +184,7 @@ func TestMigrateBoltDB(t *testing.T) {
 	require.NoError(t,err)
     err = types.DBI.Close()
     require.NoError(t, err)
+	_ = os.Remove("blackbox2.db")
 	err = Migrate(dbEngine, dbFile, BOLTDBENGINE, "blackbox2.db")
 	require.NoError(t,err)
 
@@ -195,8 +198,8 @@ func TestMigrateBoltDB(t *testing.T) {
 	err = types.GetAll(&publicKeys)
 	require.NoError(t,err)
 
-	require.Equal(t, 1000, len(transactions))
+	require.Equal(t, 100, len(transactions))
 	require.Equal(t, 100, len(rawTransactions))
 	require.Equal(t, 200, len(peers))
-	require.Equal(t, 2000, len(publicKeys))
+	require.Equal(t, 400, len(publicKeys))
 }

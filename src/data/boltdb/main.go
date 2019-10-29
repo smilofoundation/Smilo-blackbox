@@ -164,7 +164,9 @@ func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 
 	if err != nil {
 		defer func() {
-			err = db.Close()
+			if db != nil {
+				_ = db.Close()
+			}
 			log.WithError(err).Fatal("Could not open DBFile: ", filename, ", error: ", err)
 			os.Exit(1)
 		}()

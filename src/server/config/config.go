@@ -42,12 +42,18 @@ var (
 
 	//GenerateKeys (cli) uses it for key pair
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
+	//GenerateKeys (cli) uses it for key pair
+	MigrateDB = cli.BoolFlag{Name: "migrate-database", Usage: "Migrates database to destination database"}
 	//ConfigFile (cli) uses it for config file name
 	ConfigFile = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
 	//DBEngine (cli) uses it for db engine
 	DBEngine = cli.StringFlag{Name: "dbengine", Value: "boltdb", Usage: "DB engine name"}
 	//DBFile (cli) uses it for db file name
 	DBFile = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	//DBEngine (cli) uses it for db engine
+	DBEngineDest = cli.StringFlag{Name: "dbengine-dest", Value: "boltdb", Usage: "Destination DB engine name"}
+	//DBFile (cli) uses it for db file name
+	DBFileDest = cli.StringFlag{Name: "dbfile-dest", Value: "blackbox2.db", Usage: "Destination DB file name"}
 	//PeersDBFile (cli) uses it for peer db file
 	PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
 	//Port (cli) uses it for local api public port
@@ -104,7 +110,7 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBEngine, DBFile, PeersDBFile, Port, Hostaddr, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, MigrateDB, ConfigFile, DBEngine, DBFile, DBEngineDest, DBFileDest, PeersDBFile, Port, Hostaddr, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
 }
 
 //LoadConfig will load cfg
