@@ -42,7 +42,7 @@ var (
 
 	//GenerateKeys (cli) uses it for key pair
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
-	//GenerateKeys (cli) uses it for key pair
+	//MigrateDB (cli) uses it for signaling a database migration
 	MigrateDB = cli.BoolFlag{Name: "migrate-database", Usage: "Migrates database to destination database"}
 	//ConfigFile (cli) uses it for config file name
 	ConfigFile = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
@@ -50,9 +50,9 @@ var (
 	DBEngine = cli.StringFlag{Name: "dbengine", Value: "boltdb", Usage: "DB engine name"}
 	//DBFile (cli) uses it for db file name
 	DBFile = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
-	//DBEngine (cli) uses it for db engine
+	//DBEngineDest (cli) uses it for the migration destination db engine
 	DBEngineDest = cli.StringFlag{Name: "dbengine-dest", Value: "boltdb", Usage: "Destination DB engine name"}
-	//DBFile (cli) uses it for db file name
+	//DBFileDest (cli) uses it for the migration destination db file name
 	DBFileDest = cli.StringFlag{Name: "dbfile-dest", Value: "blackbox2.db", Usage: "Destination DB file name"}
 	//PeersDBFile (cli) uses it for peer db file
 	PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}

@@ -58,7 +58,7 @@ func Start() {
 
 }
 
-func Migrate(fromEngine string, fromFile   string, toEngine   string, toFile     string) error {
+func Migrate(fromEngine string, fromFile string, toEngine string, toFile string) error {
 	SetEngine(fromEngine)
 	SetFilename(fromFile)
 	Start()
@@ -112,5 +112,5 @@ func Migrate(fromEngine string, fromFile   string, toEngine   string, toFile    
 			}
 		}
 	}
-    return nil
+	return nil
 }

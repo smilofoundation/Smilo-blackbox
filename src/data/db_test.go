@@ -38,9 +38,9 @@ func TestMain(m *testing.M) {
 	// TODO: Tests to dynamodb and redis rely on services running to accept requests, for now they are just commented out.
 	//       To run all tests we need to start services using docker instances and configure environment for aws.
 	engines := []testEngine{
-		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb", CleanUp: func (){os.Remove(utils.BuildFilename("blackbox.db"))}},
-		//{Filename: "", Engine: "dynamodb", CleanUp: func (){}},
-		//{Filename: "redis/test.conf", Engine: "redis", CleanUp: func (){}},
+		{Filename: utils.BuildFilename("blackbox.db"), Engine: "boltdb", CleanUp: func() { os.Remove(utils.BuildFilename("blackbox.db")) }},
+		//{Filename: "", Engine: "dynamodb", CleanUp: func() {}},
+		//{Filename: "redis/test.conf", Engine: "redis", CleanUp: func() {}},
 	}
 	for _, eng := range engines {
 		eng.CleanUp()
@@ -117,7 +117,7 @@ func TestGetAll(t *testing.T) {
 	testValues := []string{"teste1", "teste2", "teste3", "teste4"}
 	err := types.UpdateNewPeers(testValues, "")
 	require.NoError(t, err)
-	peers := make([]types.Peer,0)
+	peers := make([]types.Peer, 0)
 	err = types.GetAll(&peers)
 	if err != nil {
 		require.Fail(t, "Unexpected error retrieving peers")
@@ -160,43 +160,42 @@ func TestMigrateBoltDB(t *testing.T) {
 	var rawTransactions []types.EncryptedRawTransaction
 	var publicKeys []types.PublicKeyURL
 
-	for i:=0; i<100; i++ {
+	for i := 0; i < 100; i++ {
 		now := time.Now()
 		trans := types.CreateEncryptedTransaction([]byte(strconv.Itoa(i)), []byte("Payload: "+strconv.Itoa(i)), now)
 		err := trans.Save()
 		require.NoError(t, err)
 	}
-	for i:=0; i<100; i++ {
-		trans := types.NewEncryptedRawTransaction([]byte("Payload: "+strconv.Itoa(i)),[]byte(""))
+	for i := 0; i < 100; i++ {
+		trans := types.NewEncryptedRawTransaction([]byte("Payload: "+strconv.Itoa(i)), []byte(""))
 		err := trans.Save()
 		require.NoError(t, err)
 	}
 
-	for i:=0; i<200; i++ {
+	for i := 0; i < 200; i++ {
 		peer := types.NewPeer("teste " + strconv.Itoa(i))
-		for j:=0; j<2; j++ {
+		for j := 0; j < 2; j++ {
 			peer.PublicKeys = append(peer.PublicKeys, []byte("pk_"+strconv.Itoa(i)+"_"+strconv.Itoa(j)))
 		}
 		err := peer.Save()
-		require.NoError(t,err)
+		require.NoError(t, err)
 	}
 	err := types.GetAll(&peers)
-	require.NoError(t,err)
-    err = types.DBI.Close()
-    require.NoError(t, err)
+	require.NoError(t, err)
+	err = types.DBI.Close()
+	require.NoError(t, err)
 	_ = os.Remove("blackbox2.db")
 	err = Migrate(dbEngine, dbFile, BOLTDBENGINE, "blackbox2.db")
-	require.NoError(t,err)
-
+	require.NoError(t, err)
 
 	err = types.GetAll(&peers)
-	require.NoError(t,err)
+	require.NoError(t, err)
 	err = types.GetAll(&transactions)
-	require.NoError(t,err)
+	require.NoError(t, err)
 	err = types.GetAll(&rawTransactions)
-	require.NoError(t,err)
+	require.NoError(t, err)
 	err = types.GetAll(&publicKeys)
-	require.NoError(t,err)
+	require.NoError(t, err)
 
 	require.Equal(t, 100, len(transactions))
 	require.Equal(t, 100, len(rawTransactions))

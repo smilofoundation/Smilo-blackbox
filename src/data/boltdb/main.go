@@ -53,9 +53,8 @@ func (bdb *DatabaseInstance) Find(fieldname string, value interface{}, to interf
 func (bdb *DatabaseInstance) All(instances interface{}) error {
 	result := reflect.ValueOf(instances)
 	resultItem := reflect.New(reflect.TypeOf(result.Elem().Interface()).Elem()).Elem().Addr().Interface()
-	requestItem := GetTagged(resultItem)
 	request := GetTaggedArray(instances)
-    mutex.Lock()
+	mutex.Lock()
 	locked := true
 	defer func() {
 		if locked {
@@ -71,12 +70,10 @@ func (bdb *DatabaseInstance) All(instances interface{}) error {
 	result = reflect.ValueOf(
 		reflect.MakeSlice(
 			reflect.SliceOf(
-				reflect.TypeOf(resultItem).Elem()),
-				0,
-				reflect.ValueOf(request).Elem().Len()).
+				reflect.TypeOf(resultItem).Elem()), 0, reflect.ValueOf(request).Elem().Len()).
 			Interface())
-	for i:=0; i < reflect.ValueOf(request).Elem().Len(); i++ {
-		requestItem = reflect.ValueOf(request).Elem().Index(i).Addr().Interface()
+	for i := 0; i < reflect.ValueOf(request).Elem().Len(); i++ {
+		requestItem := reflect.ValueOf(request).Elem().Index(i).Addr().Interface()
 		GetUntagged(requestItem, resultItem)
 		tmp2 := reflect.ValueOf(resultItem)
 		result = reflect.Append(result, tmp2.Elem())
