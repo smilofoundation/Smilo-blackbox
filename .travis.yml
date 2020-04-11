@@ -15,9 +15,6 @@ matrix:
       dist: xenial
       go: 1.12.x
       script:
-      - sudo modprobe fuse
-      - sudo chmod 666 /dev/fuse
-      - sudo chown root:$USER /etc/fuse.conf
       - go build -o blackbox main.go
       - go test ./src/... -timeout=20m -cover
       - make integration-test
@@ -28,9 +25,6 @@ matrix:
       dist: xenial
       go: 1.13.x
       script:
-        - sudo modprobe fuse
-        - sudo chmod 666 /dev/fuse
-        - sudo chown root:$USER /etc/fuse.conf
         - go build -o blackbox main.go
         - go test ./src/... -timeout=20m -cover
         - make integration-test
