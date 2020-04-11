@@ -18,9 +18,13 @@ package utils
 
 import (
 	"flag"
+	"io/ioutil"
 	"os"
 	"path"
+	"reflect"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -62,9 +66,45 @@ func BuildFilename(filename string) string {
 	} else {
 		workDir = ""
 	}
-	//if !strings.HasPrefix(currentDir, "/"){
-	//	newDBFile = path.Join(currentDir, workDir)
-	//}
+
 	newDBFile = path.Join(workDir, filename)
 	return newDBFile
+}
+
+func GetType(data interface{}) reflect.Type {
+	t := reflect.TypeOf(data).Elem()
+	return t
+}
+
+func GetMetadata(data interface{}) (string, string) {
+	t := GetType(data)
+	keyField := ""
+	for key := 0; key < t.NumField(); key++ {
+		field := t.Field(key)
+		if field.Tag.Get("key") == "true" {
+			keyField = field.Name
+		}
+	}
+	return t.Name(), keyField
+}
+
+func GetField(data interface{}, field string) interface{} {
+	r := reflect.ValueOf(data).Elem()
+	s := r.FieldByName(field).Interface()
+	return s
+}
+
+func ReadAllFile(file string, log *logrus.Entry) ([]byte, error) {
+	plainFile, err := os.Open(file)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		err := plainFile.Close()
+		if err != nil {
+			log.WithError(err).Error("Could not Close ")
+		}
+	}()
+	byteValue, err := ioutil.ReadAll(plainFile)
+	return byteValue, err
 }

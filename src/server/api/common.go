@@ -23,9 +23,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"Smilo-blackbox/src/data/types"
+
 	"bytes"
 
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
@@ -49,7 +50,7 @@ func Upcheck(w http.ResponseWriter, r *http.Request) {
 
 //API Request path "/api", response json rest api spec.
 func API(w http.ResponseWriter, r *http.Request) {
-
+	// TODO: Implement an api endpoint
 }
 
 //UnknownRequest will debug unknown reqs
@@ -72,7 +73,7 @@ func RetrieveJSONPayload(w http.ResponseWriter, r *http.Request, key []byte, to 
 
 //RetrieveAndDecryptPayload will retrieve and decrypt the payload
 func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byte, to []byte) []byte {
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if err != nil || encTrans == nil {
 		message := fmt.Sprintf("Transaction key: %s not found", hex.EncodeToString(key))
 		log.Error(message)
@@ -92,11 +93,12 @@ func RetrieveAndDecryptPayload(w http.ResponseWriter, r *http.Request, key []byt
 }
 
 //PushTransactionForOtherNodes will push encrypted transaction to other nodes
-func PushTransactionForOtherNodes(encryptedTransaction data.EncryptedTransaction, recipient []byte) {
+func PushTransactionForOtherNodes(encryptedTransaction types.EncryptedTransaction, recipient []byte) error {
 	url, err := syncpeer.GetPeerURL(recipient)
 	if err == nil {
 		cli := syncpeer.GetHTTPClient()
-		response, err := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		response, err2 := cli.Post(url+"/push", "application/octet-stream", bytes.NewBuffer([]byte(base64.StdEncoding.EncodeToString(encryptedTransaction.EncodedPayload)))) //nolint:bodyclose
+		err = err2
 		defer func() {
 			if response != nil && response.Body != nil {
 				err := response.Body.Close()
@@ -105,10 +107,11 @@ func PushTransactionForOtherNodes(encryptedTransaction data.EncryptedTransaction
 				}
 			}
 		}()
-		if err != nil {
-			log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
-		}
 	}
+	if err != nil {
+		log.WithError(err).Errorf("Failed to push to %s", base64.StdEncoding.EncodeToString(recipient))
+	}
+	return err
 }
 
 // will write status into header and log error if any

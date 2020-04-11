@@ -21,6 +21,8 @@ import (
 	"net/http"
 	"testing"
 
+	"Smilo-blackbox/src/data/types"
+
 	"Smilo-blackbox/src/server/api"
 
 	"bytes"
@@ -32,7 +34,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"Smilo-blackbox/src/crypt"
-	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server/encoding"
 	"Smilo-blackbox/src/server/syncpeer"
 	"Smilo-blackbox/src/utils"
@@ -156,7 +157,7 @@ func TestPublicAPI(t *testing.T) {
 							t.Logf("Cannot decode key from json. %v", response)
 							t.Fail()
 						}
-						encRawTrans, err := data.FindEncryptedRawTransaction(key)
+						encRawTrans, err := types.FindEncryptedRawTransaction(key)
 						if err != nil {
 							t.Logf("Raw transaction not found. %v", response)
 							t.Fail()
@@ -416,7 +417,7 @@ func TestPrivateAPI(t *testing.T) {
 
 }
 
-func createEncryptedTransactionForTest() *data.EncryptedTransaction {
+func createEncryptedTransactionForTest() *types.EncryptedTransaction {
 	encTrans := createEncryptedTransaction()
 	err := encTrans.Save()
 	if err != nil {
@@ -425,17 +426,17 @@ func createEncryptedTransactionForTest() *data.EncryptedTransaction {
 	return encTrans
 }
 
-func createEncryptedTransaction() *data.EncryptedTransaction {
+func createEncryptedTransaction() *types.EncryptedTransaction {
 	toValues := make([][]byte, 1)
 	toValues[0] = []byte("09876543210987654321098765432109")
 	fromValue := []byte("12345678901234567890123456789012")
 	payload, _ := crypt.NewRandomNonce()
 	encPayloadData, _ := encoding.EncodePayloadData(payload, fromValue, toValues)
-	encTrans := data.NewEncryptedTransaction(*encPayloadData.Serialize())
+	encTrans := types.NewEncryptedTransaction(*encPayloadData.Serialize())
 	return encTrans
 }
 
-func createEncryptedRawTransactionForTest() *data.EncryptedRawTransaction {
+func createEncryptedRawTransactionForTest() *types.EncryptedRawTransaction {
 	encTrans := createEncryptedRawTransaction()
 	err := encTrans.Save()
 	if err != nil {
@@ -444,13 +445,13 @@ func createEncryptedRawTransactionForTest() *data.EncryptedRawTransaction {
 	return encTrans
 }
 
-func createEncryptedRawTransaction() *data.EncryptedRawTransaction {
+func createEncryptedRawTransaction() *types.EncryptedRawTransaction {
 	toValues := make([][]byte, 1)
 	pubkey, _ := base64.StdEncoding.DecodeString("MD3fapkkHUn86h/W7AUhiD4NiDFkuIxtuRr0Nge27Bk=")
 	toValues[0] = pubkey
 	fromValue := pubkey
 	payload := []byte("12345")
 	encPayloadData, _ := encoding.EncodePayloadData(payload, fromValue, toValues)
-	encTrans := data.NewEncryptedRawTransaction(*encPayloadData.Serialize(), encPayloadData.Sender)
+	encTrans := types.NewEncryptedRawTransaction(*encPayloadData.Serialize(), encPayloadData.Sender)
 	return encTrans
 }

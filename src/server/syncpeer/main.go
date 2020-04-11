@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
-	sync2 "sync"
 	"time"
 
 	"crypto/tls"
@@ -18,16 +18,14 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/data/types"
 )
 
 var (
-	peerChannel         = make(chan *Peer, 1024)
-	peerList            []*Peer
-	publicKeysHashMap   = NewSafePublicKeyMap()
 	keepRunning         = true
-	mutex               sync2.RWMutex
 	timeBetweenCycles   = 13 * time.Second
 	timeBetweenRequests = 2 * time.Second
+	timeBetweenUpdates  = 15 * time.Minute
 	hostURL             string
 	log                 = logrus.WithFields(logrus.Fields{
 		"app":     "blackbox",
@@ -39,20 +37,19 @@ var (
 		DisableCompression: true,
 		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
 	}
-	client = &http.Client{
-		Transport: tr,
-		Timeout:   getRequestTimeout(),
-	}
+	client = SetupHTTPClientWrapper()
 )
 
 func getRequestTimeout() (t time.Duration) {
 	value := os.Getenv("REQUEST_TIMEOUT")
-	vint, err := strconv.Atoi(value)
-	if err != nil {
-		t = 30 * time.Second
-	} else {
-		t = time.Duration(vint) * time.Second
+	_, err := strconv.Atoi(value)
+	if err == nil {
+		t, err = time.ParseDuration(value + "s")
+		if err == nil {
+			return t
+		}
 	}
+	t = 30 * time.Second
 	return t
 }
 func getOrCreateCertPool() *x509.CertPool {
@@ -69,9 +66,27 @@ func AppendCertificate(cert []byte) bool {
 	if !ok {
 		log.Error("Unable to append additional Root CA certificate.")
 	} else {
-		client = &http.Client{Transport: tr}
+		client = SetupHTTPClientWrapper()
 	}
 	return ok
+}
+
+func SetupHTTPClientWrapper() *HTTPClientWrapper {
+	clientWrapper := HTTPClientWrapper{
+		http.Client{
+			Transport: tr,
+			Timeout:   getRequestTimeout(),
+		},
+		nil,
+		nil,
+	}
+	clientWrapper.RequestResponseFunction = func(req *http.Request) (response *http.Response, e error) {
+		return clientWrapper.Client.Do(req)
+	}
+	clientWrapper.PostResponseFunction = func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+		return clientWrapper.Client.Post(url, contentType, body)
+	}
+	return &clientWrapper
 }
 
 //StartSync start sync
@@ -99,83 +114,75 @@ func SetHostURL(url string) {
 func sync() {
 	keepRunning = true
 	for keepRunning {
-		time.Sleep(timeBetweenCycles)
-		updateAllPeers()
-		updatePeersList()
+		time.Sleep(timeBetweenRequests)
+		updatePeer()
 	}
 }
 
-func updatePeersList() {
-	mutex.Lock()
-	defer mutex.Unlock()
-	for j := len(peerList) - 1; j >= 0; j-- {
-		if peerList[j].tries > 3 {
-			peer := peerList[j]
-			if j < len(peerList)-1 {
-				peerList = append(peerList[0:j], peerList[j+1:]...)
-			} else {
-				peerList = peerList[0:j]
-			}
-			for _, pubKeys := range peer.publicKeys {
-				if publicKeysHashMap.Get(string(pubKeys)) == peer {
-					publicKeysHashMap.Delete(string(pubKeys))
-				}
-			}
-		}
+func updatePeer() {
+	peer, err := types.FindNextUpdatablePeer(timeBetweenCycles)
+	if err != nil {
+		log.Panicf("Unable to get next the peer, Error: %s", err)
 	}
-	for {
-		select {
-		case p := <-peerChannel:
-			alreadyExists := false
-			for _, peer := range peerList {
-				if peer.url == p.url {
-					alreadyExists = true
-					break
+	if peer == nil {
+		time.Sleep(timeBetweenCycles)
+		return
+	}
+	log.Debugf("Starting update of: %s", peer.URL)
+	updateFromRemotePeerData(peer)
+}
+
+func updateFromRemotePeerData(peer *types.Peer) {
+	publicKeys, err := queryPeer(peer.URL)
+	if err != nil {
+		peer.Failures++
+		peer.LastFailure = time.Now()
+		peer.NextUpdate = time.Now().Add(timeBetweenCycles)
+		log.Errorf("Unable to query the peer: %s, Error: %s", peer.URL, err)
+		if peer.Failures > 9 {
+			peer.Failures = 0
+			peer.Tries++
+			peer.NextUpdate = time.Now().Add(timeBetweenUpdates)
+		}
+		if peer.Tries > 3 {
+			for _, pubKeys := range peer.PublicKeys {
+				pkurl, err := types.FindPublicKeyURL(pubKeys)
+				if err != nil {
+					log.Panicf("Unable to get public key, Error: %s", err)
+				}
+				if pkurl.URL == peer.URL {
+					err := pkurl.Delete()
+					if err != nil {
+						log.WithError(err).Panic("Could not delete remote peer public key.")
+					}
 				}
 			}
-			if !alreadyExists {
-				peerList = append(peerList, p)
+			err = peer.Delete()
+			if err != nil {
+				log.WithError(err).Panic("Could not delete peer.")
 			}
-		default:
 			return
 		}
-	}
-}
-
-func updateAllPeers() {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	for i, peer := range peerList {
-		if peer.failures > 10 {
-			if time.Since(peer.lastFailure) > (15 * time.Minute) {
-				peer.failures = 0
-				peer.tries++
-			}
-		} else {
-			if peer.skipcycles > 0 {
-				peer.skipcycles--
-				continue
-			}
-			time.Sleep(timeBetweenRequests)
-			updatePeer(i)
-		}
-	}
-}
-
-func updatePeer(i int) {
-	publicKeys, err := queryPeer(peerList[i].url)
-	if err != nil {
-		peerList[i].failures++
-		peerList[i].lastFailure = time.Now()
-		log.Errorf("Unable to query the peer: %s, Error: %s", peerList[i].url, err)
 	} else {
-		peerList[i].failures = 0
-		peerList[i].tries = 0
-		peerList[i].publicKeys = publicKeys
-		peerList[i].skipcycles = 10 * len(publicKeys)
+		peer.Failures = 0
+		peer.Tries = 0
+		peer.PublicKeys = publicKeys
+		peer.NextUpdate = time.Now().Add(timeBetweenUpdates)
 	}
+	SavePublicKeys(publicKeys, peer)
+	err = peer.Save()
+	if err != nil {
+		log.WithError(err).Panic("Could not save peer.")
+	}
+}
+
+func SavePublicKeys(publicKeys [][]byte, peer *types.Peer) {
 	for j := range publicKeys {
-		publicKeysHashMap.Store(string(publicKeys[j]), peerList[i])
+		pkURL := types.NewPublicKeyURL(publicKeys[j], peer.URL)
+		err := pkURL.Save()
+		if err != nil {
+			log.WithError(err).Panic("Could not save peer public key.")
+		}
 	}
 }
 
@@ -193,34 +200,38 @@ func queryPeer(url string) ([][]byte, error) {
 }
 
 func peerAddAll(urls ...string) {
-	for _, url := range urls {
-		PeerAdd(url)
+	err := types.UpdateNewPeers(urls, hostURL)
+	if err != nil {
+		log.WithError(err).Panic("Unable to insert peers to database.")
 	}
 }
 
-//PeerAdd add peer url
 func PeerAdd(url string) {
-	if url != hostURL {
-		peerChannel <- &Peer{url: url, publicKeys: make([][]byte, 0, 128), failures: 0, tries: 0, skipcycles: 0}
-	}
+	peerAddAll(url)
 }
 
 //GetPeers get peers
 func GetPeers() []string {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	urls := make([]string, 0, len(peerList))
-	for _, peer := range peerList {
-		urls = append(urls, peer.url)
+	peerList, err := types.GetAllPeers()
+	if err != nil {
+		log.WithError(err).Panic("Unable to retrieve peer list from database.")
+	}
+	urls := make([]string, 0, len(*peerList))
+	for _, peer := range *peerList {
+		urls = append(urls, peer.URL)
 	}
 	return urls
 }
 
 //GetPeerURL get url
 func GetPeerURL(publicKey []byte) (string, error) {
-	peer := publicKeysHashMap.Get(string(publicKey))
+
+	peer, err := types.FindPublicKeyURL(publicKey)
+	if err != nil && err != types.ErrNotFound {
+		log.WithError(err).Panic("Unable to query database")
+	}
 	if peer != nil {
-		return peer.url, nil
+		return peer.URL, nil
 	}
 	return "", errors.New("unknown Public Key Peer")
 }
@@ -274,14 +285,18 @@ func GetPublicKeysFromOtherNode(url string, publicKey []byte) ([][]byte, []strin
 			continue
 		}
 		sharedKey := crypt.ComputeSharedKey(privateKey, remotePublicKey)
+		log.Info(base64.StdEncoding.EncodeToString(crypt.EncryptPayload(sharedKey, nonce, nonce)))
 		if string(crypt.DecryptPayload(sharedKey, remoteProof, nonce)) != "" {
 			retPubKeys = append(retPubKeys, remotePublicKey)
+			log.Debugf("Public Key accepted: %s", provenKey.Key)
+		} else {
+			log.Debugf("Public Key ignored: %s", provenKey.Key)
 		}
 	}
 	return retPubKeys, responseJSON.PeerURLs, nil
 }
 
 //GetHTTPClient get http client
-func GetHTTPClient() *http.Client {
+func GetHTTPClient() *HTTPClientWrapper {
 	return client
 }

@@ -18,6 +18,7 @@ package main
 
 import (
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server"
 	"Smilo-blackbox/src/server/config"
 	"Smilo-blackbox/src/utils"
@@ -61,9 +62,9 @@ func main() {
 
 	app.Action = func(c *cli.Context) error {
 		generateKeys := c.String("generate-keys")
+		migrateDatabase := c.Bool("migrate-database")
 		configFile := c.String("configfile")
 		cpuProfilingFile := c.String("cpuprofile")
-		p2pEnabled := c.Bool("p2p")
 		if generateKeys != "" {
 			err := crypt.GenerateKeys(generateKeys)
 			if err != nil {
@@ -71,29 +72,39 @@ func main() {
 			} else {
 				os.Exit(0)
 			}
-		} else {
-			if cpuProfilingFile != "" {
-				f, err := os.Create(cpuProfilingFile)
-				if err != nil {
-					log.Fatal(err)
-				}
-				err = pprof.StartCPUProfile(f)
-				if err != nil {
-					log.Fatal(err)
-				}
-				defer pprof.StopCPUProfile()
+		}
+		if migrateDatabase {
+			var dbengine string
+			var dbfile string
+			if configFile != "blackbox.conf" {
+				LoadConfig(configFile)
+				dbengine = config.DBEngine.Value
+				dbfile = config.DBFile.Value
+			} else {
+				dbengine = c.String("dbengine")
+				dbfile = c.String("dbfile")
 			}
-			err := config.LoadConfig(configFile)
+			err := data.Migrate(dbengine, utils.BuildFilename(dbfile), c.String("dbengine-dest"), utils.BuildFilename(c.String("dbfile-dest")))
+			if err != nil {
+				os.Exit(-1)
+			} else {
+				os.Exit(0)
+			}
+		}
+		if cpuProfilingFile != "" {
+			f, err := os.Create(cpuProfilingFile)
 			if err != nil {
 				log.Fatal(err)
-				os.Exit(1)
 			}
-			server.StartServer()
-			if p2pEnabled {
-				server.InitP2p()
+			err = pprof.StartCPUProfile(f)
+			if err != nil {
+				log.Fatal(err)
 			}
-			syncpeer.StartSync()
+			defer pprof.StopCPUProfile()
 		}
+		LoadConfig(configFile)
+		server.StartServer()
+		syncpeer.StartSync()
 		return nil
 	}
 
@@ -108,9 +119,17 @@ func main() {
 
 }
 
+func LoadConfig(configFile string) {
+	err := config.LoadConfig(configFile)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+}
+
 func handlePanic() {
 	if r := recover(); r != nil {
-		log.WithError(fmt.Errorf("%+v", r)).Error(fmt.Sprintf("Application BlackBox panic"))
+		log.WithError(fmt.Errorf("%+v", r)).Error("Application BlackBox panic")
 	}
 	time.Sleep(time.Second * 5)
 }

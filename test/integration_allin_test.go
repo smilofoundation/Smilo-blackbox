@@ -32,12 +32,14 @@ import (
 	"strings"
 )
 
+//nolint:unused
 var (
 	errWaiting = errors.New("unix socket dial failed")
 	errUpcheck = errors.New("http upcheck failed")
 	errDone    = errors.New("done")
 )
 
+//nolint:unused
 func checkFunc(tmIPCFile string) error {
 	conn, err := net.Dial("unix", tmIPCFile)
 	if err != nil {
@@ -53,6 +55,7 @@ func checkFunc(tmIPCFile string) error {
 	return errUpcheck
 }
 
+//nolint:unused
 func runBlackbox(targetNode string) (*osExec.Cmd, error) {
 	here, err := os.Getwd()
 	if err != nil {
@@ -102,6 +105,7 @@ func runBlackbox(targetNode string) (*osExec.Cmd, error) {
 
 }
 
+//nolint:unused
 func checkblackboxstarted(t *testing.T, err error) {
 	if err != nil {
 		if strings.Contains(err.Error(), "executable file not found") {

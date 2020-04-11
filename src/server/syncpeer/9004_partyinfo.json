@@ -1,0 +1,11 @@
+{
+  "publicKeys":[
+    {"key": "7BPSOhfa8XR1DfetZ6hqHU6r7I9RdjZgUoHB2xjGZkk=",
+    "proof": "1obKObGq1yYYKSZXJ7lnYdXD3mjhi8Kr+o68T307M4cLmqD0HvXgag=="
+    }
+  ],
+  "peers": [
+    "http://localhost:9001",
+    "http://localhost:9002"
+  ]
+}

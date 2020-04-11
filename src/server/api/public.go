@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/data/types"
 
 	"encoding/base64"
 	"strings"
@@ -95,7 +95,7 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 func Push(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			message := fmt.Sprintf("Cannot deserialize payload.")
+			message := "Cannot deserialize payload."
 			log.Error(message)
 			requestError(w, http.StatusInternalServerError, message)
 		}
@@ -128,10 +128,10 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	}
 
 	encoding.Deserialize(payload)
-	encTrans := data.NewEncryptedTransaction(payload)
+	encTrans := types.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
-		message := fmt.Sprintf("Cannot save transaction.")
+		message := "Cannot save transaction."
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
 		return
@@ -228,7 +228,7 @@ func Resend(w http.ResponseWriter, r *http.Request) {
 			requestError(w, http.StatusBadRequest, message)
 			return
 		}
-		encTrans, err := data.FindEncryptedTransaction(key)
+		encTrans, err := types.FindEncryptedTransaction(key)
 		if err != nil {
 			message := fmt.Sprintf("Invalid request: %s, error (%s) Finding Encrypted Transaction.", r.URL, err)
 			log.WithError(err).Error(message)
@@ -282,7 +282,7 @@ func Delete(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", jsonReq.Key)
 		log.WithError(err).Error(message)
@@ -315,7 +315,7 @@ func TransactionDelete(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
-	encTrans, err := data.FindEncryptedTransaction(key)
+	encTrans, err := types.FindEncryptedTransaction(key)
 	if encTrans == nil || err != nil {
 		message := fmt.Sprintf("Transaction key: %s not found", params["key"])
 		log.WithError(err).Error(message)
@@ -376,7 +376,7 @@ func StoreRaw(w http.ResponseWriter, r *http.Request) {
 	encRawTrans := createNewEncodedRawTransaction(w, r, payload, from)
 
 	if encRawTrans == nil {
-		message := fmt.Sprintf("Cannot save raw transaction.")
+		message := "Cannot save raw transaction."
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
 		return
@@ -458,7 +458,7 @@ func Metrics(w http.ResponseWriter, r *http.Request) {
 	//TODO:
 }
 
-func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte) *data.EncryptedRawTransaction {
+func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte) *types.EncryptedRawTransaction {
 	recipients := make([][]byte, 1)
 	recipients[0] = crypt.GetPublicKeys()[0]
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
@@ -468,7 +468,7 @@ func createNewEncodedRawTransaction(w http.ResponseWriter, r *http.Request, payl
 		requestError(w, http.StatusInternalServerError, message)
 		return nil
 	}
-	encRawTrans := data.NewEncryptedRawTransaction(*encPayload.Serialize(), encPayload.Sender)
+	encRawTrans := types.NewEncryptedRawTransaction(*encPayload.Serialize(), encPayload.Sender)
 	err = encRawTrans.Save()
 	if err != nil {
 		log.WithError(err).Error("Could not encRawTrans.Save()")

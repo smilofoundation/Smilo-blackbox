@@ -17,7 +17,12 @@
 package server
 
 import (
+	"Smilo-blackbox/src/data/types"
+	"bytes"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"gopkg.in/urfave/cli.v1"
@@ -45,12 +50,31 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic("Could not open config for server_hack_test")
 	}
-
 	go StartServer()
 
 	config.WorkDir.Value = ""
 
 	time.Sleep(2000000000)
+	pk, _ := base64.StdEncoding.DecodeString("OeVDzTdR95fhLKIgpBLxqdDNXYzgozgi7dnnS125A3w=")
+	pkURLTest := types.NewPublicKeyURL(pk, "http://test")
+	err = pkURLTest.Save()
+	if err != nil {
+		os.Exit(1)
+	}
+
+	client := syncpeer.GetHTTPClient()
+	client.PostResponseFunction =
+		func(url, contentType string, body io.Reader) (resp *http.Response, err error) {
+			if strings.Contains(url, "http://test") {
+				return &http.Response{
+					Body:       ioutil.NopCloser(bytes.NewBuffer([]byte(""))),
+					StatusCode: http.StatusOK,
+				}, nil
+
+			}
+			return client.Client.Post(url, contentType, body)
+		}
+
 	retcode := m.Run()
 	os.Exit(retcode)
 }

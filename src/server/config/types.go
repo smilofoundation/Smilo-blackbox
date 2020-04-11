@@ -62,6 +62,7 @@ type Config struct {
 	Peers       []Peer   `json:"peer"`
 	Keys        Keys     `json:"keys"`
 	UnixSocket  string   `json:"socket"`
+	DBEngine    string   `json:"dbengine,omitempty"`
 	DBFile      string   `json:"dbfile,omitempty"`
 	PeersDBFile string   `json:"peersdbfile,omitempty"`
 }

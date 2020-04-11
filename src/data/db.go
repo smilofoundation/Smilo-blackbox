@@ -17,38 +17,100 @@
 package data
 
 import (
-	"os"
-
-	"github.com/asdine/storm"
+	"Smilo-blackbox/src/data/boltdb"
+	"Smilo-blackbox/src/data/dynamodb"
+	"Smilo-blackbox/src/data/redis"
+	"Smilo-blackbox/src/data/types"
 )
 
-var db *storm.DB
-
 var dbFile string
+var dbEngine = ""
+
+const BOLTDBENGINE = "boltdb"
+const DYNAMODBENGINE = "dynamodb"
+const REDISENGINE = "redis"
 
 // SetFilename set filename
 func SetFilename(filename string) {
 	dbFile = filename
 }
 
+func SetEngine(engine string) {
+	dbEngine = engine
+}
+
 // Start will start the db
 func Start() {
 	var err error
-	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
-		_, err := os.Create(dbFile)
+	switch dbEngine {
+	case BOLTDBENGINE:
+		types.DBI, err = boltdb.DBOpen(dbFile, log)
+	case DYNAMODBENGINE:
+		types.DBI, err = dynamodb.DBOpen(dbFile, log)
+	case REDISENGINE:
+		types.DBI, err = redis.DBOpen(dbFile, log)
+	default:
+		panic("Unknown Database Engine")
+	}
+	if err != nil {
+		log.Fatal("Unable to connect to database.")
+	}
+
+}
+
+func Migrate(fromEngine string, fromFile string, toEngine string, toFile string) error {
+	SetEngine(fromEngine)
+	SetFilename(fromFile)
+	Start()
+	var encryptedTransactions []types.EncryptedTransaction
+	var encryptedRawTransactions []types.EncryptedRawTransaction
+	var peers []types.Peer
+
+	err := types.GetAll(&encryptedTransactions)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all transactions")
+	}
+
+	err = types.GetAll(&encryptedRawTransactions)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all raw transactions")
+	}
+
+	err = types.GetAll(&peers)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all peers")
+	}
+
+	SetEngine(toEngine)
+	SetFilename(toFile)
+	Start()
+
+	for _, item := range encryptedTransactions {
+		err = item.Save()
 		if err != nil {
-			log.Fatalf("Failed to start DB file at %s", dbFile)
+			log.WithError(err).Fatal("Unable to save all transactions")
 		}
 	}
 
-	log.Info("Opening DB: ", dbFile)
-	db, err = storm.Open(dbFile)
-
-	if err != nil {
-		defer func() {
-			err = db.Close()
-			log.WithError(err).Fatal("Could not open DBFile: ", dbFile, ", error: ", err)
-			os.Exit(1)
-		}()
+	for _, item := range encryptedRawTransactions {
+		err = item.Save()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to save all raw transactions")
+		}
 	}
+
+	for _, item := range peers {
+		err = item.Save()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to save all peers")
+		}
+		for _, pk := range item.PublicKeys {
+			pkURL := types.NewPublicKeyURL(pk, item.URL)
+			err := pkURL.Save()
+			if err != nil {
+				log.WithError(err).Panic("Could not save peer public key.")
+			}
+		}
+	}
+	return nil
 }

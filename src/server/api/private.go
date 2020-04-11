@@ -24,7 +24,8 @@ import (
 	"net/http"
 	"strings"
 
-	"Smilo-blackbox/src/data"
+	"Smilo-blackbox/src/data/types"
+
 	"Smilo-blackbox/src/server/encoding"
 
 	"io/ioutil"
@@ -117,17 +118,20 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		requestError(w, http.StatusBadRequest, message)
 	}
 
-	encTrans := createNewEncodedTransaction(w, r, payload, fromEncoded, recipients)
+	encTrans, err := createNewEncodedTransaction(w, r, payload, fromEncoded, recipients)
 
-	if encTrans != nil {
+	if err == nil {
 		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)
 		log.WithField("txEncoded", txEncoded).Info("Created transaction, ")
-		_, err := w.Write([]byte(txEncoded))
-		if err != nil {
-			log.WithError(err).Error("Could not w.Write")
+		_, err = w.Write([]byte(txEncoded))
+		if err == nil {
+			w.Header().Set("Content-Type", "text/plain")
+			return
 		}
-		w.Header().Set("Content-Type", "text/plain")
+		log.WithError(err).Error("Could not w.Write")
 	}
+
+	requestError(w, http.StatusInternalServerError, err.Error())
 }
 
 // Send It receives json SendRequest with from, to and payload, returns Status Code 200 and json KeyJSON with encoded key.
@@ -156,16 +160,19 @@ func Send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encTrans := createNewEncodedTransaction(w, r, payload, sender, recipients)
+	encTrans, err := createNewEncodedTransaction(w, r, payload, sender, recipients)
 
-	if encTrans != nil {
+	if err == nil {
 		sendResp := KeyJSON{Key: base64.StdEncoding.EncodeToString(encTrans.Hash)}
-		err := json.NewEncoder(w).Encode(sendResp)
-		if err != nil {
-			log.WithError(err).Error("Could not json.NewEncoder")
+		err = json.NewEncoder(w).Encode(sendResp)
+		if err == nil {
+			w.Header().Set("Content-Type", "application/json")
+			return
 		}
-		w.Header().Set("Content-Type", "application/json")
+		log.WithError(err).Error("Could not json.NewEncoder")
 	}
+
+	requestError(w, http.StatusInternalServerError, err.Error())
 }
 
 // SendSignedTx It receives header "bb0x-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
@@ -211,7 +218,7 @@ func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	encRawTrans, err := data.FindEncryptedRawTransaction(key)
+	encRawTrans, err := types.FindEncryptedRawTransaction(key)
 	if err != nil || encRawTrans == nil {
 		message := fmt.Sprintf("Raw Transaction key: %s not found", hex.EncodeToString(key))
 		log.Error(message)
@@ -221,17 +228,20 @@ func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 
 	encPayload := encoding.Deserialize(encRawTrans.EncodedPayload)
 	payload := encPayload.Decode(crypt.GetPublicKeys()[0])
-	encTrans := createNewEncodedTransaction(w, r, payload, encRawTrans.Sender, recipients)
+	encTrans, err := createNewEncodedTransaction(w, r, payload, encRawTrans.Sender, recipients)
 
-	if encTrans != nil {
+	if err == nil {
 		txEncoded := base64.StdEncoding.EncodeToString(encTrans.Hash)
 		log.WithField("txEncoded", txEncoded).Info("Created transaction, ")
-		_, err := w.Write([]byte(txEncoded))
-		if err != nil {
-			log.WithError(err).Error("Could not w.Write")
+		_, err = w.Write([]byte(txEncoded))
+		if err == nil {
+			w.Header().Set("Content-Type", "text/plain")
+			return
 		}
-		w.Header().Set("Content-Type", "text/plain")
+		log.WithError(err).Error("Could not w.Write")
+		requestError(w, http.StatusInternalServerError, err.Error())
 	}
+
 }
 
 func splitToString(to string) ([][]byte, []string) {
@@ -248,27 +258,41 @@ func splitToString(to string) ([][]byte, []string) {
 	return recipients, errors
 }
 
-func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) *data.EncryptedTransaction {
+func createNewEncodedTransaction(w http.ResponseWriter, r *http.Request, payload []byte, fromEncoded []byte, recipients [][]byte) (*types.EncryptedTransaction, error) {
 	encPayload, err := encoding.EncodePayloadData(payload, fromEncoded, recipients)
 	if err != nil {
 		message := fmt.Sprintf("Error Encoding Payload on Request: url: %s, err: %s", r.URL, err)
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
-		return nil
+		return nil, err
 	}
-	encTrans := data.NewEncryptedTransaction(*encPayload.Serialize())
+	encTrans := types.NewEncryptedTransaction(*encPayload.Serialize())
 	err = encTrans.Save()
 	if err != nil {
-		log.WithError(err).Error("Could not encTrans.Save()")
+		message := "Error saving encrypted transaction."
+		log.Error(message)
+		requestError(w, http.StatusInternalServerError, message)
+		return nil, err
 	}
-	pushToAllRecipients(recipients, encTrans)
-	return encTrans
+	failed := pushToAllRecipients(recipients, encTrans)
+	if len(failed) > 0 {
+		// TODO: Think about a retry queue, it will be useful for mobile blackboxes
+		msg := "Unable to find peers for: " + strings.Join(failed, ",")
+		requestError(w, http.StatusExpectationFailed, msg)
+		return nil, fmt.Errorf(msg)
+	}
+	return encTrans, nil
 }
 
-func pushToAllRecipients(recipients [][]byte, encTrans *data.EncryptedTransaction) {
+func pushToAllRecipients(recipients [][]byte, encTrans *types.EncryptedTransaction) []string {
+	failedRecipients := make([]string, 0, len(recipients))
 	for _, recipient := range recipients {
-		PushTransactionForOtherNodes(*encTrans, recipient)
+		err := PushTransactionForOtherNodes(*encTrans, recipient)
+		if err != nil {
+			failedRecipients = append(failedRecipients, base64.StdEncoding.EncodeToString(recipient))
+		}
 	}
+	return failedRecipients
 }
 
 // Receive is a Deprecated API

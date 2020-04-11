@@ -20,7 +20,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
-	"os"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/urfave/cli.v1"
@@ -37,15 +36,24 @@ import (
 )
 
 var (
-	log    *logrus.Entry
-	config Config
+	log          *logrus.Entry
+	config       Config
+	InitialPeers []string
 
 	//GenerateKeys (cli) uses it for key pair
 	GenerateKeys = cli.StringFlag{Name: "generate-keys", Value: "", Usage: "Generate a new keypair"}
+	//MigrateDB (cli) uses it for signaling a database migration
+	MigrateDB = cli.BoolFlag{Name: "migrate-database", Usage: "Migrates database to destination database"}
 	//ConfigFile (cli) uses it for config file name
 	ConfigFile = cli.StringFlag{Name: "configfile", Value: "blackbox.conf", Usage: "Config file name"}
+	//DBEngine (cli) uses it for db engine
+	DBEngine = cli.StringFlag{Name: "dbengine", Value: "boltdb", Usage: "DB engine name"}
 	//DBFile (cli) uses it for db file name
 	DBFile = cli.StringFlag{Name: "dbfile", Value: "blackbox.db", Usage: "DB file name"}
+	//DBEngineDest (cli) uses it for the migration destination db engine
+	DBEngineDest = cli.StringFlag{Name: "dbengine-dest", Value: "boltdb", Usage: "Destination DB engine name"}
+	//DBFileDest (cli) uses it for the migration destination db file name
+	DBFileDest = cli.StringFlag{Name: "dbfile-dest", Value: "blackbox2.db", Usage: "Destination DB file name"}
 	//PeersDBFile (cli) uses it for peer db file
 	PeersDBFile = cli.StringFlag{Name: "peersdbfile", Value: "blackbox-peers.db", Usage: "Peers DB file name"}
 	//Port (cli) uses it for local api public port
@@ -102,12 +110,12 @@ func Init(app *cli.App) {
 }
 
 func setCommandList(app *cli.App) {
-	app.Flags = []cli.Flag{GenerateKeys, ConfigFile, DBFile, PeersDBFile, Port, Hostaddr, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
+	app.Flags = []cli.Flag{GenerateKeys, MigrateDB, ConfigFile, DBEngine, DBFile, DBEngineDest, DBFileDest, PeersDBFile, Port, Hostaddr, Socket, OtherNodes, PublicKeys, PrivateKeys, Storage, HostName, WorkDir, IsTLS, ServCert, ServKey, RootCert, CPUProfiling, P2PEnabled}
 }
 
 //LoadConfig will load cfg
 func LoadConfig(configPath string) error {
-	byteValue, err := readAllFile(configPath)
+	byteValue, err := utils.ReadAllFile(configPath, log)
 	if err != nil {
 		return err
 	}
@@ -171,6 +179,9 @@ func parseConfigValues() {
 		}
 
 	}
+	if config.DBEngine != "" {
+		DBEngine.Value = config.DBEngine
+	}
 	if config.DBFile != "" {
 		DBFile.Value = config.DBFile
 	}
@@ -178,15 +189,17 @@ func parseConfigValues() {
 		PeersDBFile.Value = config.PeersDBFile
 	}
 	data.SetFilename(utils.BuildFilename(DBFile.Value))
+	data.SetEngine(DBEngine.Value)
 	syncpeer.SetHostURL(HostName.Value + ":" + Port.Value)
+	InitialPeers = make([]string, 0, len(config.Peers))
 	for _, peerdata := range config.Peers {
-		syncpeer.PeerAdd(peerdata.URL)
+		InitialPeers = append(InitialPeers, peerdata.URL)
 	}
 }
 
 //ReadPrimaryKey will read pk
 func ReadPrimaryKey(pkFile string) ([]byte, error) {
-	byteValue, err := readAllFile(pkFile)
+	byteValue, err := utils.ReadAllFile(pkFile, log)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +220,7 @@ func ReadPrimaryKey(pkFile string) ([]byte, error) {
 
 //ReadPublicKey will read pub
 func ReadPublicKey(pubFile string) ([]byte, error) {
-	byteValue, err := readAllFile(pubFile)
+	byteValue, err := utils.ReadAllFile(pubFile, log)
 	if err != nil {
 		return nil, err
 	}
@@ -216,19 +229,4 @@ func ReadPublicKey(pubFile string) ([]byte, error) {
 	_, err = base64.StdEncoding.Decode(publicKey, byteValue)
 
 	return publicKey[0:32], err
-}
-
-func readAllFile(file string) ([]byte, error) {
-	plainFile, err := os.Open(file)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		err := plainFile.Close()
-		if err != nil {
-			log.WithError(err).Error("Could not Close ")
-		}
-	}()
-	byteValue, err := ioutil.ReadAll(plainFile)
-	return byteValue, err
 }

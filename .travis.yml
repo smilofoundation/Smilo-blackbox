@@ -1,33 +1,37 @@
 language: go
 go_import_path: Smilo-blackbox
-sudo: false
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $GOPATH/pkg/mod
+
+#before_cache:
+
 matrix:
   include:
     - os: linux
-      dist: trusty
-      sudo: required
-      go: 1.10.x
+      name: "Linux go12, build, unit test, integration-test"
+      dist: xenial
+      go: 1.12.x
       script:
-      - sudo modprobe fuse
-      - sudo chmod 666 /dev/fuse
-      - sudo chown root:$USER /etc/fuse.conf
       - go build -o blackbox main.go
       - go test ./src/... -timeout=20m -cover
+      - make integration-test
 
     # Build and test latest go version
     - os: linux
-      dist: trusty
-      sudo: required
-      go: 1.11.x
+      name: "Linux go13, build, unit test, integration-test"
+      dist: xenial
+      go: 1.13.x
       script:
-        - sudo modprobe fuse
-        - sudo chmod 666 /dev/fuse
-        - sudo chown root:$USER /etc/fuse.conf
         - go build -o blackbox main.go
         - go test ./src/... -timeout=20m -cover
+        - make integration-test
 
     - os: osx
-      go: 1.11.x
+      name: "OSX go13, build, unit test, integration-test"
+      go: 1.13.x
       script:
         - echo "Increase the maximum number of open file descriptors on macOS"
         - NOFILE=20480
@@ -40,13 +44,13 @@ matrix:
         - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
         - go build -o blackbox main.go
         - go test ./src/... -timeout=20m cover
+        - make integration-test
 
     # Run lint on latest go version
     - os: linux
-      dist: trusty
-      go: 1.11.x
-      env:
-        - lint
+      name: "lint"
+      dist: xenial
+      go: 1.13.x
       git:
         submodules: false
       script:

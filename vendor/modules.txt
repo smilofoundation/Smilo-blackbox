@@ -1,0 +1,114 @@
+# github.com/asdine/storm v2.1.2+incompatible
+github.com/asdine/storm
+github.com/asdine/storm/codec
+github.com/asdine/storm/codec/json
+github.com/asdine/storm/index
+github.com/asdine/storm/internal
+github.com/asdine/storm/q
+# github.com/aws/aws-sdk-go v1.20.18
+github.com/aws/aws-sdk-go/aws
+github.com/aws/aws-sdk-go/aws/awserr
+github.com/aws/aws-sdk-go/aws/awsutil
+github.com/aws/aws-sdk-go/aws/client
+github.com/aws/aws-sdk-go/aws/client/metadata
+github.com/aws/aws-sdk-go/aws/corehandlers
+github.com/aws/aws-sdk-go/aws/credentials
+github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds
+github.com/aws/aws-sdk-go/aws/credentials/endpointcreds
+github.com/aws/aws-sdk-go/aws/credentials/processcreds
+github.com/aws/aws-sdk-go/aws/credentials/stscreds
+github.com/aws/aws-sdk-go/aws/crr
+github.com/aws/aws-sdk-go/aws/csm
+github.com/aws/aws-sdk-go/aws/defaults
+github.com/aws/aws-sdk-go/aws/ec2metadata
+github.com/aws/aws-sdk-go/aws/endpoints
+github.com/aws/aws-sdk-go/aws/request
+github.com/aws/aws-sdk-go/aws/session
+github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/ini
+github.com/aws/aws-sdk-go/internal/sdkio
+github.com/aws/aws-sdk-go/internal/sdkrand
+github.com/aws/aws-sdk-go/internal/sdkuri
+github.com/aws/aws-sdk-go/internal/shareddefaults
+github.com/aws/aws-sdk-go/private/protocol
+github.com/aws/aws-sdk-go/private/protocol/json/jsonutil
+github.com/aws/aws-sdk-go/private/protocol/jsonrpc
+github.com/aws/aws-sdk-go/private/protocol/query
+github.com/aws/aws-sdk-go/private/protocol/query/queryutil
+github.com/aws/aws-sdk-go/private/protocol/rest
+github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil
+github.com/aws/aws-sdk-go/service/dynamodb
+github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute
+github.com/aws/aws-sdk-go/service/dynamodb/expression
+github.com/aws/aws-sdk-go/service/sts
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/drewolson/testflight v1.0.0
+github.com/drewolson/testflight
+# github.com/ethereum/go-ethereum v1.8.12
+github.com/ethereum/go-ethereum/log
+# github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a
+github.com/facebookgo/clock
+# github.com/facebookgo/grace v0.0.0-20180706040059-75cf19382434
+github.com/facebookgo/grace/gracehttp
+github.com/facebookgo/grace/gracenet
+# github.com/facebookgo/httpdown v0.0.0-20180706035922-5979d39b15c2
+github.com/facebookgo/httpdown
+# github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4
+github.com/facebookgo/stats
+# github.com/go-redis/redis v6.15.7+incompatible
+github.com/go-redis/redis
+github.com/go-redis/redis/internal
+github.com/go-redis/redis/internal/consistenthash
+github.com/go-redis/redis/internal/hashtag
+github.com/go-redis/redis/internal/pool
+github.com/go-redis/redis/internal/proto
+github.com/go-redis/redis/internal/util
+# github.com/go-stack/stack v1.8.0
+github.com/go-stack/stack
+# github.com/gorilla/context v1.1.1
+github.com/gorilla/context
+# github.com/gorilla/mux v1.6.2
+github.com/gorilla/mux
+# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+github.com/jmespath/go-jmespath
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/onrik/logrus v0.2.2-0.20181225141908-a09d5cdcdc62
+github.com/onrik/logrus/filename
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/sirupsen/logrus v1.3.0
+github.com/sirupsen/logrus
+# github.com/stretchr/testify v1.3.0
+github.com/stretchr/testify/assert
+github.com/stretchr/testify/require
+# github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0
+github.com/tidwall/btree
+# github.com/tidwall/buntdb v1.0.0
+github.com/tidwall/buntdb
+# github.com/tidwall/gjson v1.1.5
+github.com/tidwall/gjson
+# github.com/tidwall/grect v0.0.0-20161006141115-ba9a043346eb
+github.com/tidwall/grect
+# github.com/tidwall/match v1.0.1
+github.com/tidwall/match
+# github.com/tidwall/rtree v0.0.0-20180113144539-6cd427091e0e
+github.com/tidwall/rtree
+github.com/tidwall/rtree/base
+# github.com/tidwall/tinyqueue v0.0.0-20180302190814-1e39f5511563
+github.com/tidwall/tinyqueue
+# github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926
+github.com/tv42/httpunix
+# github.com/twystd/tweetnacl-go v0.0.0-20160506143631-427e8b66793d
+github.com/twystd/tweetnacl-go
+# go.etcd.io/bbolt v1.3.0
+go.etcd.io/bbolt
+# golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b
+golang.org/x/crypto/sha3
+golang.org/x/crypto/ssh/terminal
+# golang.org/x/sys v0.0.0-20190124100055-b90733256f2e
+golang.org/x/sys/unix
+golang.org/x/sys/windows
+# gopkg.in/urfave/cli.v1 v1.20.0
+gopkg.in/urfave/cli.v1
