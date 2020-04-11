@@ -1,11 +1,18 @@
 language: go
 go_import_path: Smilo-blackbox
-sudo: false
+
+cache:
+  directories:
+    - $HOME/.cache/go-build
+    - $GOPATH/pkg/mod
+
+#before_cache:
+
 matrix:
   include:
     - os: linux
-      dist: trusty
-      sudo: required
+      name: "Linux go12, build, unit test, integration-test"
+      dist: xenial
       go: 1.12.x
       script:
       - sudo modprobe fuse
@@ -17,8 +24,8 @@ matrix:
 
     # Build and test latest go version
     - os: linux
-      dist: trusty
-      sudo: required
+      name: "Linux go13, build, unit test, integration-test"
+      dist: xenial
       go: 1.13.x
       script:
         - sudo modprobe fuse
@@ -29,6 +36,7 @@ matrix:
         - make integration-test
 
     - os: osx
+      name: "OSX go13, build, unit test, integration-test"
       go: 1.13.x
       script:
         - echo "Increase the maximum number of open file descriptors on macOS"
@@ -47,7 +55,7 @@ matrix:
     # Run lint on latest go version
     - os: linux
       name: "lint"
-      dist: trusty
+      dist: xenial
       go: 1.13.x
       git:
         submodules: false
