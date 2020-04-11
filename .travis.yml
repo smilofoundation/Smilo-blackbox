@@ -6,28 +6,30 @@ matrix:
     - os: linux
       dist: trusty
       sudo: required
-      go: 1.10.x
+      go: 1.12.x
       script:
       - sudo modprobe fuse
       - sudo chmod 666 /dev/fuse
       - sudo chown root:$USER /etc/fuse.conf
       - go build -o blackbox main.go
       - go test ./src/... -timeout=20m -cover
+      - make integration-test
 
     # Build and test latest go version
     - os: linux
       dist: trusty
       sudo: required
-      go: 1.11.x
+      go: 1.13.x
       script:
         - sudo modprobe fuse
         - sudo chmod 666 /dev/fuse
         - sudo chown root:$USER /etc/fuse.conf
         - go build -o blackbox main.go
         - go test ./src/... -timeout=20m -cover
+        - make integration-test
 
     - os: osx
-      go: 1.11.x
+      go: 1.13.x
       script:
         - echo "Increase the maximum number of open file descriptors on macOS"
         - NOFILE=20480
@@ -40,11 +42,12 @@ matrix:
         - unset -f cd # workaround for https://github.com/travis-ci/travis-ci/issues/8703
         - go build -o blackbox main.go
         - go test ./src/... -timeout=20m cover
+        - make integration-test
 
     # Run lint on latest go version
     - os: linux
       dist: trusty
-      go: 1.11.x
+      go: 1.13.x
       env:
         - lint
       git:

@@ -72,6 +72,7 @@ func (bdb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 	}
 	return &allPeers, nil
 }
+
 func (bdb *DatabaseInstance) Save(data interface{}) error {
 	tagged := GetTagged(data)
 	mutex.Lock()
