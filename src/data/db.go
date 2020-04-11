@@ -44,9 +44,9 @@ func Start() {
 	var err error
 	switch dbEngine {
 	case BOLTDBENGINE:
-		types.DBI, err = boltdb.DbOpen(dbFile, log)
+		types.DBI, err = boltdb.DBOpen(dbFile, log)
 	case DYNAMODBENGINE:
-		types.DBI, err = dynamodb.DbOpen(dbFile, log)
+		types.DBI, err = dynamodb.DBOpen(dbFile, log)
 	case REDISENGINE:
 		types.DBI, err = redis.DBOpen(dbFile, log)
 	default:

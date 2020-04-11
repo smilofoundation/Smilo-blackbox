@@ -46,10 +46,9 @@ matrix:
 
     # Run lint on latest go version
     - os: linux
+      name: "lint"
       dist: trusty
       go: 1.13.x
-      env:
-        - lint
       git:
         submodules: false
       script:

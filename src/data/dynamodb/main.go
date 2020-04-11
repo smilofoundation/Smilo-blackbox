@@ -139,7 +139,7 @@ func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer,
 	return nil, err
 }
 
-func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
+func DBOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,

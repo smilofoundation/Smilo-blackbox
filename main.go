@@ -129,7 +129,7 @@ func LoadConfig(configFile string) {
 
 func handlePanic() {
 	if r := recover(); r != nil {
-		log.WithError(fmt.Errorf("%+v", r)).Error(fmt.Sprintf("Application BlackBox panic"))
+		log.WithError(fmt.Errorf("%+v", r)).Error("Application BlackBox panic")
 	}
 	time.Sleep(time.Second * 5)
 }

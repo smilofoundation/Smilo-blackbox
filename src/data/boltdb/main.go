@@ -147,7 +147,7 @@ func (bdb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, e
 	return &next, nil
 }
 
-func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
+func DBOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if _, err := os.Stat(filename); os.IsNotExist(err) {

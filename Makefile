@@ -52,7 +52,6 @@ test-race: clean ## Run tests with -race. Note: expected to fail, but look for "
 	go test ./src/... -timeout=5m -race
 
 lint: clean ## Run linters. Use make install-linters first.
-	vendorcheck ./src/...
 	golangci-lint run --deadline=3m --disable-all --tests \
 		-E deadcode \
 		-E errcheck \
@@ -106,7 +105,6 @@ doc:
 
 
 install-linters: ## Install linters
-	go get -u github.com/FiloSottile/vendorcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
 
@@ -163,15 +161,15 @@ integration-clean:
 integration-network-up:
 	rm ./test/*.log | true
 	rm ./test/*.prof | true
-	bin/blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof 2>> ./test/1.log &
+	bin/blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof 2>&1 ./test/1.log &
 	sleep 1
-	bin/blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof 2>> ./test/2.log &
+	bin/blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof 2>&1 ./test/2.log &
 	sleep 1
-	bin/blackbox --configfile ./test/test3.conf  2>> ./test/3.log &
+	bin/blackbox --configfile ./test/test3.conf  2>&1 ./test/3.log &
 	sleep 1
-	bin/blackbox --configfile ./test/test4.conf  2>> ./test/4.log &
+	bin/blackbox --configfile ./test/test4.conf  2>&1 ./test/4.log &
 	sleep 1
-	bin/blackbox --configfile ./test/test5.conf  2>> ./test/5.log &
+	bin/blackbox --configfile ./test/test5.conf  2>&1 ./test/5.log &
 	sleep 1
 
 integration-test: build integration-clean build integration-network-up

@@ -95,7 +95,7 @@ func GetPartyInfo(w http.ResponseWriter, r *http.Request) {
 func Push(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		if rec := recover(); rec != nil {
-			message := fmt.Sprintf("Cannot deserialize payload.")
+			message := "Cannot deserialize payload."
 			log.Error(message)
 			requestError(w, http.StatusInternalServerError, message)
 		}
@@ -131,7 +131,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	encTrans := types.NewEncryptedTransaction(payload)
 
 	if encTrans == nil {
-		message := fmt.Sprintf("Cannot save transaction.")
+		message := "Cannot save transaction."
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
 		return
@@ -376,7 +376,7 @@ func StoreRaw(w http.ResponseWriter, r *http.Request) {
 	encRawTrans := createNewEncodedRawTransaction(w, r, payload, from)
 
 	if encRawTrans == nil {
-		message := fmt.Sprintf("Cannot save raw transaction.")
+		message := "Cannot save raw transaction."
 		log.Error(message)
 		requestError(w, http.StatusInternalServerError, message)
 		return
