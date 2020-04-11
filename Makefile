@@ -79,7 +79,7 @@ lint: clean ## Run linters. Use make install-linters first.
 		-E bodyclose \
 		-E gosimple \
 		-E unused \
-		--exclude="don't use ALL_CAPS in Go names; use CamelCase"
+		--exclude="should not use ALL_CAPS in Go names; use CamelCase instead,don't use ALL_CAPS in Go names; use CamelCase"
 
 lint-cyclo: clean ## Run linters. Use make install-linters first.
 	vendorcheck ./src/...
@@ -163,18 +163,18 @@ integration-clean:
 integration-network-up:
 	rm ./test/*.log | true
 	rm ./test/*.prof | true
-	./bin/blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof &> ./test/1.log &
+	bin/blackbox --configfile ./test/test1.conf --p2p --cpuprofile ./test/cpu.prof 2>> ./test/1.log &
 	sleep 1
-	./bin/blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof &> ./test/2.log&
+	bin/blackbox --configfile ./test/test2.conf --cpuprofile ./test/cpu_without_p2p.prof 2>> ./test/2.log &
 	sleep 1
-	./bin/blackbox --configfile ./test/test3.conf  &> ./test/3.log &
+	bin/blackbox --configfile ./test/test3.conf  2>> ./test/3.log &
 	sleep 1
-	./bin/blackbox --configfile ./test/test4.conf  &> ./test/4.log &
+	bin/blackbox --configfile ./test/test4.conf  2>> ./test/4.log &
 	sleep 1
-	./bin/blackbox --configfile ./test/test5.conf  &> ./test/5.log &
+	bin/blackbox --configfile ./test/test5.conf  2>> ./test/5.log &
 	sleep 1
 
-integration-test: integration-clean build integration-network-up
+integration-test: build integration-clean build integration-network-up
 	go test ./test/... -timeout=10m -count=1 || true
 	killall -1 blackbox
 	make integration-clean

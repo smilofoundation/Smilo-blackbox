@@ -18,8 +18,10 @@ package main
 
 import (
 	"Smilo-blackbox/src/crypt"
+	"Smilo-blackbox/src/data"
 	"Smilo-blackbox/src/server"
 	"Smilo-blackbox/src/server/config"
+	"Smilo-blackbox/src/utils"
 	"os"
 
 	"fmt"
@@ -56,8 +58,11 @@ func main() {
 	config.Init(app)
 	app.Name = "blackbox"
 	app.Usage = "safe storage and exchange service for private transactions"
+	app.Version = utils.BlackBoxVersion
+
 	app.Action = func(c *cli.Context) error {
 		generateKeys := c.String("generate-keys")
+		migrateDatabase := c.Bool("migrate-database")
 		configFile := c.String("configfile")
 		cpuProfilingFile := c.String("cpuprofile")
 		if generateKeys != "" {
@@ -67,26 +72,39 @@ func main() {
 			} else {
 				os.Exit(0)
 			}
-		} else {
-			if cpuProfilingFile != "" {
-				f, err := os.Create(cpuProfilingFile)
-				if err != nil {
-					log.Fatal(err)
-				}
-				err = pprof.StartCPUProfile(f)
-				if err != nil {
-					log.Fatal(err)
-				}
-				defer pprof.StopCPUProfile()
+		}
+		if migrateDatabase {
+			var dbengine string
+			var dbfile string
+			if configFile != "blackbox.conf" {
+				LoadConfig(configFile)
+				dbengine = config.DBEngine.Value
+				dbfile = config.DBFile.Value
+			} else {
+				dbengine = c.String("dbengine")
+				dbfile = c.String("dbfile")
 			}
-			err := config.LoadConfig(configFile)
+			err := data.Migrate(dbengine, utils.BuildFilename(dbfile), c.String("dbengine-dest"), utils.BuildFilename(c.String("dbfile-dest")))
+			if err != nil {
+				os.Exit(-1)
+			} else {
+				os.Exit(0)
+			}
+		}
+		if cpuProfilingFile != "" {
+			f, err := os.Create(cpuProfilingFile)
 			if err != nil {
 				log.Fatal(err)
-				os.Exit(1)
 			}
-			server.StartServer()
-			syncpeer.StartSync()
+			err = pprof.StartCPUProfile(f)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer pprof.StopCPUProfile()
 		}
+		LoadConfig(configFile)
+		server.StartServer()
+		syncpeer.StartSync()
 		return nil
 	}
 
@@ -99,6 +117,14 @@ func main() {
 
 	select {}
 
+}
+
+func LoadConfig(configFile string) {
+	err := config.LoadConfig(configFile)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
 }
 
 func handlePanic() {

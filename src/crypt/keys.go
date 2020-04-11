@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -73,7 +72,7 @@ func GenerateKeys(generateKeys string) error {
 }
 
 // WritePrivateKeyFile creates a json file with the private key
-func WritePrivateKeyFile(key string, filename string) error {
+func WritePrivateKeyFile(key string, filepath string) error {
 	targetObject := map[string]interface{}{
 		"type": "unlocked",
 		"data": map[string]interface{}{
@@ -86,27 +85,14 @@ func WritePrivateKeyFile(key string, filename string) error {
 		return err
 	}
 
-	dir, err := os.Getwd() // gives us the source path
-	if err != nil {
-		log.WithError(err).Error("Could not os.Getwd()")
-		return err
-	}
-
-	path := filepath.Join(dir, "keys/"+filename)
-
-	log.WithField("path", path).Info("Going to Write Private Key File")
-	return ioutil.WriteFile(path, jsonBytes, os.ModePerm)
+	log.WithField("filepath", filepath).Info("Going to Write Private Key File")
+	return ioutil.WriteFile(filepath, jsonBytes, os.ModePerm)
 }
 
 // WritePublicKeyFile creates a file with the pubKey
-func WritePublicKeyFile(key string, filename string) error {
-	dir, err := os.Getwd() // gives us the source path
-	if err != nil {
-		return err
-	}
-	path := filepath.Join(dir, "keys/"+filename)
+func WritePublicKeyFile(key string, filepath string) error {
 
-	log.WithField("path", path).Info("Going to Write Public Key File")
+	log.WithField("filepath", filepath).Info("Going to Write Public Key File")
 
-	return ioutil.WriteFile(path, []byte(key), os.ModePerm)
+	return ioutil.WriteFile(filepath, []byte(key), os.ModePerm)
 }

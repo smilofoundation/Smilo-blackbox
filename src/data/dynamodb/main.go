@@ -1,14 +1,16 @@
 package dynamodb
 
 import (
-	"errors"
+	"reflect"
 	"time"
 
 	"Smilo-blackbox/src/data/types"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	dynDB "github.com/aws/aws-sdk-go/service/dynamodb"
 	dynDBAttr "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	dynDBExp "github.com/aws/aws-sdk-go/service/dynamodb/expression"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,7 +42,7 @@ func (dyndb *DatabaseInstance) Find(fieldname string, value interface{}, to inte
 	ret, err := dyndb.db.GetItem(input)
 	if err == nil {
 		if ret.Item == nil {
-			return errors.New("not found")
+			return types.ErrNotFound
 		}
 		err = dynDBAttr.UnmarshalMap(ret.Item, to)
 	}
@@ -55,12 +57,86 @@ func (dyndb *DatabaseInstance) Save(data interface{}) error {
 	return err
 }
 
+func (dyndb *DatabaseInstance) All(instances interface{}) error {
+	result := reflect.ValueOf(instances)
+	resultItem := reflect.New(reflect.TypeOf(result.Elem().Interface()).Elem()).Elem().Addr().Interface()
+	input := &dynDB.ScanInput{
+		TableName: aws.String(*getTablename(resultItem)),
+	}
+	out, err := dyndb.db.Scan(input)
+	if err != nil {
+		return err
+	}
+	result = reflect.ValueOf(
+		reflect.MakeSlice(
+			reflect.SliceOf(
+				reflect.TypeOf(resultItem).Elem()),
+			0,
+			len(out.Items)).
+			Interface())
+	for _, item := range out.Items {
+		err = dynDBAttr.UnmarshalMap(item, resultItem)
+		if err != nil {
+			return err
+		}
+		tmp2 := reflect.ValueOf(resultItem)
+		result = reflect.Append(result, tmp2.Elem())
+	}
+
+	types.GetUntaggedArrayPtr(result.Interface(), instances)
+	return nil
+}
+
 func (dyndb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
-	return nil, nil
+	peerList := make([]types.Peer, 0, 128)
+	input := &dynDB.ScanInput{
+		TableName: aws.String(*getTablename(&types.Peer{})),
+	}
+	out, err := dyndb.db.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range out.Items {
+		var peer types.Peer
+		err = dynDBAttr.UnmarshalMap(item, &peer)
+		if err != nil {
+			return nil, err
+		}
+		peerList = append(peerList, peer)
+	}
+	return &peerList, nil
 }
 func (dyndb *DatabaseInstance) GetNextPeer(postpone time.Duration) (*types.Peer, error) {
-	//TODO: Implement NextPeer for DynamoDB
-	return nil, nil
+	cond := dynDBExp.Name("NextUpdate").LessThanEqual(dynDBExp.Value(time.Now()))
+	expr, err := dynDBExp.NewBuilder().
+		WithFilter(cond).
+		Build()
+	if err != nil {
+		return nil, err
+	}
+	input := &dynDB.ScanInput{
+		FilterExpression:          expr.Filter(),
+		ExpressionAttributeNames:  expr.Names(),
+		ExpressionAttributeValues: expr.Values(),
+		TableName:                 aws.String(*getTablename(&types.Peer{})),
+	}
+	out, err := dyndb.db.Scan(input)
+	if err != nil {
+		return nil, err
+	}
+	if *out.Count < 1 {
+		return nil, nil
+	}
+	var peer types.Peer
+	err = dynDBAttr.UnmarshalMap(out.Items[0], &peer)
+	if err == nil {
+		peer.NextUpdate = time.Now().Add(postpone)
+		err = peer.Save()
+		if err == nil {
+			return &peer, nil
+		}
+	}
+	return nil, err
 }
 
 func DbOpen(filename string, log *logrus.Entry) (*DatabaseInstance, error) {

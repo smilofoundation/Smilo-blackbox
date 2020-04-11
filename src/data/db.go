@@ -26,6 +26,10 @@ import (
 var dbFile string
 var dbEngine = ""
 
+const BOLTDBENGINE = "boltdb"
+const DYNAMODBENGINE = "dynamodb"
+const REDISENGINE = "redis"
+
 // SetFilename set filename
 func SetFilename(filename string) {
 	dbFile = filename
@@ -39,11 +43,11 @@ func SetEngine(engine string) {
 func Start() {
 	var err error
 	switch dbEngine {
-	case "boltdb":
+	case BOLTDBENGINE:
 		types.DBI, err = boltdb.DbOpen(dbFile, log)
-	case "dynamodb":
+	case DYNAMODBENGINE:
 		types.DBI, err = dynamodb.DbOpen(dbFile, log)
-	case "redis":
+	case REDISENGINE:
 		types.DBI, err = redis.DBOpen(dbFile, log)
 	default:
 		panic("Unknown Database Engine")
@@ -52,4 +56,61 @@ func Start() {
 		log.Fatal("Unable to connect to database.")
 	}
 
+}
+
+func Migrate(fromEngine string, fromFile string, toEngine string, toFile string) error {
+	SetEngine(fromEngine)
+	SetFilename(fromFile)
+	Start()
+	var encryptedTransactions []types.EncryptedTransaction
+	var encryptedRawTransactions []types.EncryptedRawTransaction
+	var peers []types.Peer
+
+	err := types.GetAll(&encryptedTransactions)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all transactions")
+	}
+
+	err = types.GetAll(&encryptedRawTransactions)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all raw transactions")
+	}
+
+	err = types.GetAll(&peers)
+	if err != nil {
+		log.WithError(err).Fatal("Unable to get all peers")
+	}
+
+	SetEngine(toEngine)
+	SetFilename(toFile)
+	Start()
+
+	for _, item := range encryptedTransactions {
+		err = item.Save()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to save all transactions")
+		}
+	}
+
+	for _, item := range encryptedRawTransactions {
+		err = item.Save()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to save all raw transactions")
+		}
+	}
+
+	for _, item := range peers {
+		err = item.Save()
+		if err != nil {
+			log.WithError(err).Fatal("Unable to save all peers")
+		}
+		for _, pk := range item.PublicKeys {
+			pkURL := types.NewPublicKeyURL(pk, item.URL)
+			err := pkURL.Save()
+			if err != nil {
+				log.WithError(err).Panic("Could not save peer public key.")
+			}
+		}
+	}
+	return nil
 }

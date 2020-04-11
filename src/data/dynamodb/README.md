@@ -30,3 +30,10 @@ Create the tables to store transactions:
             AttributeName=Hash,AttributeType=B \
         --key-schema AttributeName=Hash,KeyType=HASH\
         --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1
+    
+    >aws dynamodb create-table \
+        --table-name Peer \
+        --attribute-definitions \
+            AttributeName=URL,AttributeType=S \
+        --key-schema AttributeName=URL,KeyType=HASH\
+        --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1

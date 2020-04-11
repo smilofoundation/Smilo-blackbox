@@ -65,6 +65,7 @@ type PeerNode struct {
     NetworkStatus string    `json:"network_status"`
     RemoteAddr    string    `json:"remote_addr"`
 }
+
 ```
 PeerNode Peers contains the peer info
 

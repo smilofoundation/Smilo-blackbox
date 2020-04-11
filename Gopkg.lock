@@ -17,7 +17,7 @@
   version = "v2.1.2"
 
 [[projects]]
-  digest = "1:e099b71dfd94940ca3fbcda0910e2fc5713cf76d925f7ee1c478c15743ffd360"
+  digest = "1:f7630983fb78536ffe4d48bb811f81d6238bce6d78b7813ed3dfed26c77e4ded"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -53,6 +53,7 @@
     "private/protocol/xml/xmlutil",
     "service/dynamodb",
     "service/dynamodb/dynamodbattribute",
+    "service/dynamodb/expression",
     "service/sts",
   ]
   pruneopts = "UT"
@@ -330,6 +331,7 @@
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/dynamodb",
     "github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute",
+    "github.com/aws/aws-sdk-go/service/dynamodb/expression",
     "github.com/drewolson/testflight",
     "github.com/ethereum/go-ethereum/log",
     "github.com/facebookgo/grace/gracehttp",
