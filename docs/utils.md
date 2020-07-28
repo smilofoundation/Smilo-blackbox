@@ -28,11 +28,11 @@ const (
     UpcheckMessage = "I'm up!"
 
     //HeaderFrom header default
-    HeaderFrom = "bb0x-from"
+    HeaderFrom = "c11n-from"
     //HeaderTo header default
-    HeaderTo = "bb0x-to"
+    HeaderTo = "c11n-to"
     //HeaderKey header default
-    HeaderKey = "bb0x-key"
+    HeaderKey = "c11n-key"
 )
 ```
 

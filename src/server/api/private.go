@@ -36,7 +36,7 @@ import (
 	"Smilo-blackbox/src/utils"
 )
 
-// SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns Status Code 200 and encoded key plain text.
+// SendRaw It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
 func SendRaw(w http.ResponseWriter, r *http.Request) {
 	var fromEncoded []byte
 	var err error
@@ -54,7 +54,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	if from != "" {
 		fromEncoded, err = base64.StdEncoding.DecodeString(from)
 		if err != nil {
-			message := fmt.Sprintf("Invalid request: %s, bb0x-from header (%s) is not a valid key.", r.URL, from)
+			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
 			log.Error(message)
 			requestError(w, http.StatusBadRequest, message)
 			return
@@ -65,7 +65,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 		fromEncoded, err = base64.StdEncoding.DecodeString(defaultPubKey)
 		log.WithField("defaultPubKey", defaultPubKey).Info("Request from NOT filled, will use default PubKey")
 		if err != nil {
-			message := fmt.Sprintf("Invalid request: %s, bb0x-from header (%s) is not a valid key.", r.URL, from)
+			message := fmt.Sprintf("Invalid request: %s, c11n-from header (%s) is not a valid key.", r.URL, from)
 			log.Error(message)
 			requestError(w, http.StatusBadRequest, message)
 			return
@@ -78,7 +78,7 @@ func SendRaw(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < len(encodedRecipients); i++ {
 		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
+			errors = append(errors, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
 		}
 		recipients[i] = decodedValue
 	}
@@ -175,7 +175,7 @@ func Send(w http.ResponseWriter, r *http.Request) {
 	requestError(w, http.StatusInternalServerError, err.Error())
 }
 
-// SendSignedTx It receives header "bb0x-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
+// SendSignedTx It receives header "c11n-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
 func SendSignedTx(w http.ResponseWriter, r *http.Request) {
 	var err error
 
@@ -251,7 +251,7 @@ func splitToString(to string) ([][]byte, []string) {
 	for i := 0; i < len(encodedRecipients); i++ {
 		decodedValue, err := base64.StdEncoding.DecodeString(encodedRecipients[i])
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("bb0x-to header (%s) is not a valid key", encodedRecipients[i]))
+			errors = append(errors, fmt.Sprintf("c11n-to header (%s) is not a valid key", encodedRecipients[i]))
 		}
 		recipients[i] = decodedValue
 	}

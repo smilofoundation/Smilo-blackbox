@@ -29,16 +29,16 @@ import (
 
 const (
 	//BlackBoxVersion holds bb version
-	BlackBoxVersion = "v1.0.4"
+	BlackBoxVersion = "v2.0.0"
 	//UpcheckMessage http up check msg
 	UpcheckMessage = "I'm up!"
 
 	//HeaderFrom header default
-	HeaderFrom = "bb0x-from"
+	HeaderFrom = "c11n-from"
 	//HeaderTo header default
-	HeaderTo = "bb0x-to"
+	HeaderTo = "c11n-to"
 	//HeaderKey header default
-	HeaderKey = "bb0x-key"
+	HeaderKey = "c11n-key"
 )
 
 //BuildFilename will build a filename with correct path based on pwd
