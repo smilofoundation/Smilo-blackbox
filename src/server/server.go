@@ -168,7 +168,7 @@ func StartServer() {
 				log.Fatalf("Error loading cert: %v", err)
 				os.Exit(1)
 			}
-			pub.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}}
+			pub.TLSConfig = &tls.Config{Certificates: []tls.Certificate{cert}, MinVersion: tls.VersionTLS12}
 			err = gracehttp.Serve(pub)
 			if err != nil {
 				log.Fatalf("Error starting server with TLS: %v", err)
