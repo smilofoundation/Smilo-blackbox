@@ -138,7 +138,7 @@ It receives a ReceiveRequest json with an encoded key (hash) and to values, retu
 ``` go
 func ReceiveRaw(w http.ResponseWriter, r *http.Request)
 ```
-ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return unencrypted payload
+ReceiveRaw Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
 
 
 
@@ -179,7 +179,7 @@ Send It receives json SendRequest with from, to and payload, returns Status Code
 ``` go
 func SendRaw(w http.ResponseWriter, r *http.Request)
 ```
-SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns Status Code 200 and encoded key plain text.
+SendRaw It receives headers "c11n-from" and "c11n-to", payload body and returns Status Code 200 and encoded key plain text.
 
 
 
@@ -187,7 +187,7 @@ SendRaw It receives headers "bb0x-from" and "bb0x-to", payload body and returns 
 ``` go
 func SendSignedTx(w http.ResponseWriter, r *http.Request)
 ```
-SendSignedTx It receives header "bb0x-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
+SendSignedTx It receives header "c11n-to" and raw transaction hash body and returns Status Code 200 and transaction hash.
 
 
 

@@ -148,7 +148,7 @@ func Push(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// ReceiveRaw Receive a GET request with header params bb0x-key and bb0x-to, return unencrypted payload
+// ReceiveRaw Receive a GET request with header params c11n-key and c11n-to, return unencrypted payload
 func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 	key := r.Header.Get(utils.HeaderKey)
 	to := r.Header.Get(utils.HeaderTo)
@@ -169,14 +169,14 @@ func ReceiveRaw(w http.ResponseWriter, r *http.Request) {
 
 	hash, err := base64.StdEncoding.DecodeString(key)
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, bb0x-key header (%s) is not a valid key.", r.URL, key)
+		message := fmt.Sprintf("Invalid request: %s, c11n-key header (%s) is not a valid key.", r.URL, key)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return
 	}
 	public, err := base64.StdEncoding.DecodeString(to)
 	if err != nil {
-		message := fmt.Sprintf("Invalid request: %s, bb0x-to header (%s) is not a valid key.", r.URL, to)
+		message := fmt.Sprintf("Invalid request: %s, c11n-to header (%s) is not a valid key.", r.URL, to)
 		log.Error(message)
 		requestError(w, http.StatusBadRequest, message)
 		return

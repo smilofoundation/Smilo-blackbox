@@ -8,7 +8,7 @@ GO ?= latest
 
 GIT_REV=$$(git rev-parse --short HEAD)
 
-VERSION='v0-2'
+VERSION='v2-0'
 
 DOCKERVERSION=latest
 
@@ -112,7 +112,7 @@ install-tools:
 	go get -u github.com/karalabe/xgo
 
 cross: install-tools blackbox-linux blackbox-linux-arm blackbox-darwin blackbox-windows blackbox-android blackbox-ios
-	xgo --go=latest --targets=linux/amd64  --remote=github.com/Smilo-platform/Smilo-blackbox .
+	xgo --go=latest --targets=linux/amd64  --remote=github.com/smilofoundation/Smilo-blackbox .
 
 blackbox-linux:
 	xgo --go=latest --targets=linux/amd64 -out=./bin/blackbox  .

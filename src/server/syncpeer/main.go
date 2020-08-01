@@ -35,7 +35,7 @@ var (
 		MaxIdleConns:       10,
 		IdleConnTimeout:    30 * time.Second,
 		DisableCompression: true,
-		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool()},
+		TLSClientConfig:    &tls.Config{RootCAs: getOrCreateCertPool(), MinVersion: tls.VersionTLS12},
 	}
 	client = SetupHTTPClientWrapper()
 )

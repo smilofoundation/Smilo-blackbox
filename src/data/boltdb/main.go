@@ -98,9 +98,9 @@ func (bdb *DatabaseInstance) AllPeers() (*[]types.Peer, error) {
 		return nil, err
 	}
 	allPeers := make([]types.Peer, 0, len(peers))
-	for _, peer := range peers {
+	for i := range peers {
 		tmp := types.Peer{}
-		GetUntagged(&peer, &tmp)
+		GetUntagged(&peers[i], &tmp)
 		allPeers = append(allPeers, tmp)
 	}
 	return &allPeers, nil
