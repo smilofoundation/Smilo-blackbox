@@ -6,7 +6,7 @@ require (
 	github.com/DataDog/zstd v1.4.5 // indirect
 	github.com/Sereal/Sereal v0.0.0-20200729085936-158b3944d4d1 // indirect
 	github.com/asdine/storm v2.1.2+incompatible
-	github.com/aws/aws-sdk-go v1.20.18
+	github.com/aws/aws-sdk-go v1.33.0
 	github.com/drewolson/testflight v1.0.0
 	github.com/ethereum/go-ethereum v1.8.12
 	github.com/facebookgo/clock v0.0.0-20150410010913-600d898af40a // indirect
