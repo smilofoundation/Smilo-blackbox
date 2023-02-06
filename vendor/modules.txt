@@ -72,27 +72,29 @@ github.com/gorilla/context
 github.com/gorilla/mux
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
-# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+# github.com/konsorten/go-windows-terminal-sequences v1.0.3
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/onrik/logrus v0.2.2-0.20181225141908-a09d5cdcdc62
 github.com/onrik/logrus/filename
 # github.com/pmezard/go-difflib v1.0.0
 github.com/pmezard/go-difflib/difflib
-# github.com/sirupsen/logrus v1.3.0
+# github.com/sirupsen/logrus v1.6.0
 github.com/sirupsen/logrus
-# github.com/stretchr/testify v1.3.0
+# github.com/stretchr/testify v1.6.1
 github.com/stretchr/testify/assert
 github.com/stretchr/testify/require
 # github.com/tidwall/btree v0.0.0-20170113224114-9876f1454cf0
 github.com/tidwall/btree
 # github.com/tidwall/buntdb v1.0.0
 github.com/tidwall/buntdb
-# github.com/tidwall/gjson v1.1.5
+# github.com/tidwall/gjson v1.9.3
 github.com/tidwall/gjson
 # github.com/tidwall/grect v0.0.0-20161006141115-ba9a043346eb
 github.com/tidwall/grect
-# github.com/tidwall/match v1.0.1
+# github.com/tidwall/match v1.1.1
 github.com/tidwall/match
+# github.com/tidwall/pretty v1.2.0
+github.com/tidwall/pretty
 # github.com/tidwall/rtree v0.0.0-20180113144539-6cd427091e0e
 github.com/tidwall/rtree
 github.com/tidwall/rtree/base
@@ -102,13 +104,15 @@ github.com/tidwall/tinyqueue
 github.com/tv42/httpunix
 # github.com/twystd/tweetnacl-go v0.0.0-20160506143631-427e8b66793d
 github.com/twystd/tweetnacl-go
-# go.etcd.io/bbolt v1.3.0
+# go.etcd.io/bbolt v1.3.2
 go.etcd.io/bbolt
-# golang.org/x/crypto v0.0.0-20190123085648-057139ce5d2b
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 golang.org/x/crypto/sha3
-golang.org/x/crypto/ssh/terminal
-# golang.org/x/sys v0.0.0-20190124100055-b90733256f2e
+# golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1
+golang.org/x/sys/cpu
+golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
-golang.org/x/sys/windows
 # gopkg.in/urfave/cli.v1 v1.20.0
 gopkg.in/urfave/cli.v1
+# gopkg.in/yaml.v3 v3.0.0-20200615113413-eeeca48fe776
+gopkg.in/yaml.v3
